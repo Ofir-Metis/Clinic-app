@@ -4,9 +4,12 @@
   "scripts": {
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "test": "jest"
+    "test": "jest",
+    "migration:run": "echo migrating"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.358.0",
+    "@aws-sdk/s3-request-presigner": "^3.358.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^10.0.0",
@@ -20,6 +23,7 @@
     "@nestjs/cli": "^10.2.5",
     "@nestjs/testing": "^10.0.0",
     "@types/jest": "^29.5.2",
+    "jest": "^29.7.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2"
   },

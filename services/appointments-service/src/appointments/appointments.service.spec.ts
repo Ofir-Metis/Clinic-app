@@ -1,0 +1,33 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { AppointmentsService } from './appointments.service';
+import { Appointment } from './appointment.entity';
+
+describe('AppointmentsService', () => {
+  let service: AppointmentsService;
+  const repo = {
+    create: jest.fn((dto) => dto),
+    save: jest.fn((a) => Promise.resolve({ id: 1, ...a })),
+    find: jest.fn(() => []),
+    findOne: jest.fn(() => null),
+    update: jest.fn(() => Promise.resolve()),
+    delete: jest.fn(() => Promise.resolve()),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AppointmentsService,
+        { provide: getRepositoryToken(Appointment), useValue: repo },
+      ],
+    }).compile();
+
+    service = module.get<AppointmentsService>(AppointmentsService);
+  });
+
+  it('creates an appointment', async () => {
+    const dto = { therapistId: 1, clientId: 2, startTime: new Date().toISOString(), endTime: new Date().toISOString(), type: 'test', location: 'online' };
+    const result = await service.create(dto);
+    expect(result).toHaveProperty('id');
+  });
+});

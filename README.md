@@ -1,5 +1,43 @@
 # Clinic App
 
+## Backend
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Yarn 1.22+
+- AWS credentials for Terraform
+
+### Local Development
+
+```bash
+cp .env.example .env
+yarn install
+./scripts/dev.sh
+```
+
+Individual services can be started in watch mode:
+
+```bash
+yarn workspace auth-service start:dev
+yarn workspace appointments-service start:dev
+```
+
+### Testing
+
+```bash
+./scripts/test.sh
+```
+
+### Deployment
+
+```bash
+terraform -chdir=infrastructure/terraform init
+terraform -chdir=infrastructure/terraform apply
+```
+
+GitHub Actions will build Docker images and run Terraform on merges to `main`.
+
 ## Auth Service
 
 ### Setup
