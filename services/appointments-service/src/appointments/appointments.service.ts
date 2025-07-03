@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { GetAppointmentsDto } from './dto/get-appointments.dto';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 /**
@@ -32,8 +33,11 @@ export class AppointmentsService {
     return saved;
   }
 
-  findAll() {
-    return this.repo.find();
+  findAll(filter: GetAppointmentsDto) {
+    return this.repo.find({
+      where: { therapistId: filter.therapistId },
+      order: { startTime: 'ASC' },
+    });
   }
 
   upcoming(limit: number) {
@@ -44,13 +48,23 @@ export class AppointmentsService {
     return this.repo.findOne({ where: { id } });
   }
 
-  async update(id: number, dto: UpdateAppointmentDto) {
+  async update(id: number, dto: UpdateAppointmentDto, userId?: number) {
+    const appt = await this.findOne(id);
+    if (!appt || (userId && appt.therapistId !== userId)) {
+      throw new ForbiddenException();
+    }
     await this.repo.update(id, {
       ...dto,
       startTime: dto.startTime ? new Date(dto.startTime) : undefined,
       endTime: dto.endTime ? new Date(dto.endTime) : undefined,
     });
-    return this.findOne(id);
+    const updated = await this.findOne(id);
+    if (dto.status === 'cancelled') {
+      this.client.emit('appointment.cancelled', updated);
+    } else {
+      this.client.emit('appointment.updated', updated);
+    }
+    return updated;
   }
 
   remove(id: number) {

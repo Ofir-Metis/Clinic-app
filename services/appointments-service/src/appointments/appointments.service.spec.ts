@@ -37,4 +37,12 @@ describe('AppointmentsService', () => {
     expect(repo.find).toHaveBeenCalled();
     expect(result).toEqual([]);
   });
+
+  it('updates an appointment and emits event', async () => {
+    const emit = jest.spyOn<any, any>(service['client'], 'emit').mockImplementation(jest.fn());
+    repo.findOne.mockResolvedValue({ id: 1, therapistId: 1 });
+    await service.update(1, { status: 'cancelled' }, 1);
+    expect(repo.update).toHaveBeenCalledWith(1, expect.any(Object));
+    expect(emit).toHaveBeenCalledWith('appointment.cancelled', expect.any(Object));
+  });
 });

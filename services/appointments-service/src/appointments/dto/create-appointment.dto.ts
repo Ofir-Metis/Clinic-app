@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsInt, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsInt()
@@ -13,9 +13,14 @@ export class CreateAppointmentDto {
   @IsDateString()
   endTime: string;
 
-  @IsString()
-  type: string;
+  @IsEnum(['in-person', 'virtual'])
+  type: 'in-person' | 'virtual';
 
+  @IsOptional()
   @IsString()
-  location: string;
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  meetingUrl?: string;
 }
