@@ -10,4 +10,12 @@
   "patient": "מטופל",
   "or": "או",
   "required": "נדרש"
+  ,"myPatients": "המטופלים שלי"
+  ,"searchPatients": "חיפוש מטופלים"
+  ,"upcomingAppointment": "פגישה קרובה"
+  ,"actions": "פעולות"
+  ,"viewProfile": "צפיה בפרופיל"
+  ,"newSession": "מפגש חדש"
+  ,"newPatient": "מטופל חדש"
+  ,"noPatients": "לא נמצאו מטופלים"
 }

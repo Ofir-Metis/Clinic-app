@@ -4,4 +4,6 @@ logs
 .env
 dist/
 coverage/
+.pnp.cjs
+.pnp.loader.mjs
 .yarn/

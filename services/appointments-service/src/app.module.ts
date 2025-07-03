@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
 import { HealthController } from './health/health.controller';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { PatientsModule } from './patients/patients.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [() => ({ pagination: { defaultLimit: 20, maxLimit: 100 } })],
+    }),
+    JwtModule.register({}),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.POSTGRES_HOST,
@@ -18,6 +24,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
       synchronize: false,
     }),
     AppointmentsModule,
+    PatientsModule,
   ],
   controllers: [HealthController],
 })

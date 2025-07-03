@@ -10,4 +10,12 @@
   "patient": "Пациент",
   "or": "или",
   "required": "Обязательно"
+  ,"myPatients": "Мои пациенты"
+  ,"searchPatients": "Поиск пациентов"
+  ,"upcomingAppointment": "Ближайший прием"
+  ,"actions": "Действия"
+  ,"viewProfile": "Профиль"
+  ,"newSession": "Новый сеанс"
+  ,"newPatient": "Новый пациент"
+  ,"noPatients": "Пациенты не найдены"
 }

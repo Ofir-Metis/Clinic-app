@@ -10,4 +10,12 @@
   "patient": "مراجع",
   "or": "أو",
   "required": "مطلوب"
+  ,"myPatients": "مرضاي"
+  ,"searchPatients": "بحث عن مرضى"
+  ,"upcomingAppointment": "موعد قادم"
+  ,"actions": "إجراءات"
+  ,"viewProfile": "عرض الملف"
+  ,"newSession": "جلسة جديدة"
+  ,"newPatient": "مريض جديد"
+  ,"noPatients": "لا يوجد مرضى"
 }
