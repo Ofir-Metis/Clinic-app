@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import Button from '@mui/material/Button';
+import AIHelper from './AIHelper';
 
 function App() {
   const { t } = useTranslation();
@@ -9,6 +10,7 @@ function App() {
       <Button variant="contained" color="primary">
         {t('clickMe')}
       </Button>
+      <AIHelper />
     </div>
   );
 }

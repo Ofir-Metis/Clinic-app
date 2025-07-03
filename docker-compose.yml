@@ -3,11 +3,11 @@ services:
   mongo:
     image: mongo:6
     ports:
-      - "27017:27017"
+      - '27017:27017'
   nats:
     image: nats:2
     ports:
-      - "4222:4222"
+      - '4222:4222'
   minio:
     image: minio/minio
     environment:
@@ -15,5 +15,61 @@ services:
       MINIO_ROOT_PASSWORD: minio123
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
+  auth-service:
+    build: ./services/auth-service
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      NATS_URL: ${NATS_URL}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+    ports:
+      - '3001:3000'
+  appointments-service:
+    build: ./services/appointments-service
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      NATS_URL: ${NATS_URL}
+    ports:
+      - '3002:3000'
+  files-service:
+    build: ./services/files-service
+    depends_on:
+      - mongo
+      - minio
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+    ports:
+      - '3003:3000'
+  notifications-service:
+    build: ./services/notifications-service
+    depends_on:
+      - nats
+    environment:
+      NATS_URL: ${NATS_URL}
+    ports:
+      - '3004:3000'
+  ai-service:
+    build: ./services/ai-service
+    depends_on:
+      - mongo
+      - nats
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      NATS_URL: ${NATS_URL}
+    ports:
+      - '3005:3000'
+  frontend:
+    build: ./frontend
+    depends_on:
+      - auth-service
+    ports:
+      - '5173:80'
