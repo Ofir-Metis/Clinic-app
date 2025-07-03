@@ -21,3 +21,25 @@ npm run start:dev
 ```bash
 npm test
 ```
+
+## Frontend
+
+### Setup
+
+```bash
+cp frontend/.env.example frontend/.env
+cd frontend
+npm install
+```
+
+### Run
+
+```bash
+npm run dev
+```
+
+### Test
+
+```bash
+npm test
+```
