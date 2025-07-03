@@ -10,4 +10,12 @@
   "patient": "Patient",
   "or": "or",
   "required": "Required"
+  ,"myPatients": "My Patients"
+  ,"searchPatients": "Search Patients"
+  ,"upcomingAppointment": "Upcoming Appointment"
+  ,"actions": "Actions"
+  ,"viewProfile": "View Profile"
+  ,"newSession": "New Session"
+  ,"newPatient": "New Patient"
+  ,"noPatients": "No patients found"
 }

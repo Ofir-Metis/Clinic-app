@@ -5001,6 +5001,7 @@ __metadata:
     "@nestjs/common": "npm:^10.0.0"
     "@nestjs/config": "npm:^2.2.0"
     "@nestjs/core": "npm:^10.0.0"
+    "@nestjs/jwt": "npm:^10.0.0"
     "@nestjs/microservices": "npm:^10.0.0"
     "@nestjs/testing": "npm:^10.0.0"
     "@nestjs/typeorm": "npm:^10.0.0"
@@ -5725,6 +5726,7 @@ __metadata:
     jest-environment-jsdom: "npm:^30.0.2"
     prettier: "npm:^3.0.0"
     ts-node: "npm:^10.9.2"
+    typescript: "npm:^5.2.2"
   languageName: unknown
   linkType: soft
 
