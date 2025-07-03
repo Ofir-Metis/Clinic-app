@@ -1,9 +1,14 @@
 version: '3.8'
 services:
-  mongo:
-    image: mongo:6
+  postgres:
+    image: postgres:15
     ports:
-      - '27017:27017'
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
   nats:
     image: nats:2
     ports:
@@ -20,10 +25,14 @@ services:
   auth-service:
     build: ./services/auth-service
     depends_on:
-      - mongo
+      - postgres
       - nats
     environment:
-      MONGO_URI: ${MONGO_URI}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       NATS_URL: ${NATS_URL}
       S3_ENDPOINT: ${S3_ENDPOINT}
@@ -32,20 +41,28 @@ services:
   appointments-service:
     build: ./services/appointments-service
     depends_on:
-      - mongo
+      - postgres
       - nats
     environment:
-      MONGO_URI: ${MONGO_URI}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       NATS_URL: ${NATS_URL}
     ports:
       - '3002:3000'
   files-service:
     build: ./services/files-service
     depends_on:
-      - mongo
+      - postgres
       - minio
     environment:
-      MONGO_URI: ${MONGO_URI}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       S3_ENDPOINT: ${S3_ENDPOINT}
     ports:
       - '3003:3000'
@@ -60,10 +77,14 @@ services:
   ai-service:
     build: ./services/ai-service
     depends_on:
-      - mongo
+      - postgres
       - nats
     environment:
-      MONGO_URI: ${MONGO_URI}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       NATS_URL: ${NATS_URL}
     ports:
       - '3005:3000'
