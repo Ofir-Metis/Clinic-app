@@ -1,5 +1,5 @@
 {
-  "name": "api-gateway",
+  "name": "analytics-service",
   "version": "0.1.0",
   "scripts": {
     "start": "nest start",
@@ -8,14 +8,9 @@
     "migration:run": "echo migrating"
   },
   "dependencies": {
-    "@nestjs/apollo": "^10.0.0",
-    "@nestjs/axios": "^3.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^10.0.0",
-    "@nestjs/graphql": "^10.0.0",
-    "apollo-server-express": "^3.12.0",
-    "graphql": "^16.8.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1"
   },

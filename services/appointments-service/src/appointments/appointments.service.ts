@@ -36,6 +36,10 @@ export class AppointmentsService {
     return this.repo.find();
   }
 
+  upcoming(limit: number) {
+    return this.repo.find({ order: { startTime: 'ASC' }, take: limit });
+  }
+
   findOne(id: number) {
     return this.repo.findOne({ where: { id } });
   }

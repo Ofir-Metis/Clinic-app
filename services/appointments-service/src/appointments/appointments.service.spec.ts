@@ -30,4 +30,11 @@ describe('AppointmentsService', () => {
     const result = await service.create(dto);
     expect(result).toHaveProperty('id');
   });
+
+  it('gets upcoming appointments', async () => {
+    repo.find.mockResolvedValue([]);
+    const result = await service.upcoming(5);
+    expect(repo.find).toHaveBeenCalled();
+    expect(result).toEqual([]);
+  });
 });
