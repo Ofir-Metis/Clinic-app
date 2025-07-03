@@ -51,3 +51,10 @@ export async function addPatient(data: AddPatientPayload): Promise<AddPatientRes
   logger.info('Received addPatient response', res.data);
   return res.data;
 }
+
+export const searchPatients = async (search: string): Promise<PatientResponse> => {
+  const { data } = await axios.get<PatientResponse>(`${import.meta.env.VITE_API_URL}/patients`, {
+    params: { search },
+  });
+  return data;
+};

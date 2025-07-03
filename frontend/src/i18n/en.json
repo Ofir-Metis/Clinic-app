@@ -27,4 +27,11 @@
   ,"viewNote": "View Note"
   ,"uploadFile": "Upload File"
   ,"newSessionNote": "New Session Note"
+  ,"scheduleAppointment": "Schedule Appointment"
+  ,"patientName": "Patient"
+  ,"datetime": "Date & Time"
+  ,"serviceType": "Service Type"
+  ,"notes": "Notes"
+  ,"submit": "Submit"
+  ,"cancel": "Cancel"
 }

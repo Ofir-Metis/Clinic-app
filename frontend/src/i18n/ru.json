@@ -27,4 +27,11 @@
   ,"viewNote": "Просмотр заметки"
   ,"uploadFile": "Загрузить файл"
   ,"newSessionNote": "Новая заметка"
+  ,"scheduleAppointment": "Записать на прием"
+  ,"patientName": "Пациент"
+  ,"datetime": "Дата и время"
+  ,"serviceType": "Тип услуги"
+  ,"notes": "Заметки"
+  ,"submit": "Сохранить"
+  ,"cancel": "Отмена"
 }

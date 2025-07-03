@@ -27,4 +27,11 @@
   ,"viewNote": "عرض الملاحظة"
   ,"uploadFile": "تحميل ملف"
   ,"newSessionNote": "ملاحظة جلسة جديدة"
+  ,"scheduleAppointment": "تحديد موعد"
+  ,"patientName": "المريض"
+  ,"datetime": "التاريخ والوقت"
+  ,"serviceType": "نوع الخدمة"
+  ,"notes": "ملاحظات"
+  ,"submit": "إرسال"
+  ,"cancel": "إلغاء"
 }
