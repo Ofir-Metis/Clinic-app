@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from '../logger';
 
 export interface Appointment {
   id: number;
@@ -18,7 +19,7 @@ export interface GetAppointmentsFilter {
 }
 
 const api = axios.create({
-  baseURL: process.env.APPOINTMENTS_SERVICE_URL,
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 export const getAppointments = async (filter: GetAppointmentsFilter) => {
@@ -38,5 +39,18 @@ export const updateAppointment = async (id: number, payload: Partial<Appointment
 
 export const createAppointment = async (payload: Partial<Appointment>) => {
   const { data } = await api.post<Appointment>('/appointments', payload);
+  return data;
+};
+
+export interface ScheduleAppointmentPayload {
+  patientId: number;
+  datetime: string;
+  serviceType: string;
+  notes?: string;
+}
+
+export const scheduleAppointment = async (payload: ScheduleAppointmentPayload) => {
+  logger.info('schedule appointment request', payload);
+  const { data } = await api.post('/appointments', payload);
   return data;
 };
