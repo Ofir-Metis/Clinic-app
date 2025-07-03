@@ -13,6 +13,11 @@ services:
     image: nats:2
     ports:
       - '4222:4222'
+  maildev:
+    image: maildev/maildev
+    ports:
+      - '1080:1080'
+      - '1025:1025'
   minio:
     image: minio/minio
     environment:

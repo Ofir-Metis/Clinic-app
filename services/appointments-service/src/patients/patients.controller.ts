@@ -7,19 +7,27 @@ import {
   Req,
   Param,
   ParseIntPipe,
+  Post,
+  Body,
+  Request,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../jwt-auth.guard';
 import { PatientsService } from './patients.service';
 import { GetPatientsDto } from './dto/get-patients.dto';
 import { GetPatientDetailDto } from './dto/get-patient-detail.dto';
 import { GetSessionsDto } from './dto/get-sessions.dto';
+import { CreatePatientDto } from './dto/create-patient.dto';
+import { NotifierService } from './notifier.service';
 
 /**
  * Controller exposing patient list endpoints.
  */
 @Controller('patients')
 export class PatientsController {
-  constructor(private readonly service: PatientsService) {}
+  constructor(
+    private readonly service: PatientsService,
+    private readonly notifier: NotifierService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get()
@@ -59,5 +67,17 @@ export class PatientsController {
   @Get(':id/billing')
   getBilling(@Param('id', ParseIntPipe) id: number) {
     return this.service.billing(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async add(@Body() dto: CreatePatientDto, @Request() req: any) {
+    const { patient, existing } = await this.service.addOrInvite(dto, req.user.id);
+    if (existing) {
+      await this.notifier.notifyExisting(patient, req.user.id);
+    } else {
+      await this.notifier.sendInvitation(patient, req.user.id);
+    }
+    return { id: patient.id, existing };
   }
 }

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Patient } from './patient.entity';
 import { SessionNote } from './session-note.entity';
+import { CreatePatientDto } from "./dto/create-patient.dto";
 import { Invoice } from './invoice.entity';
 
 /**
@@ -17,6 +18,8 @@ export class PatientsService {
     @InjectRepository(Invoice)
     private readonly invoices: Repository<Invoice>,
   ) {}
+
+  private readonly logger = new Logger(PatientsService.name);
 
   async list(therapistId: number, page: number, limit: number, search?: string) {
     const qb = this.repo.createQueryBuilder('p').where('p.therapistId = :therapistId', { therapistId });
@@ -49,5 +52,25 @@ export class PatientsService {
 
   billing(patientId: number) {
     return this.invoices.find({ where: { patientId } });
+  }
+
+  async addOrInvite(dto: CreatePatientDto, therapistId: number) {
+    let patient = await this.repo.findOne({ where: { email: dto.email } });
+    const existing = !!patient;
+    if (!existing) {
+      patient = this.repo.create({ ...dto, therapistId });
+      await this.repo.save(patient);
+      this.logger.log(`Created new patient ${patient.email}`);
+    } else {
+      await this.linkTherapist(patient, therapistId);
+      this.logger.log(`Patient ${patient.email} already exists`);
+    }
+    return { patient, existing };
+  }
+
+  private async linkTherapist(patient: Patient, therapistId: number) {
+    if (patient.therapistId !== therapistId) {
+      await this.repo.update(patient.id, { therapistId });
+    }
   }
 }
