@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        workspace: [frontend, auth-service, appointments-service, files-service, notifications-service, ai-service]
+        workspace: [frontend, auth-service, appointments-service, files-service, notifications-service, ai-service, api-gateway]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -37,4 +37,20 @@ jobs:
     needs: [lint, test]
     steps:
       - uses: actions/checkout@v3
-      - run: echo "Docker build & publish"
+      - run: |
+          echo "Build and push docker images"
+          for ws in auth-service appointments-service files-service notifications-service ai-service api-gateway; do
+            docker build -t myrepo/$ws:latest services/$ws
+          done
+
+  terraform:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: docker
+    steps:
+      - uses: actions/checkout@v3
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
+      - run: terraform -chdir=infrastructure/terraform init
+      - run: terraform -chdir=infrastructure/terraform plan
