@@ -20,6 +20,11 @@ export class AppointmentsController {
     return this.service.findAll();
   }
 
+  @Get('upcoming')
+  upcoming(@Query('limit') limit?: string) {
+    return this.service.upcoming(Number(limit) || 5);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(+id);

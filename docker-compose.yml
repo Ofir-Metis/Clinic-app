@@ -88,11 +88,37 @@ services:
       NATS_URL: ${NATS_URL}
     ports:
       - '3005:3000'
+  notes-service:
+    build: ./services/notes-service
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '3006:3000'
+  analytics-service:
+    build: ./services/analytics-service
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '3007:3000'
   api-gateway:
     build: ./services/api-gateway
     depends_on:
       - auth-service
       - appointments-service
+      - notes-service
+      - analytics-service
     environment:
       JWT_SECRET: ${JWT_SECRET}
     ports:

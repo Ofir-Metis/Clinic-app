@@ -21,6 +21,8 @@ Individual services can be started in watch mode:
 ```bash
 yarn workspace auth-service start:dev
 yarn workspace appointments-service start:dev
+yarn workspace notes-service start:dev
+yarn workspace analytics-service start:dev
 ```
 
 ### Testing
@@ -75,6 +77,8 @@ npm install
 ```bash
 npm run dev
 ```
+
+The frontend expects `VITE_API_URL` in `.env` pointing to the API gateway.
 
 ### Test
 
