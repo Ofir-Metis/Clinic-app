@@ -17,8 +17,11 @@ export class Patient {
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true })
-  avatarUrl: string;
+  @Column()
+  phone: string;
+
+  @Column({ default: false })
+  whatsappOptIn: boolean;
 
   @Column()
   therapistId: number;

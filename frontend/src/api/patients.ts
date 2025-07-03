@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { logger } from "../logger";
 
 export interface Patient {
   id: number;
@@ -28,3 +29,25 @@ export const getMyPatients = async (
   );
   return data;
 };
+
+export interface AddPatientPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  whatsappOptIn?: boolean;
+  role: string;
+  therapistId: number;
+}
+
+export interface AddPatientResponse {
+  id: number;
+  existing: boolean;
+}
+
+export async function addPatient(data: AddPatientPayload): Promise<AddPatientResponse> {
+  logger.info('Submitting new patient', data);
+  const res = await axios.post(`${process.env.VITE_API_URL}/patients`, data);
+  logger.info('Received addPatient response', res.data);
+  return res.data;
+}

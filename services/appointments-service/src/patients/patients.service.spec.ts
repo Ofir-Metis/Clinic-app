@@ -16,6 +16,9 @@ describe('PatientsService', () => {
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
     })),
     findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation((d) => d),
+    save: jest.fn().mockImplementation((d) => Promise.resolve({ id: 1, ...d })),
+    update: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -39,5 +42,21 @@ describe('PatientsService', () => {
   it('gets detail', async () => {
     await service.getDetail(1);
     expect(repo.findOne).toHaveBeenCalledWith({ where: { id: 1 } });
+  });
+
+  it('creates new patient', async () => {
+    const dto: any = { firstName: 'a', lastName: 'b', email: 'c@d.com', phone: '1' };
+    const result = await service.addOrInvite(dto, 2);
+    expect(repo.create).toHaveBeenCalled();
+    expect(result.patient).toHaveProperty('id');
+    expect(result.existing).toBe(false);
+  });
+
+  it('links existing patient', async () => {
+    repo.findOne.mockResolvedValueOnce({ id: 1, therapistId: 3 });
+    const dto: any = { firstName: 'a', lastName: 'b', email: 'c@d.com', phone: '1' };
+    const result = await service.addOrInvite(dto, 2);
+    expect(repo.update).toHaveBeenCalled();
+    expect(result.existing).toBe(true);
   });
 });

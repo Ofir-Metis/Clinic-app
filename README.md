@@ -62,6 +62,10 @@ npm run start:dev
 npm test
 ```
 
+### Adding patients
+
+Navigate to `/patients/new` in the frontend. Fill in the patient information and submit. An invitation email and WhatsApp message will be sent if the patient does not already exist.
+
 ## Frontend
 
 ### Setup
