@@ -37,3 +37,12 @@ docker-compose up --build
 ```
 
 Copy `.env.example` to `.env` and adjust values before running.
+
+## Build
+To generate production builds of all workspaces:
+```bash
+yarn workspaces run build
+```
+
+## Acknowledgements
+- Nora Zinger
