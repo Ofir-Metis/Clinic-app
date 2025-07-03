@@ -1,4 +1,13 @@
 {
   "welcome": "ברוך הבא",
-  "clickMe": "לחץ עלי"
+  "clickMe": "לחץ עלי",
+  "login": "התחבר",
+  "register": "הרשמה",
+  "fullName": "שם מלא",
+  "email": "אימייל",
+  "password": "סיסמה",
+  "therapist": "מטפל",
+  "patient": "מטופל",
+  "or": "או",
+  "required": "נדרש"
 }

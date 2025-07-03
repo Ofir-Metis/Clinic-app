@@ -13,6 +13,15 @@ i18n
       en: {
         translation: {
           welcome: 'Welcome',       // מפת המפתח 'welcome' ל-'Welcome'
+          login: 'Login',
+          register: 'Register',
+          fullName: 'Full Name',
+          email: 'Email',
+          password: 'Password',
+          therapist: 'Therapist',
+          patient: 'Patient',
+          or: 'or',
+          required: 'Required',
         },
       },
     },
