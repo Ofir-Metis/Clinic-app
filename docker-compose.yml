@@ -121,6 +121,7 @@ services:
       - analytics-service
     environment:
       JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
     ports:
       - '4000:3000'
   frontend:

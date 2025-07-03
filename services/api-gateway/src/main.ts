@@ -9,7 +9,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(new LoggingMiddleware().use);
-  app.enableCors();
+  app.enableCors({ origin: process.env.FRONTEND_ORIGIN || '*' });
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

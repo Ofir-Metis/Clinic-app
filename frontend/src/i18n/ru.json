@@ -18,4 +18,13 @@
   ,"newSession": "Новый сеанс"
   ,"newPatient": "Новый пациент"
   ,"noPatients": "Пациенты не найдены"
+  ,"overview": "Обзор"
+  ,"sessions": "Сессии"
+  ,"files": "Файлы"
+  ,"billing": "Биллинг"
+  ,"totalSessions": "Всего сессий"
+  ,"lastSession": "Последняя сессия"
+  ,"viewNote": "Просмотр заметки"
+  ,"uploadFile": "Загрузить файл"
+  ,"newSessionNote": "Новая заметка"
 }

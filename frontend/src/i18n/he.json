@@ -18,4 +18,13 @@
   ,"newSession": "מפגש חדש"
   ,"newPatient": "מטופל חדש"
   ,"noPatients": "לא נמצאו מטופלים"
+  ,"overview": "סקירה"
+  ,"sessions": "מפגשים"
+  ,"files": "קבצים"
+  ,"billing": "חיובים"
+  ,"totalSessions": "סך כל המפגשים"
+  ,"lastSession": "מועד מפגש אחרון"
+  ,"viewNote": "צפייה בהערה"
+  ,"uploadFile": "העלה קובץ"
+  ,"newSessionNote": "הערת מפגש חדשה"
 }

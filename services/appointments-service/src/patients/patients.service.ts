@@ -2,13 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Patient } from './patient.entity';
+import { SessionNote } from './session-note.entity';
+import { Invoice } from './invoice.entity';
 
 /**
  * Service providing patient queries.
  */
 @Injectable()
 export class PatientsService {
-  constructor(@InjectRepository(Patient) private readonly repo: Repository<Patient>) {}
+  constructor(
+    @InjectRepository(Patient) private readonly repo: Repository<Patient>,
+    @InjectRepository(SessionNote)
+    private readonly notes: Repository<SessionNote>,
+    @InjectRepository(Invoice)
+    private readonly invoices: Repository<Invoice>,
+  ) {}
 
   async list(therapistId: number, page: number, limit: number, search?: string) {
     const qb = this.repo.createQueryBuilder('p').where('p.therapistId = :therapistId', { therapistId });
@@ -20,5 +28,26 @@ export class PatientsService {
       .take(limit)
       .getManyAndCount();
     return { items, total };
+  }
+
+  getDetail(id: number) {
+    return this.repo.findOne({ where: { id } });
+  }
+
+  async sessions(patientId: number, page: number, limit: number) {
+    return this.notes.find({
+      where: { patientId },
+      order: { date: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+  }
+
+  files(patientId: number) {
+    return [];
+  }
+
+  billing(patientId: number) {
+    return this.invoices.find({ where: { patientId } });
   }
 }
