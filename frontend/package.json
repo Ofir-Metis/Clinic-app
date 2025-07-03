@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "jest"
+    "test": "jest",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.10.6",
