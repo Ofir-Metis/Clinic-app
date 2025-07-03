@@ -1,42 +1,61 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Query,
+  ParseIntPipe,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { GetAppointmentsDto } from './dto/get-appointments.dto';
+import { JwtAuthGuard } from '../jwt-auth.guard';
 
 /**
  * REST controller for appointments.
  */
 @Controller('appointments')
+@UseGuards(JwtAuthGuard)
 export class AppointmentsController {
   constructor(private readonly service: AppointmentsService) {}
 
-  @Post()
-  create(@Body() dto: CreateAppointmentDto) {
-    return this.service.create(dto);
-  }
-
   @Get()
-  findAll() {
-    return this.service.findAll();
-  }
-
-  @Get('upcoming')
-  upcoming(@Query('limit') limit?: string) {
-    return this.service.upcoming(Number(limit) || 5);
+  findAll(@Query() query: GetAppointmentsDto, @Req() req: any) {
+    if (req.user?.id !== query.therapistId) {
+      throw new ForbiddenException();
+    }
+    return this.service.findAll(query);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    const a = await this.service.findOne(id);
+    if (!a || a.therapistId !== req.user?.id) {
+      throw new ForbiddenException();
+    }
+    return a;
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAppointmentDto) {
-    return this.service.update(+id, dto);
+  @Post()
+  create(@Body() dto: CreateAppointmentDto, @Req() req: any) {
+    if (req.user?.id !== dto.therapistId) {
+      throw new ForbiddenException();
+    }
+    return this.service.create(dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(+id);
+  @Put(':id')
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAppointmentDto,
+    @Req() req: any,
+  ) {
+    return this.service.update(id, dto, req.user?.id);
   }
 }

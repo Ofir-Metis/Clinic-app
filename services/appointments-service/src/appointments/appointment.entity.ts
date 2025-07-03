@@ -21,13 +21,16 @@ export class Appointment {
   endTime: Date;
 
   @Column()
-  type: string;
-
-  @Column()
-  location: string;
+  type: 'in-person' | 'virtual';
 
   @Column({ default: 'scheduled' })
-  status: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+
+  @Column({ nullable: true })
+  location: string;
+
+  @Column({ nullable: true })
+  meetingUrl: string;
 
   @CreateDateColumn()
   createdAt: Date;
