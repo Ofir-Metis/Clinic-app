@@ -18,4 +18,13 @@
   ,"newSession": "New Session"
   ,"newPatient": "New Patient"
   ,"noPatients": "No patients found"
+  ,"overview": "Overview"
+  ,"sessions": "Sessions"
+  ,"files": "Files"
+  ,"billing": "Billing"
+  ,"totalSessions": "Total Sessions"
+  ,"lastSession": "Last Session"
+  ,"viewNote": "View Note"
+  ,"uploadFile": "Upload File"
+  ,"newSessionNote": "New Session Note"
 }

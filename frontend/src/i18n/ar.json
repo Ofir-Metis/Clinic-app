@@ -18,4 +18,13 @@
   ,"newSession": "جلسة جديدة"
   ,"newPatient": "مريض جديد"
   ,"noPatients": "لا يوجد مرضى"
+  ,"overview": "نظرة عامة"
+  ,"sessions": "جلسات"
+  ,"files": "ملفات"
+  ,"billing": "الفواتير"
+  ,"totalSessions": "إجمالي الجلسات"
+  ,"lastSession": "آخر جلسة"
+  ,"viewNote": "عرض الملاحظة"
+  ,"uploadFile": "تحميل ملف"
+  ,"newSessionNote": "ملاحظة جلسة جديدة"
 }

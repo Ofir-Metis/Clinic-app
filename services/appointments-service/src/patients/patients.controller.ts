@@ -1,7 +1,18 @@
-import { Controller, Get, Query, UseGuards, ForbiddenException, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  ForbiddenException,
+  Req,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../jwt-auth.guard';
 import { PatientsService } from './patients.service';
 import { GetPatientsDto } from './dto/get-patients.dto';
+import { GetPatientDetailDto } from './dto/get-patient-detail.dto';
+import { GetSessionsDto } from './dto/get-sessions.dto';
 
 /**
  * Controller exposing patient list endpoints.
@@ -19,5 +30,34 @@ export class PatientsController {
     const page = query.page || 1;
     const limit = query.limit || 10;
     return this.service.list(query.therapistId, page, limit, query.search);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  getDetail(@Param('id', ParseIntPipe) id: number) {
+    return this.service.getDetail(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/sessions')
+  getSessions(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: GetSessionsDto,
+  ) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    return this.service.sessions(id, page, limit);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/files')
+  getFiles(@Param('id', ParseIntPipe) id: number) {
+    return this.service.files(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/billing')
+  getBilling(@Param('id', ParseIntPipe) id: number) {
+    return this.service.billing(id);
   }
 }

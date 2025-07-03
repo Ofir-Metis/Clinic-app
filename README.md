@@ -78,7 +78,8 @@ npm install
 npm run dev
 ```
 
-The frontend expects `VITE_API_URL` in `.env` pointing to the API gateway.
+The frontend expects `VITE_API_URL` in `.env` pointing to the API gateway. The
+API gateway should be configured with `FRONTEND_ORIGIN` to enable CORS.
 
 ### Test
 
