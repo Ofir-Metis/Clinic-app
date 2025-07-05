@@ -23,6 +23,7 @@ yarn workspace auth-service start:dev
 yarn workspace appointments-service start:dev
 yarn workspace notes-service start:dev
 yarn workspace analytics-service start:dev
+yarn workspace therapists-service start:dev
 ```
 
 ### Testing
