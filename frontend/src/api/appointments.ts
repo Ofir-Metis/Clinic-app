@@ -42,6 +42,15 @@ export const createAppointment = async (payload: Partial<Appointment>) => {
   return data;
 };
 
+export const getAppointmentHistory = async (
+  params: { therapistId: number; page?: number; limit?: number },
+) => {
+  const { data } = await api.get<Appointment[]>('/appointments/history', {
+    params,
+  });
+  return data;
+};
+
 export interface ScheduleAppointmentPayload {
   patientId: number;
   datetime: string;
