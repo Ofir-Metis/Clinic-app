@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
@@ -7,6 +7,7 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
 import { GetHistoryDto } from './dto/get-history.dto';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { createLogger, transports, format } from 'winston';
 
 /**
  * Service for managing appointments.
@@ -18,7 +19,11 @@ export class AppointmentsService {
     options: { url: process.env.NATS_URL || 'nats://localhost:4222' },
   });
 
-  private readonly logger = new Logger(AppointmentsService.name);
+  private readonly logger = createLogger({
+    level: 'info',
+    format: format.json(),
+    transports: [new transports.Console()],
+  });
 
   constructor(
     @InjectRepository(Appointment)
@@ -26,6 +31,7 @@ export class AppointmentsService {
   ) {}
 
   async create(dto: CreateAppointmentDto) {
+    this.logger.info('create', { therapistId: dto.therapistId });
     const appointment = this.repo.create({
       ...dto,
       startTime: new Date(dto.startTime),
@@ -37,6 +43,7 @@ export class AppointmentsService {
   }
 
   findAll(filter: GetAppointmentsDto) {
+    this.logger.info('findAll', { therapistId: filter.therapistId });
     return this.repo.find({
       where: { therapistId: filter.therapistId },
       order: { startTime: 'ASC' },
@@ -45,6 +52,14 @@ export class AppointmentsService {
 
   upcoming(limit: number) {
     return this.repo.find({ order: { startTime: 'ASC' }, take: limit });
+  }
+
+  async findHistory(userId: number) {
+    this.logger.info('findHistory', { userId });
+    return this.repo.find({
+      where: { therapistId: userId },
+      order: { startTime: 'DESC' },
+    });
   }
 
   async history(query: GetHistoryDto) {
@@ -60,14 +75,17 @@ export class AppointmentsService {
   }
 
   findOne(id: number) {
+    this.logger.info('findOne', { id });
     return this.repo.findOne({ where: { id } });
   }
 
   async update(id: number, dto: UpdateAppointmentDto, userId?: number) {
     const appt = await this.findOne(id);
     if (!appt || (userId && appt.therapistId !== userId)) {
+      this.logger.error('update forbidden', { id, userId });
       throw new ForbiddenException();
     }
+    this.logger.info('update', { id });
     await this.repo.update(id, {
       ...dto,
       startTime: dto.startTime ? new Date(dto.startTime) : undefined,
