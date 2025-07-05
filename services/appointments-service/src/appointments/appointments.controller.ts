@@ -15,6 +15,7 @@ import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
+import { GetHistoryDto } from './dto/get-history.dto';
 import { JwtAuthGuard } from '../jwt-auth.guard';
 
 /**
@@ -31,6 +32,14 @@ export class AppointmentsController {
       throw new ForbiddenException();
     }
     return this.service.findAll(query);
+  }
+
+  @Get('history')
+  history(@Query() query: GetHistoryDto, @Req() req: any) {
+    if (req.user?.id !== query.therapistId) {
+      throw new ForbiddenException();
+    }
+    return this.service.history(query);
   }
 
   @Get(':id')

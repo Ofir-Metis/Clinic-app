@@ -1,10 +1,11 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
+import { GetHistoryDto } from './dto/get-history.dto';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 
 /**
@@ -16,6 +17,8 @@ export class AppointmentsService {
     transport: Transport.NATS,
     options: { url: process.env.NATS_URL || 'nats://localhost:4222' },
   });
+
+  private readonly logger = new Logger(AppointmentsService.name);
 
   constructor(
     @InjectRepository(Appointment)
@@ -42,6 +45,18 @@ export class AppointmentsService {
 
   upcoming(limit: number) {
     return this.repo.find({ order: { startTime: 'ASC' }, take: limit });
+  }
+
+  async history(query: GetHistoryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    this.logger.log(`History query therapist=${query.therapistId} page=${page}`);
+    return this.repo.find({
+      where: { therapistId: query.therapistId },
+      order: { startTime: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
   findOne(id: number) {
