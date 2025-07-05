@@ -16,6 +16,8 @@ yarn install
 ./scripts/dev.sh
 ```
 
+Ensure `.env` defines `API_URL`, `DATABASE_URL`, and `NATS_URL` for the services.
+
 Individual services can be started in watch mode:
 
 ```bash

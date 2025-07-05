@@ -15,9 +15,11 @@ import {
   Fab,
   Skeleton,
   useMediaQuery,
+  Button,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -28,6 +30,7 @@ import {
   getAppointment,
   getAppointmentHistory,
 } from '../api/appointments';
+import { logger } from '../logger';
 
 const locales = { en: require('date-fns/locale/en-US') };
 const localizer = dateFnsLocalizer({
@@ -53,8 +56,13 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
     if (!id) return;
     setLoading(true);
     getAppointment(id)
-      .then(setAppointment)
-      .catch(() => {})
+      .then((a) => {
+        logger.debug('fetched appointment', a);
+        setAppointment(a);
+      })
+      .catch((e) => {
+        logger.error('fetch appointment failed', e);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -74,6 +82,10 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
             <Typography>{t('client')}: {appointment.clientId}</Typography>
             <Typography>{t('type')}: {appointment.type}</Typography>
             <Typography>{t('status')}: {appointment.status}</Typography>
+            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+              <Button variant="contained" size="small">{t('viewNote')}</Button>
+              <Button variant="outlined" size="small">{t('reschedule')}</Button>
+            </Box>
           </Box>
         )}
       </Box>
@@ -82,17 +94,20 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
 };
 
 interface NewDrawerProps { open: boolean; onClose: () => void; }
-const NewAppointmentDrawer: React.FC<NewDrawerProps> = ({ open, onClose }) => (
-  <Drawer anchor="right" open={open} onClose={onClose} aria-label="new-appointment">
-    <Box sx={{ width: 320, p: 2 }}>
-      <IconButton onClick={onClose} aria-label="close-new">
-        <CloseIcon />
-      </IconButton>
-      <Typography variant="h6">New Appointment</Typography>
-      {/* form fields would go here */}
-    </Box>
-  </Drawer>
-);
+const NewAppointmentDrawer: React.FC<NewDrawerProps> = ({ open, onClose }) => {
+  const { t } = useTranslation();
+  return (
+    <Drawer anchor="right" open={open} onClose={onClose} aria-label="new-appointment">
+      <Box sx={{ width: 320, p: 2 }}>
+        <IconButton onClick={onClose} aria-label="close-new">
+          <CloseIcon />
+        </IconButton>
+        <Typography variant="h6">{t('newAppointment')}</Typography>
+        {/* form fields would go here */}
+      </Box>
+    </Drawer>
+  );
+};
 
 interface Props { user: { id: number }; }
 const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
@@ -116,6 +131,11 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
   );
 
   useEffect(() => {
+    console.info('TreatmentHistoryPage mount');
+    logger.debug('mount', user.id);
+  }, [user.id]);
+
+  useEffect(() => {
     setLoading(true);
     const fetcher = tab === 0 ? getAppointments : getAppointmentHistory;
     fetcher({ therapistId: user.id } as any)
@@ -136,6 +156,9 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
       <CssBaseline />
       <AppBar position="static">
         <Toolbar>
+          <IconButton edge="start" color="inherit" aria-label="back" href="/profile">
+            <ArrowBackIcon />
+          </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {t('myTreatmentHistory', 'My Treatment History')}
           </Typography>
@@ -143,9 +166,17 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
       </AppBar>
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} aria-label="history-tabs">
-          <Tab label={t('calendar', 'Calendar')} />
-          <Tab label={t('list', 'List')} />
+        <Tabs
+          value={tab}
+          onChange={(_, v) => {
+            console.info('tab switch', v);
+            logger.debug('tab switch', v);
+            setTab(v);
+          }}
+          aria-label="history-tabs"
+        >
+          <Tab label={t('calendarView')} />
+          <Tab label={t('listView')} />
         </Tabs>
         {loading ? (
           <Box sx={{ mt: 2 }}>
@@ -163,14 +194,29 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
                     start: new Date(a.startTime),
                     end: new Date(a.endTime),
                   }))}
-                  onSelectEvent={(e) => setSelectedId((e as Appointment).id)}
+                  onSelectEvent={(e) => {
+                    const id = (e as Appointment).id;
+                    console.info('event click', id);
+                    logger.debug('event click', id);
+                    setSelectedId(id);
+                  }}
                   style={{ height: '100%' }}
                 />
               </Box>
             )}
             {tab === 1 && (
               <Box sx={{ height: 500, mt: 2 }}>
-                <DataGrid rows={items} columns={columns} autoHeight disableRowSelectionOnClick onRowClick={(p) => setSelectedId(p.row.id)} />
+                <DataGrid
+                  rows={items}
+                  columns={columns}
+                  autoHeight
+                  disableRowSelectionOnClick
+                  onRowClick={(p) => {
+                    console.info('row click', p.row.id);
+                    logger.debug('row click', p.row.id);
+                    setSelectedId(p.row.id);
+                  }}
+                />
               </Box>
             )}
           </>

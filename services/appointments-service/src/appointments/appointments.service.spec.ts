@@ -48,12 +48,10 @@ describe('AppointmentsService', () => {
 
   it('gets history', async () => {
     repo.find.mockResolvedValueOnce([]);
-    const result = await service.history({ therapistId: 1, page: 1, limit: 10 });
+    const result = await service.findHistory(1);
     expect(repo.find).toHaveBeenCalledWith({
       where: { therapistId: 1 },
       order: { startTime: 'DESC' },
-      skip: 0,
-      take: 10,
     });
     expect(result).toEqual([]);
   });

@@ -34,4 +34,9 @@
   ,"notes": "Заметки"
   ,"submit": "Сохранить"
   ,"cancel": "Отмена"
+  ,"backToProfile": "Назад к профилю"
+  ,"calendarView": "Календарь"
+  ,"listView": "Список"
+  ,"reschedule": "Перепланировать"
+  ,"newAppointment": "Новая запись"
 }
