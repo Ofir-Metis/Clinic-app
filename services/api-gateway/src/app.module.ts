@@ -4,6 +4,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TherapistsModule } from './therapists/therapists.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
       autoSchemaFile: join(process.cwd(), 'gateway-schema.gql'),
     }),
     DashboardModule,
+    TherapistsModule,
   ],
 })
 export class AppModule {}
