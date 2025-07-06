@@ -6,6 +6,7 @@ A comprehensive microservices platform for managing clinic operations, including
 
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
 - [Local Setup \(Windows\)](#local-setup-windows)
 - [Google Cloud Deployment](#google-cloud-deployment)
 - [AWS Deployment](#aws-deployment)
@@ -41,9 +42,29 @@ Clinic App is a full stack application for therapists and clinics. Core features
 - **Docker** and **Docker Compose**
 - **Git**
 - **Cloud CLIs**: [gcloud](https://cloud.google.com/sdk/docs/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [Terraform](https://developer.hashicorp.com/terraform/install)
-- **OS Notes**
-  - *Windows*: Use [WSL2](https://learn.microsoft.com/windows/wsl/install) for the best experience.
-  - *macOS/Linux*: Ensure Docker Desktop or docker engine is installed.
+ - **OS Notes**
+   - *Windows*: Use [WSL2](https://learn.microsoft.com/windows/wsl/install) for the best experience.
+   - *macOS/Linux*: Ensure Docker Desktop or docker engine is installed.
+
+## Quick Start
+
+```bash
+git clone https://github.com/yourorg/clinic-app.git
+cd clinic-app
+
+# set up environment and dependencies
+./scripts/setup.sh
+
+# start the full stack using Docker Compose
+./scripts/dev.sh
+
+# run linting and tests
+./scripts/test.sh
+```
+
+Use `docker compose` for running all services together (as in `scripts/dev.sh`).
+Run `yarn` commands within individual workspaces when developing or testing a
+single service.
 
 ## Local Setup (Windows)
 
@@ -81,8 +102,7 @@ cd frontend && yarn dev
 
 ```bash
 # from repository root
-yarn lint
-yarn test
+./scripts/test.sh
 ```
 
 ## Google Cloud Deployment
