@@ -8,6 +8,7 @@ A comprehensive microservices platform for managing clinic operations, including
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
 - [Local Setup \(Windows\)](#local-setup-windows)
+- [Local Setup \(Linux\)](#local-setup-linux)
 - [Google Cloud Deployment](#google-cloud-deployment)
 - [AWS Deployment](#aws-deployment)
 - [Configuration & Environment Variables](#configuration--environment-variables)
@@ -98,6 +99,41 @@ yarn workspace api-gateway start:dev
 cd frontend && yarn dev
 ```
 
+## Local Setup (Linux)
+
+```bash
+# clone repository
+git clone https://github.com/yourorg/clinic-app.git
+cd clinic-app
+
+# install nvm and Node 18
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+nvm install 18
+nvm use 18
+
+# install dependencies
+corepack enable
+yarn install
+
+# build shared utilities
+yarn workspace @clinic/common build
+
+# environment variables
+cp .env.example .env
+
+# start services
+docker compose up -d
+
+# run database migrations
+yarn workspace api-gateway run migration:run
+
+# start backend and frontend
+yarn workspace api-gateway start:dev &
+cd frontend && yarn dev
+```
+
 ### Tests and Lint
 
 ```bash
@@ -112,30 +148,70 @@ cd frontend && yarn dev
    ```bash
    gcloud auth login
    gcloud config set project YOUR_PROJECT_ID
+   gcloud config set run/region us-central1
    ```
-3. **Build & Push Images**:
+3. **Build & Push Images** for each service:
    ```bash
-   gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/api-gateway services/api-gateway
+   gcloud builds submit --tag gcr.io/$GOOGLE_PROJECT_ID/api-gateway services/api-gateway
+   # repeat for other services as needed
    ```
-4. **Deploy**:
+
+### Staging
+
+1. Create a staging Cloud Run service and supply staging secrets:
    ```bash
-   gcloud run deploy api-gateway --image gcr.io/YOUR_PROJECT_ID/api-gateway --platform managed --allow-unauthenticated
+   gcloud run deploy api-gateway-staging \
+     --image gcr.io/$GOOGLE_PROJECT_ID/api-gateway \
+     --platform managed \
+     --allow-unauthenticated \
+     --set-env-vars=ENVIRONMENT=staging
    ```
-5. Use separate Cloud Run services for staging and production. Environment variables are provided via Secret Manager.
+2. Store environment variables in Secret Manager and reference them with `--update-secrets`.
+
+### Production
+
+1. Deploy the production service using a separate Cloud Run instance:
+   ```bash
+   gcloud run deploy api-gateway-prod \
+     --image gcr.io/$GOOGLE_PROJECT_ID/api-gateway \
+     --platform managed \
+     --allow-unauthenticated \
+     --set-env-vars=ENVIRONMENT=production
+   ```
+2. Provision production secrets in Secret Manager and reference them during deployment.
 
 ## AWS Deployment
 
 1. **Create ECR repositories** for each service.
-2. **Build & Push**:
+2. **Build & Push Images**:
    ```bash
    aws ecr get-login-password | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
    docker build -t auth-service services/auth-service
    docker tag auth-service:latest <account>.dkr.ecr.<region>.amazonaws.com/auth-service:latest
    docker push <account>.dkr.ecr.<region>.amazonaws.com/auth-service:latest
+   # repeat for additional services
    ```
-3. **ECS Fargate** task definitions and services are managed with Terraform stubs in `infrastructure/terraform`.
-4. **CI/CD** via GitHub Actions builds images and updates ECS services.
-5. Configure an Application Load Balancer with SSL using ACM certificates.
+
+### Staging
+
+1. Select the `staging` Terraform workspace or create it if missing:
+   ```bash
+   terraform -chdir=infrastructure/terraform workspace new staging || true
+   terraform -chdir=infrastructure/terraform workspace select staging
+   terraform -chdir=infrastructure/terraform apply -var environment=staging
+   ```
+2. ECS services will pull the latest images from the staging ECR repositories.
+
+### Production
+
+1. Repeat using the `production` workspace:
+   ```bash
+   terraform -chdir=infrastructure/terraform workspace new production || true
+   terraform -chdir=infrastructure/terraform workspace select production
+   terraform -chdir=infrastructure/terraform apply -var environment=production
+   ```
+2. Configure an Application Load Balancer with ACM certificates for SSL.
+3. CI/CD via GitHub Actions updates images and triggers deployments when commits reach the `main` branch.
 
 ## Configuration & Environment Variables
 
