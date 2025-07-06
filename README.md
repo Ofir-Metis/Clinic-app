@@ -17,6 +17,7 @@ yarn install
 ```
 
 Ensure `.env` defines `API_URL`, `DATABASE_URL`, and `NATS_URL` for the services.
+Auth features require `JWT_SECRET` and `VITE_GOOGLE_CLIENT_ID` for OAuth. Configure SMTP variables for password reset emails.
 
 Individual services can be started in watch mode:
 

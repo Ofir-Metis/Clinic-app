@@ -42,4 +42,18 @@
   "dashboard": "Dashboard",
   "addPatient": "Add Patient",
   "settings": "Settings"
+  ,"forgotPassword": "Forgot Password?"
+  ,"rememberMe": "Remember me"
+  ,"sendResetLink": "Send reset link"
+  ,"resetPassword": "Reset Password"
+  ,"newPassword": "New Password"
+  ,"confirmPassword": "Confirm Password"
+  ,"confirmNewPassword": "Confirm New Password"
+  ,"passwordStrength": "Password strength"
+  ,"requestReset": "Request password reset"
+  ,"resetLinkSent": "If an account exists, a link has been sent"
+  ,"loginFailed": "Login failed"
+  ,"passwordRequirements": "At least 8 characters with letters and numbers"
+  ,"welcomeBackName": "Welcome back, {{name}}!"
+  ,"welcomeNewUser": "Nice to meet you, {{name}}!"
 }
