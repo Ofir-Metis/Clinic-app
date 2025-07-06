@@ -156,6 +156,7 @@ Create a `.env` file based on `.env.example` and provide the following keys:
 | `SMTP_URL` | Full SMTP URL |
 | `PAYMENT_GATEWAY_KEY` | Payment provider key |
 | `STRIPE_SECRET` | Stripe secret key |
+When connecting to a remote database, update `DATABASE_URL` accordingly.
 
 Secrets should be stored in **AWS Secrets Manager** or **GCP Secret Manager** and injected at runtime.
 
