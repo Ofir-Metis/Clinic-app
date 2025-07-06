@@ -162,6 +162,7 @@ Create a `.env` file based on `.env.example` and provide the following keys:
 | `EMAIL_PASS` | SMTP password | `your-email-password` - change for production |
 | `TWILIO_ACCOUNT_SID` | Twilio account SID | `your-twilio-sid` - change for production |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token | `your-twilio-token` - change for production |
+| `TWILIO_FROM` | Default SMS sender number | `+1234567890` - change for production |
 | `OPENAI_API_KEY` | OpenAI API key | `your-openai-key` - change for production |
 | `APPOINTMENTS_URL` | Appointments service URL | `http://appointments-service:3000` |
 | `NOTES_URL` | Notes service URL | `http://notes-service:3000` |
