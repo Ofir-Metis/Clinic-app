@@ -1,8 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
   Card,
   CardContent,
   TextField,
@@ -24,15 +21,6 @@ import { logger } from '../logger';
 const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 }) => {
   const { t, i18n } = useTranslation();
   const [snack, setSnack] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n]
-  );
 
   const formik = useFormik({
     initialValues: {
@@ -66,9 +54,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
   });
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <Card sx={{ width: 400 }}>
           <CardContent>
             <form onSubmit={formik.handleSubmit} noValidate>
@@ -142,7 +128,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
         onClose={() => setSnack(null)}
         message={snack?.message}
       />
-    </ThemeProvider>
+    </Box>
   );
 };
 

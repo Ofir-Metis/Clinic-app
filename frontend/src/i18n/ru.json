@@ -9,34 +9,37 @@
   "therapist": "Терапевт",
   "patient": "Пациент",
   "or": "или",
-  "required": "Обязательно"
-  ,"myPatients": "Мои пациенты"
-  ,"searchPatients": "Поиск пациентов"
-  ,"upcomingAppointment": "Ближайший прием"
-  ,"actions": "Действия"
-  ,"viewProfile": "Профиль"
-  ,"newSession": "Новый сеанс"
-  ,"newPatient": "Новый пациент"
-  ,"noPatients": "Пациенты не найдены"
-  ,"overview": "Обзор"
-  ,"sessions": "Сессии"
-  ,"files": "Файлы"
-  ,"billing": "Биллинг"
-  ,"totalSessions": "Всего сессий"
-  ,"lastSession": "Последняя сессия"
-  ,"viewNote": "Просмотр заметки"
-  ,"uploadFile": "Загрузить файл"
-  ,"newSessionNote": "Новая заметка"
-  ,"scheduleAppointment": "Записать на прием"
-  ,"patientName": "Пациент"
-  ,"datetime": "Дата и время"
-  ,"serviceType": "Тип услуги"
-  ,"notes": "Заметки"
-  ,"submit": "Сохранить"
-  ,"cancel": "Отмена"
-  ,"backToProfile": "Назад к профилю"
-  ,"calendarView": "Календарь"
-  ,"listView": "Список"
-  ,"reschedule": "Перепланировать"
-  ,"newAppointment": "Новая запись"
+  "required": "Обязательно",
+  "myPatients": "Мои пациенты",
+  "searchPatients": "Поиск пациентов",
+  "upcomingAppointment": "Ближайший прием",
+  "actions": "Действия",
+  "viewProfile": "Профиль",
+  "newSession": "Новый сеанс",
+  "newPatient": "Новый пациент",
+  "noPatients": "Пациенты не найдены",
+  "overview": "Обзор",
+  "sessions": "Сессии",
+  "files": "Файлы",
+  "billing": "Биллинг",
+  "totalSessions": "Всего сессий",
+  "lastSession": "Последняя сессия",
+  "viewNote": "Просмотр заметки",
+  "uploadFile": "Загрузить файл",
+  "newSessionNote": "Новая заметка",
+  "scheduleAppointment": "Записать на прием",
+  "patientName": "Пациент",
+  "datetime": "Дата и время",
+  "serviceType": "Тип услуги",
+  "notes": "Заметки",
+  "submit": "Сохранить",
+  "cancel": "Отмена",
+  "backToProfile": "Назад к профилю",
+  "calendarView": "Календарь",
+  "listView": "Список",
+  "reschedule": "Перепланировать",
+  "newAppointment": "Новая запись",
+  "dashboard": "Панель",
+  "addPatient": "Добавить пациента",
+  "settings": "Настройки"
 }

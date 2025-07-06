@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
   Box,
   Drawer,
   List,
@@ -21,10 +18,6 @@ import {
 import ChatIcon from '@mui/icons-material/Chat';
 import AIHelper from '../AIHelper';
 import { fetchAppointments, fetchNotes, fetchStats } from '../api/dashboard';
-
-const theme = createTheme({
-  palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-});
 
 const drawerWidth = 240;
 
@@ -46,9 +39,7 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex' }}>
         <AppBar position="fixed" sx={{ zIndex: 1201 }}>
           <Toolbar>
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
@@ -139,7 +130,6 @@ const DashboardPage: React.FC = () => {
           <ChatIcon />
         </Fab>
       </Box>
-    </ThemeProvider>
   );
 };
 

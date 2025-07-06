@@ -9,34 +9,37 @@
   "therapist": "معالج",
   "patient": "مراجع",
   "or": "أو",
-  "required": "مطلوب"
-  ,"myPatients": "مرضاي"
-  ,"searchPatients": "بحث عن مرضى"
-  ,"upcomingAppointment": "موعد قادم"
-  ,"actions": "إجراءات"
-  ,"viewProfile": "عرض الملف"
-  ,"newSession": "جلسة جديدة"
-  ,"newPatient": "مريض جديد"
-  ,"noPatients": "لا يوجد مرضى"
-  ,"overview": "نظرة عامة"
-  ,"sessions": "جلسات"
-  ,"files": "ملفات"
-  ,"billing": "الفواتير"
-  ,"totalSessions": "إجمالي الجلسات"
-  ,"lastSession": "آخر جلسة"
-  ,"viewNote": "عرض الملاحظة"
-  ,"uploadFile": "تحميل ملف"
-  ,"newSessionNote": "ملاحظة جلسة جديدة"
-  ,"scheduleAppointment": "تحديد موعد"
-  ,"patientName": "المريض"
-  ,"datetime": "التاريخ والوقت"
-  ,"serviceType": "نوع الخدمة"
-  ,"notes": "ملاحظات"
-  ,"submit": "إرسال"
-  ,"cancel": "إلغاء"
-  ,"backToProfile": "العودة إلى الملف الشخصي"
-  ,"calendarView": "عرض التقويم"
-  ,"listView": "عرض القائمة"
-  ,"reschedule": "إعادة الجدولة"
-  ,"newAppointment": "موعد جديد"
+  "required": "مطلوب",
+  "myPatients": "مرضاي",
+  "searchPatients": "بحث عن مرضى",
+  "upcomingAppointment": "موعد قادم",
+  "actions": "إجراءات",
+  "viewProfile": "عرض الملف",
+  "newSession": "جلسة جديدة",
+  "newPatient": "مريض جديد",
+  "noPatients": "لا يوجد مرضى",
+  "overview": "نظرة عامة",
+  "sessions": "جلسات",
+  "files": "ملفات",
+  "billing": "الفواتير",
+  "totalSessions": "إجمالي الجلسات",
+  "lastSession": "آخر جلسة",
+  "viewNote": "عرض الملاحظة",
+  "uploadFile": "تحميل ملف",
+  "newSessionNote": "ملاحظة جلسة جديدة",
+  "scheduleAppointment": "تحديد موعد",
+  "patientName": "المريض",
+  "datetime": "التاريخ والوقت",
+  "serviceType": "نوع الخدمة",
+  "notes": "ملاحظات",
+  "submit": "إرسال",
+  "cancel": "إلغاء",
+  "backToProfile": "العودة إلى الملف الشخصي",
+  "calendarView": "عرض التقويم",
+  "listView": "عرض القائمة",
+  "reschedule": "إعادة الجدولة",
+  "newAppointment": "موعد جديد",
+  "dashboard": "لوحة التحكم",
+  "addPatient": "إضافة مراجع",
+  "settings": "الإعدادات"
 }

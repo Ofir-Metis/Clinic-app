@@ -9,34 +9,37 @@
   "therapist": "מטפל",
   "patient": "מטופל",
   "or": "או",
-  "required": "נדרש"
-  ,"myPatients": "המטופלים שלי"
-  ,"searchPatients": "חיפוש מטופלים"
-  ,"upcomingAppointment": "פגישה קרובה"
-  ,"actions": "פעולות"
-  ,"viewProfile": "צפיה בפרופיל"
-  ,"newSession": "מפגש חדש"
-  ,"newPatient": "מטופל חדש"
-  ,"noPatients": "לא נמצאו מטופלים"
-  ,"overview": "סקירה"
-  ,"sessions": "מפגשים"
-  ,"files": "קבצים"
-  ,"billing": "חיובים"
-  ,"totalSessions": "סך כל המפגשים"
-  ,"lastSession": "מועד מפגש אחרון"
-  ,"viewNote": "צפייה בהערה"
-  ,"uploadFile": "העלה קובץ"
-  ,"newSessionNote": "הערת מפגש חדשה"
-  ,"scheduleAppointment": "קביעת פגישה"
-  ,"patientName": "מטופל"
-  ,"datetime": "תאריך ושעה"
-  ,"serviceType": "סוג שירות"
-  ,"notes": "הערות"
-  ,"submit": "שלח"
-  ,"cancel": "ביטול"
-  ,"backToProfile": "חזרה לפרופיל"
-  ,"calendarView": "תצוגת לוח שנה"
-  ,"listView": "תצוגת רשימה"
-  ,"reschedule": "קביעת מועד חדש"
-  ,"newAppointment": "תור חדש"
+  "required": "נדרש",
+  "myPatients": "המטופלים שלי",
+  "searchPatients": "חיפוש מטופלים",
+  "upcomingAppointment": "פגישה קרובה",
+  "actions": "פעולות",
+  "viewProfile": "צפיה בפרופיל",
+  "newSession": "מפגש חדש",
+  "newPatient": "מטופל חדש",
+  "noPatients": "לא נמצאו מטופלים",
+  "overview": "סקירה",
+  "sessions": "מפגשים",
+  "files": "קבצים",
+  "billing": "חיובים",
+  "totalSessions": "סך כל המפגשים",
+  "lastSession": "מועד מפגש אחרון",
+  "viewNote": "צפייה בהערה",
+  "uploadFile": "העלה קובץ",
+  "newSessionNote": "הערת מפגש חדשה",
+  "scheduleAppointment": "קביעת פגישה",
+  "patientName": "מטופל",
+  "datetime": "תאריך ושעה",
+  "serviceType": "סוג שירות",
+  "notes": "הערות",
+  "submit": "שלח",
+  "cancel": "ביטול",
+  "backToProfile": "חזרה לפרופיל",
+  "calendarView": "תצוגת לוח שנה",
+  "listView": "תצוגת רשימה",
+  "reschedule": "קביעת מועד חדש",
+  "newAppointment": "תור חדש",
+  "dashboard": "לוח בקרה",
+  "addPatient": "הוסף מטופל",
+  "settings": "הגדרות"
 }
