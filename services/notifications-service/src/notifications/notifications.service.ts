@@ -34,6 +34,10 @@ export class NotificationsService implements OnModuleInit {
   }
 
   async sendSms(to: string, body: string) {
-    return this.twilio.messages.create({ to, from: '', body });
+    return this.twilio.messages.create({
+      to,
+      from: process.env.TWILIO_FROM || '',
+      body,
+    });
   }
 }
