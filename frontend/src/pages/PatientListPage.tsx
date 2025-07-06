@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   AppBar,
   Toolbar,
@@ -26,6 +25,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { getMyPatients, Patient } from '../api/patients';
+import { createAppTheme } from '../theme';
 
 const PatientListPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -40,15 +40,7 @@ const PatientListPage: React.FC = () => {
   const isMobile = useMediaQuery('(max-width:600px)');
   const user = { id: 1 }; // TODO replace with auth context
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n]
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     const handler = setTimeout(() => setSearch(pendingSearch), 300);

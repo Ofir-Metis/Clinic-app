@@ -4,7 +4,6 @@ import {
   Toolbar,
   Typography,
   ThemeProvider,
-  createTheme,
   CssBaseline,
   Box,
   IconButton,
@@ -23,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '../logger';
+import { createAppTheme } from '../theme';
 
 interface AppointmentRow {
   id: number;
@@ -35,15 +35,7 @@ interface AppointmentRow {
 const PatientHistoryPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

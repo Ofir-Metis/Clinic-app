@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   Box,
   Typography,
@@ -18,6 +17,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getTherapistProfile, updateTherapistProfile, TherapistProfile } from '../api/therapist';
 import { logger } from '../logger';
+import { createAppTheme } from '../theme';
 
 function getUserIdFromToken(): number | null {
   const token = localStorage.getItem('token');
@@ -36,15 +36,7 @@ const TherapistProfilePage: React.FC<{ id: number }> = ({ id }) => {
   const [edit, setEdit] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     getTherapistProfile(id).then(setProfile);
