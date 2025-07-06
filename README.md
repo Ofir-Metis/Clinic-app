@@ -184,6 +184,34 @@ yarn start:dev
 
 Using Docker Compose starts all services together for local development.
 
+## Docker Compose & Terraform
+
+The Compose file [`infrastructure/docker-compose.yml`](infrastructure/docker-compose.yml)
+defines local dependencies. Start everything with:
+
+```bash
+./scripts/dev.sh
+```
+
+AWS resources are managed with Terraform modules in
+[`infrastructure/terraform`](infrastructure/terraform). Before applying, export
+AWS credentials and set the region:
+
+```bash
+export AWS_ACCESS_KEY_ID=YOUR_KEY
+export AWS_SECRET_ACCESS_KEY=YOUR_SECRET
+export TF_VAR_region=us-east-1
+```
+
+Initialize and apply:
+
+```bash
+terraform -chdir=infrastructure/terraform init
+terraform -chdir=infrastructure/terraform apply
+```
+
+More details are available in [infrastructure/README.md](infrastructure/README.md).
+
 ## Code Quality & Testing
 
 - **ESLint** and **Prettier** enforce code style via Husky hooks.
