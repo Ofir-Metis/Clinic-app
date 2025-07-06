@@ -118,6 +118,7 @@ yarn test
 
 Create a `.env` file based on `.env.example` and provide the following keys:
 
+
 | Key | Description | Source |
 |-----|-------------|--------|
 | `POSTGRES_HOST` | Database host | `postgres` |
@@ -156,6 +157,9 @@ Create a `.env` file based on `.env.example` and provide the following keys:
 | `SMTP_URL` | Full SMTP URL | `smtp://user:pass@localhost:1025` - change for production |
 | `PAYMENT_GATEWAY_KEY` | Payment provider key | `your-payment-key` - change for production |
 | `STRIPE_SECRET` | Stripe secret key | `your-stripe-secret` - change for production |
+
+When connecting to a remote database, update `DATABASE_URL` accordingly.
+
 Secrets should be stored in **AWS Secrets Manager** or **GCP Secret Manager** and injected at runtime.
 
 ## Microservices & Architecture
