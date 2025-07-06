@@ -7,8 +7,12 @@ import { TherapistProfile } from './therapist-profile.entity';
 describe('TherapistsService', () => {
   let service: TherapistsService;
   const repo: Partial<Repository<TherapistProfile>> = {
-    findOne: jest.fn(() => Promise.resolve(undefined)),
-    save: jest.fn((p) => Promise.resolve({ ...p, id: 1 })),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    findOne: jest.fn(async () => undefined) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    create: jest.fn((p: any) => p) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    save: jest.fn(async (p: any) => ({ ...(p as any), id: 1 })) as any,
   };
 
   beforeEach(async () => {
@@ -19,6 +23,12 @@ describe('TherapistsService', () => {
       ],
     }).compile();
     service = module.get<TherapistsService>(TherapistsService);
+  });
+
+  it('returns null when profile missing', async () => {
+    const res = await service.getProfile(1);
+    expect(res).toBeUndefined();
+    expect(repo.findOne).toHaveBeenCalled();
   });
 
   it('saves profile', async () => {

@@ -7,9 +7,10 @@ import { UserSettings } from './user-settings.entity';
 describe('SettingsService', () => {
   let service: SettingsService;
   const repo: Partial<Repository<UserSettings>> = {
-    find: jest.fn(() => Promise.resolve([])),
-    findOne: jest.fn(() => Promise.resolve(undefined)),
-    save: jest.fn((e) => Promise.resolve(e)),
+    find: jest.fn(() => Promise.resolve([])) as any,
+    findOne: jest.fn(() => Promise.resolve(undefined)) as any,
+    create: jest.fn((e) => e) as any,
+    save: jest.fn((e) => Promise.resolve(e)) as any,
   };
 
   beforeEach(async () => {
