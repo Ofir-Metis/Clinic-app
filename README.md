@@ -118,44 +118,47 @@ yarn test
 
 Create a `.env` file based on `.env.example` and provide the following keys:
 
-| Key | Description |
-|-----|-------------|
-| `POSTGRES_HOST` | Database host |
-| `POSTGRES_PORT` | Database port |
-| `POSTGRES_USER` | Database user |
-| `POSTGRES_PASSWORD` | Database password |
-| `POSTGRES_DB` | Database name |
-| `JWT_SECRET` | JWT signing secret |
-| `NATS_URL` | NATS connection string |
-| `S3_ENDPOINT` | S3 or MinIO endpoint |
-| `S3_ACCESS_KEY` | S3 access key |
-| `S3_SECRET_KEY` | S3 secret key |
-| `FRONTEND_ORIGIN` | Allowed CORS origin |
-| `API_URL` | API Gateway URL |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_ID` | Backend OAuth client ID |
-| `EMAIL_USER` | SMTP username |
-| `EMAIL_PASS` | SMTP password |
-| `TWILIO_ACCOUNT_SID` | Twilio account SID |
-| `TWILIO_AUTH_TOKEN` | Twilio auth token |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `APPOINTMENTS_URL` | Appointments service URL |
-| `NOTES_URL` | Notes service URL |
-| `ANALYTICS_URL` | Analytics service URL |
-| `THERAPISTS_URL` | Therapists service URL |
-| `SETTINGS_URL` | Settings service URL |
-| `VITE_API_URL` | Frontend API URL |
-| `SMTP_HOST` | SMTP host |
-| `SMTP_PORT` | SMTP port |
-| `SMTP_USER` | SMTP user |
-| `SMTP_PASS` | SMTP password |
-| `WHATSAPP_FROM` | WhatsApp sender number |
-| `APP_URL` | Application base URL |
-| `DATABASE_URL` | TypeORM connection string |
-| `WHATSAPP_API_KEY` | WhatsApp API key |
-| `SMTP_URL` | Full SMTP URL |
-| `PAYMENT_GATEWAY_KEY` | Payment provider key |
-| `STRIPE_SECRET` | Stripe secret key |
+
+When connecting to a remote database, update `DATABASE_URL` accordingly.
+=======
+| Key | Description | Source |
+|-----|-------------|--------|
+| `POSTGRES_HOST` | Database host | Docker Compose service name `postgres` |
+| `POSTGRES_PORT` | Database port | Default port 5432 defined in `docker-compose.yml` |
+| `POSTGRES_USER` | Database user | Docker Compose environment variable `POSTGRES_USER` |
+| `POSTGRES_PASSWORD` | Database password | Docker Compose environment variable `POSTGRES_PASSWORD` |
+| `POSTGRES_DB` | Database name | Docker Compose environment variable `POSTGRES_DB` |
+| `JWT_SECRET` | JWT signing secret | Generate a random 32-character string, e.g. `openssl rand -hex 16` |
+| `NATS_URL` | NATS connection string | NATS container URL from Docker Compose (e.g. `nats://nats:4222`) |
+| `S3_ENDPOINT` | S3 or MinIO endpoint | From your MinIO or S3 service endpoint |
+| `S3_ACCESS_KEY` | S3 access key | From your MinIO or S3 access key |
+| `S3_SECRET_KEY` | S3 secret key | From your MinIO or S3 secret key |
+| `FRONTEND_ORIGIN` | Allowed CORS origin | URL where your frontend is hosted |
+| `API_URL` | API Gateway URL | URL where your API Gateway is hosted |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID | Google OAuth client ID from Google Cloud Console |
+| `GOOGLE_CLIENT_ID` | Backend OAuth client ID | Google OAuth client ID from Google Cloud Console |
+| `EMAIL_USER` | SMTP username | SMTP username from your provider console |
+| `EMAIL_PASS` | SMTP password | SMTP password from your provider console |
+| `TWILIO_ACCOUNT_SID` | Twilio account SID | From your Twilio console |
+| `TWILIO_AUTH_TOKEN` | Twilio auth token | From your Twilio console |
+| `OPENAI_API_KEY` | OpenAI API key | From the OpenAI dashboard |
+| `APPOINTMENTS_URL` | Appointments service URL | URL of the appointments service |
+| `NOTES_URL` | Notes service URL | URL of the notes service |
+| `ANALYTICS_URL` | Analytics service URL | URL of the analytics service |
+| `THERAPISTS_URL` | Therapists service URL | URL of the therapists service |
+| `SETTINGS_URL` | Settings service URL | URL of the settings service |
+| `VITE_API_URL` | Frontend API URL | Frontend variable pointing to API Gateway URL |
+| `SMTP_HOST` | SMTP host | From your SMTP provider console |
+| `SMTP_PORT` | SMTP port | From your SMTP provider console |
+| `SMTP_USER` | SMTP user | From your SMTP provider console |
+| `SMTP_PASS` | SMTP password | From your SMTP provider console |
+| `WHATSAPP_FROM` | WhatsApp sender number | WhatsApp sender number from Twilio |
+| `APP_URL` | Application base URL | Base URL of your application |
+| `DATABASE_URL` | TypeORM connection string | Build using the above values in `postgres://USER:PASSWORD@HOST:PORT/DB` format |
+| `WHATSAPP_API_KEY` | WhatsApp API key | WhatsApp API key from your provider |
+| `SMTP_URL` | Full SMTP URL | From your SMTP provider console |
+| `PAYMENT_GATEWAY_KEY` | Payment provider key | From your Stripe dashboard |
+| `STRIPE_SECRET` | Stripe secret key | From your Stripe dashboard |
 
 Secrets should be stored in **AWS Secrets Manager** or **GCP Secret Manager** and injected at runtime.
 
