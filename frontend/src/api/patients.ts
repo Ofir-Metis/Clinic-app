@@ -22,7 +22,7 @@ export const getMyPatients = async (
   search = ''
 ): Promise<PatientResponse> => {
   const { data } = await axios.get<PatientResponse>(
-    `${process.env.THERAPIST_SERVICE_URL}/appointments-service/patients`,
+    `${import.meta.env.THERAPIST_SERVICE_URL}/appointments-service/patients`,
     {
       params: { therapistId, page, limit, search },
     }
@@ -45,9 +45,11 @@ export interface AddPatientResponse {
   existing: boolean;
 }
 
-export async function addPatient(data: AddPatientPayload): Promise<AddPatientResponse> {
+export async function addPatient(
+  data: AddPatientPayload
+): Promise<AddPatientResponse> {
   logger.info('Submitting new patient', data);
-  const res = await axios.post(`${process.env.VITE_API_URL}/patients`, data);
+  const res = await axios.post(`${import.meta.env.VITE_API_URL}/patients`, data);
   logger.info('Received addPatient response', res.data);
   return res.data;
 }

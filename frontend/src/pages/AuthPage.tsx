@@ -61,7 +61,7 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '';
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
