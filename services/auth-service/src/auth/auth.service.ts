@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { createLogger, transports, format } from 'winston';
 
 /**
  * Service handling user authentication logic.
@@ -17,6 +18,12 @@ export class AuthService {
     private readonly usersRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
+
+  private logger = createLogger({
+    level: 'info',
+    format: format.json(),
+    transports: [new transports.Console()],
+  });
 
   /**
    * Register a new user and return a signed JWT.
@@ -53,11 +60,15 @@ export class AuthService {
    */
   async login(loginDto: LoginDto) {
     const user = await this.validateUser(loginDto.email, loginDto.password);
-    if (!user) return null;
+    if (!user) {
+      this.logger.info('login failed', { email: loginDto.email });
+      return null;
+    }
     const access_token = await this.jwtService.signAsync({
       sub: user.id,
       roles: user.roles,
     });
+    this.logger.info('login success', { userId: user.id });
     return { access_token };
   }
 }

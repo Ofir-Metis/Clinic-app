@@ -6,6 +6,7 @@ import { HealthController } from './health/health.controller';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { PatientsModule } from './patients/patients.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
+import { PatientAppointmentsModule } from './patient-appointments/patient-appointments.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SchedulingModule } from './scheduling/scheduling.module';
     AppointmentsModule,
     PatientsModule,
     SchedulingModule,
+    PatientAppointmentsModule,
   ],
   controllers: [HealthController],
 })
