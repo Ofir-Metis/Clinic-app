@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "services/*",
-    "frontend"
+    "frontend",
+    "libs/*"
   ],
   "scripts": {
     "lint": "eslint . --ext .ts,.tsx",

@@ -12,6 +12,7 @@ import {
 import { TherapistsService } from './therapists.service';
 import { UpdateTherapistProfileDto } from './dto/update-therapist-profile.dto';
 import { JwtAuthGuard } from '../jwt-auth.guard';
+import { AuthRequest } from '../common/auth-request.interface';
 
 /**
  * REST controller exposing therapist profile endpoints.
@@ -30,7 +31,7 @@ export class TherapistsController {
   updateProfile(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTherapistProfileDto,
-    @Req() req: any,
+    @Req() req: AuthRequest,
   ) {
     if (req.user.id !== id) {
       throw new ForbiddenException();

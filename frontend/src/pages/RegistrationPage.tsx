@@ -8,7 +8,6 @@ import {
   InputAdornment,
   CssBaseline,
   ThemeProvider,
-  createTheme,
   Typography,
   LinearProgress,
   FormControl,
@@ -25,20 +24,13 @@ import zxcvbn from 'zxcvbn';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../logger';
+import { createAppTheme } from '../theme';
 
 const RegistrationPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const formik = useFormik({
     initialValues: { name: '', email: '', password: '', confirmPassword: '', role: 'therapist' },

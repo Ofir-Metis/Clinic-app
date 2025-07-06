@@ -6,26 +6,18 @@ import {
   TextField,
   CssBaseline,
   ThemeProvider,
-  createTheme,
   Typography,
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { createAppTheme } from '../theme';
 
 const ResetRequestPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [sent, setSent] = useState(false);
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const formik = useFormik({
     initialValues: { email: '' },

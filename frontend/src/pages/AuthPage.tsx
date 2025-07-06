@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   Box,
   Card,
@@ -17,6 +16,7 @@ import {
 } from '@mui/material';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
+import { createAppTheme } from '../theme';
 
 /**
  * AuthPage renders login and registration forms with Google authentication.
@@ -33,14 +33,7 @@ const AuthPage: React.FC = () => {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const theme = createTheme({
-    direction: i18n.dir(),
-    palette: {
-      primary: { main: '#00A699' },
-      background: { default: '#F5F5F5' },
-    },
-    typography: { fontFamily: 'Roboto' },
-  });
+  const theme = createAppTheme(i18n.dir());
 
   const handleTabChange = (_: React.SyntheticEvent, value: number) => {
     setTab(value);
@@ -68,7 +61,7 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '';
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
   return (
     <GoogleOAuthProvider clientId={clientId}>

@@ -1,6 +1,6 @@
-import { LoggingInterceptor } from './logging.interceptor';
-import { AllExceptionsFilter } from './http-exception.filter';
-import { LoggingMiddleware } from './logging.middleware';
+import { LoggingInterceptor } from '@clinic/common';
+import { AllExceptionsFilter } from '@clinic/common';
+import { LoggingMiddleware } from '@clinic/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 async function bootstrap() {

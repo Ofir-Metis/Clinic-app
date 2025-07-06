@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { LoggingInterceptor } from './logging.interceptor';
-import { LoggingMiddleware } from './logging.middleware';
-import { AllExceptionsFilter } from './http-exception.filter';
+import { LoggingInterceptor } from '@clinic/common';
+import { LoggingMiddleware } from '@clinic/common';
+import { AllExceptionsFilter } from '@clinic/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {

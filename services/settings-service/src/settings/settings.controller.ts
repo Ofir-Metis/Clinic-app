@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { JwtAuthGuard } from '../jwt-auth.guard';
+import { AuthRequest } from '../common/auth-request.interface';
 
 /**
  * Controller exposing settings endpoints.
@@ -15,13 +16,13 @@ export class SettingsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  get(@Req() req: any) {
+  get(@Req() req: AuthRequest) {
     return this.service.getSettings(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put()
-  update(@Req() req: any, @Body() dto: UpdateSettingDto[]) {
+  update(@Req() req: AuthRequest, @Body() dto: UpdateSettingDto[]) {
     return this.service.updateSettings(req.user.id, dto);
   }
 }

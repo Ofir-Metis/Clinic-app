@@ -6,6 +6,7 @@ A comprehensive microservices platform for managing clinic operations, including
 
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
 - [Local Setup \(Windows\)](#local-setup-windows)
 - [Google Cloud Deployment](#google-cloud-deployment)
 - [AWS Deployment](#aws-deployment)
@@ -41,9 +42,29 @@ Clinic App is a full stack application for therapists and clinics. Core features
 - **Docker** and **Docker Compose**
 - **Git**
 - **Cloud CLIs**: [gcloud](https://cloud.google.com/sdk/docs/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [Terraform](https://developer.hashicorp.com/terraform/install)
-- **OS Notes**
-  - *Windows*: Use [WSL2](https://learn.microsoft.com/windows/wsl/install) for the best experience.
-  - *macOS/Linux*: Ensure Docker Desktop or docker engine is installed.
+ - **OS Notes**
+   - *Windows*: Use [WSL2](https://learn.microsoft.com/windows/wsl/install) for the best experience.
+   - *macOS/Linux*: Ensure Docker Desktop or docker engine is installed.
+
+## Quick Start
+
+```bash
+git clone https://github.com/yourorg/clinic-app.git
+cd clinic-app
+
+# set up environment and dependencies
+./scripts/setup.sh
+
+# start the full stack using Docker Compose
+./scripts/dev.sh
+
+# run linting and tests
+./scripts/test.sh
+```
+
+Use `docker compose` for running all services together (as in `scripts/dev.sh`).
+Run `yarn` commands within individual workspaces when developing or testing a
+single service.
 
 ## Local Setup (Windows)
 
@@ -59,6 +80,9 @@ nvm use 18
 # install dependencies
 corepack enable
 yarn install
+
+# build shared utilities
+yarn workspace @clinic/common build
 
 # environment variables
 cp .env.example .env
@@ -78,8 +102,7 @@ cd frontend && yarn dev
 
 ```bash
 # from repository root
-yarn lint
-yarn test
+./scripts/test.sh
 ```
 
 ## Google Cloud Deployment
@@ -163,6 +186,21 @@ When connecting to a remote database, update `DATABASE_URL` accordingly.
 
 Secrets should be stored in **AWS Secrets Manager** or **GCP Secret Manager** and injected at runtime.
 
+### Frontend Environment Variables
+
+Copy the example environment file for the React application and adjust the values as needed:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID used in the browser | `your-google-client-id` |
+| `VITE_API_URL` | Base URL for the API gateway | `http://localhost:3000` |
+| `THERAPIST_SERVICE_URL` | URL for the therapists service | `http://localhost:3000` |
+| `APPOINTMENTS_SERVICE_URL` | URL for the appointments service | `http://localhost:3000` |
+
 ## Microservices & Architecture
 
 The repository is structured as follows:
@@ -184,6 +222,34 @@ yarn start:dev
 ```
 
 Using Docker Compose starts all services together for local development.
+
+## Docker Compose & Terraform
+
+The Compose file [`infrastructure/docker-compose.yml`](infrastructure/docker-compose.yml)
+defines local dependencies. Start everything with:
+
+```bash
+./scripts/dev.sh
+```
+
+AWS resources are managed with Terraform modules in
+[`infrastructure/terraform`](infrastructure/terraform). Before applying, export
+AWS credentials and set the region:
+
+```bash
+export AWS_ACCESS_KEY_ID=YOUR_KEY
+export AWS_SECRET_ACCESS_KEY=YOUR_SECRET
+export TF_VAR_region=us-east-1
+```
+
+Initialize and apply:
+
+```bash
+terraform -chdir=infrastructure/terraform init
+terraform -chdir=infrastructure/terraform apply
+```
+
+More details are available in [infrastructure/README.md](infrastructure/README.md).
 
 ## Code Quality & Testing
 

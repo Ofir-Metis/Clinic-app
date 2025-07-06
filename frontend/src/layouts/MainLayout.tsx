@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   Box,
   BottomNavigation,
@@ -15,6 +14,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ChatIcon from '@mui/icons-material/Chat';
 import AIHelper from '../AIHelper';
+import { createAppTheme } from '../theme';
 
 interface Props {
   children: React.ReactNode;
@@ -26,18 +26,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: {
-          primary: { main: '#00A699' },
-          background: { default: '#F5F5F5' },
-        },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const value = useMemo(() => {
     if (location.pathname.startsWith('/patients/new')) return 'add';
