@@ -1,6 +1,11 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "./",
+    "paths": {
+      "@clinic/common/*": ["libs/common/src/*"],
+      "@clinic/common": ["libs/common/src"]
+    }
   }
 }
