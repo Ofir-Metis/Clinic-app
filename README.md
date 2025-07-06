@@ -60,6 +60,9 @@ nvm use 18
 corepack enable
 yarn install
 
+# build shared utilities
+yarn workspace @clinic/common build
+
 # environment variables
 cp .env.example .env
 
