@@ -9,34 +9,37 @@
   "therapist": "Therapist",
   "patient": "Patient",
   "or": "or",
-  "required": "Required"
-  ,"myPatients": "My Patients"
-  ,"searchPatients": "Search Patients"
-  ,"upcomingAppointment": "Upcoming Appointment"
-  ,"actions": "Actions"
-  ,"viewProfile": "View Profile"
-  ,"newSession": "New Session"
-  ,"newPatient": "New Patient"
-  ,"noPatients": "No patients found"
-  ,"overview": "Overview"
-  ,"sessions": "Sessions"
-  ,"files": "Files"
-  ,"billing": "Billing"
-  ,"totalSessions": "Total Sessions"
-  ,"lastSession": "Last Session"
-  ,"viewNote": "View Note"
-  ,"uploadFile": "Upload File"
-  ,"newSessionNote": "New Session Note"
-  ,"scheduleAppointment": "Schedule Appointment"
-  ,"patientName": "Patient"
-  ,"datetime": "Date & Time"
-  ,"serviceType": "Service Type"
-  ,"notes": "Notes"
-  ,"submit": "Submit"
-  ,"cancel": "Cancel"
-  ,"backToProfile": "Back to Profile"
-  ,"calendarView": "Calendar View"
-  ,"listView": "List View"
-  ,"reschedule": "Reschedule"
-  ,"newAppointment": "New Appointment"
+  "required": "Required",
+  "myPatients": "My Patients",
+  "searchPatients": "Search Patients",
+  "upcomingAppointment": "Upcoming Appointment",
+  "actions": "Actions",
+  "viewProfile": "View Profile",
+  "newSession": "New Session",
+  "newPatient": "New Patient",
+  "noPatients": "No patients found",
+  "overview": "Overview",
+  "sessions": "Sessions",
+  "files": "Files",
+  "billing": "Billing",
+  "totalSessions": "Total Sessions",
+  "lastSession": "Last Session",
+  "viewNote": "View Note",
+  "uploadFile": "Upload File",
+  "newSessionNote": "New Session Note",
+  "scheduleAppointment": "Schedule Appointment",
+  "patientName": "Patient",
+  "datetime": "Date & Time",
+  "serviceType": "Service Type",
+  "notes": "Notes",
+  "submit": "Submit",
+  "cancel": "Cancel",
+  "backToProfile": "Back to Profile",
+  "calendarView": "Calendar View",
+  "listView": "List View",
+  "reschedule": "Reschedule",
+  "newAppointment": "New Appointment",
+  "dashboard": "Dashboard",
+  "addPatient": "Add Patient",
+  "settings": "Settings"
 }

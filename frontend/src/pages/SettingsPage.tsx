@@ -1,8 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
   Tabs,
   Tab,
   Box,
@@ -44,15 +41,6 @@ const SettingsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
 
   useEffect(() => {
     logger.debug('load settings');
@@ -92,9 +80,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex', p: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+    <Box sx={{ display: 'flex', p: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {isMobile ? (
           <IconButton onClick={() => setTab((t) => (t + 1) % categories.length))}>
             <MenuIcon />
@@ -160,7 +146,6 @@ const SettingsPage: React.FC = () => {
           />
         </Box>
       </Box>
-    </ThemeProvider>
   );
 };
 
