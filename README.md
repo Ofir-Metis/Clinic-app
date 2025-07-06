@@ -118,6 +118,9 @@ yarn test
 
 Create a `.env` file based on `.env.example` and provide the following keys:
 
+
+When connecting to a remote database, update `DATABASE_URL` accordingly.
+=======
 | Key | Description | Source |
 |-----|-------------|--------|
 | `POSTGRES_HOST` | Database host | Docker Compose service name `postgres` |
