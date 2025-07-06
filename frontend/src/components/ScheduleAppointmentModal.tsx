@@ -10,7 +10,6 @@ import {
   CircularProgress,
   MenuItem,
   ThemeProvider,
-  createTheme,
   CssBaseline,
 } from '@mui/material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -19,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { searchPatients } from '../api/patients';
 import { scheduleAppointment } from '../api/appointments';
 import { logger } from '../logger';
+import { createAppTheme } from '../theme';
 
 interface Option {
   id: number;
@@ -40,15 +40,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({ ope
   const [serviceType, setServiceType] = useState('consultation');
   const [notes, setNotes] = useState('');
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#4C6EF5' }, secondary: { main: '#22B8CF' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   // debounce search
   useEffect(() => {

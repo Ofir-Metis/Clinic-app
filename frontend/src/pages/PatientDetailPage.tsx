@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   AppBar,
   Toolbar,
@@ -23,6 +22,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadIcon from '@mui/icons-material/UploadFile';
 import { useTranslation } from 'react-i18next';
+import { createAppTheme } from '../theme';
 import {
   getPatientDetail,
   getPatientSessions,
@@ -41,15 +41,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
   const [error, setError] = useState('');
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     setLoading(true);

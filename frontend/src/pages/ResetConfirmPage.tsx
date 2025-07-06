@@ -6,7 +6,6 @@ import {
   TextField,
   CssBaseline,
   ThemeProvider,
-  createTheme,
   Typography,
   LinearProgress,
 } from '@mui/material';
@@ -16,20 +15,13 @@ import axios from 'axios';
 import zxcvbn from 'zxcvbn';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { createAppTheme } from '../theme';
 
 const ResetConfirmPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const token = params.get('token') || '';
 

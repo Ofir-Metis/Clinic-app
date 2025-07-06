@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
-  createTheme,
   CssBaseline,
   AppBar,
   Toolbar,
@@ -31,6 +30,7 @@ import {
   getAppointmentHistory,
 } from '../api/appointments';
 import { logger } from '../logger';
+import { createAppTheme } from '../theme';
 
 const locales = { en: require('date-fns/locale/en-US') };
 const localizer = dateFnsLocalizer({
@@ -120,15 +120,7 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
   const [showNew, setShowNew] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const theme = useMemo(
-    () =>
-      createTheme({
-        direction: i18n.dir(),
-        palette: { primary: { main: '#00A699' }, background: { default: '#F5F5F5' } },
-        typography: { fontFamily: 'Roboto' },
-      }),
-    [i18n],
-  );
+  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     console.info('TreatmentHistoryPage mount');
