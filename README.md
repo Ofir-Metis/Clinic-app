@@ -162,6 +162,21 @@ When connecting to a remote database, update `DATABASE_URL` accordingly.
 
 Secrets should be stored in **AWS Secrets Manager** or **GCP Secret Manager** and injected at runtime.
 
+### Frontend Environment Variables
+
+Copy the example environment file for the React application and adjust the values as needed:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+| Key | Description | Default |
+|-----|-------------|---------|
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID used in the browser | `your-google-client-id` |
+| `VITE_API_URL` | Base URL for the API gateway | `http://localhost:3000` |
+| `THERAPIST_SERVICE_URL` | URL for the therapists service | `http://localhost:3000` |
+| `APPOINTMENTS_SERVICE_URL` | URL for the appointments service | `http://localhost:3000` |
+
 ## Microservices & Architecture
 
 The repository is structured as follows:
