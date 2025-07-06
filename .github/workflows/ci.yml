@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        workspace: [frontend, auth-service, appointments-service, files-service, notifications-service, ai-service, api-gateway]
+        workspace: [frontend, auth-service, appointments-service, files-service, notifications-service, ai-service, api-gateway, analytics-service, notes-service, therapists-service, settings-service]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: |
           echo "Build and push docker images"
-          for ws in auth-service appointments-service files-service notifications-service ai-service api-gateway; do
+          for ws in auth-service appointments-service files-service notifications-service ai-service api-gateway analytics-service notes-service therapists-service settings-service; do
             docker build -t myrepo/$ws:latest services/$ws
           done
 
