@@ -65,6 +65,10 @@ npm run start:dev
 npm test
 ```
 
+## Settings Service
+
+See [docs/Settings.md](docs/Settings.md) for API details.
+
 ### Adding patients
 
 Navigate to `/patients/new` in the frontend. Fill in the patient information and submit. An invitation email and WhatsApp message will be sent if the patient does not already exist.

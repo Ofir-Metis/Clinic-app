@@ -5,6 +5,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TherapistsModule } from './therapists/therapists.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TherapistsModule } from './therapists/therapists.module';
     }),
     DashboardModule,
     TherapistsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}
