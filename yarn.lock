@@ -9352,21 +9352,6 @@ typeorm@^0.3.17:
   version "0.3.25"
   resolved "https://registry.yarnpkg.com/typeorm/-/typeorm-0.3.25.tgz#9a416f93cda0f612b20f8450e03d6b0e11b467fb"
   integrity sha512-fTKDFzWXKwAaBdEMU4k661seZewbNYET4r1J/z3Jwf+eAvlzMVpTLKAVcAzg75WwQk7GDmtsmkZ5MfkmXCiFWg==
-  dependencies:
-    "@sqltools/formatter" "^1.2.5"
-    ansis "^3.17.0"
-    app-root-path "^3.1.0"
-    buffer "^6.0.3"
-    dayjs "^1.11.13"
-    debug "^4.4.0"
-    dedent "^1.6.0"
-    dotenv "^16.4.7"
-    glob "^10.4.5"
-    sha.js "^2.4.11"
-    sql-highlight "^6.0.0"
-    tslib "^2.8.1"
-    uuid "^11.1.0"
-    yargs "^17.7.2"
 
 typescript@4.9.5:
   version "4.9.5"
