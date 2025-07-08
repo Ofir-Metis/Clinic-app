@@ -41,5 +41,6 @@
   "newAppointment": "موعد جديد",
   "dashboard": "لوحة التحكم",
   "addPatient": "إضافة مراجع",
-  "settings": "الإعدادات"
+  "settings": "الإعدادات",
+  "notifications": "الإشعارات"
 }

@@ -56,4 +56,5 @@
   ,"passwordRequirements": "At least 8 characters with letters and numbers"
   ,"welcomeBackName": "Welcome back, {{name}}!"
   ,"welcomeNewUser": "Nice to meet you, {{name}}!"
+  ,"notifications": "Notifications"
 }
