@@ -25,6 +25,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import { useTranslation } from 'react-i18next';
 import { getMyPatients, Patient } from '../api/patients';
+import { useAuth } from '../AuthContext';
 import { createAppTheme } from '../theme';
 
 const PatientListPage: React.FC = () => {
@@ -38,7 +39,7 @@ const PatientListPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const isMobile = useMediaQuery('(max-width:600px)');
-  const user = { id: 1 }; // TODO replace with auth context
+  const { userId } = useAuth();
 
   const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
@@ -49,7 +50,7 @@ const PatientListPage: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    getMyPatients(user.id, page + 1, rowsPerPage, search)
+    getMyPatients(userId, page + 1, rowsPerPage, search)
       .then((res) => {
         setPatients(res.items);
         setTotal(res.total);
