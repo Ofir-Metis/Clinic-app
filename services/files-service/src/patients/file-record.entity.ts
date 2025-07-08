@@ -3,17 +3,17 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 @Entity()
 export class FileRecord {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  patientId: number;
+  patientId!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  url: string;
+  url!: string;
 
   @CreateDateColumn()
-  uploadedAt: Date;
+  uploadedAt!: Date;
 }

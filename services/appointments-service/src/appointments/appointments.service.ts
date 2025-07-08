@@ -65,7 +65,7 @@ export class AppointmentsService {
   async history(query: GetHistoryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
-    this.logger.log(`History query therapist=${query.therapistId} page=${page}`);
+    this.logger.info('history', { therapistId: query.therapistId, page });
     return this.repo.find({
       where: { therapistId: query.therapistId },
       order: { startTime: 'DESC' },
@@ -92,11 +92,7 @@ export class AppointmentsService {
       endTime: dto.endTime ? new Date(dto.endTime) : undefined,
     });
     const updated = await this.findOne(id);
-    if (dto.status === 'cancelled') {
-      this.client.emit('appointment.cancelled', updated);
-    } else {
-      this.client.emit('appointment.updated', updated);
-    }
+    this.client.emit('appointment.updated', updated);
     return updated;
   }
 

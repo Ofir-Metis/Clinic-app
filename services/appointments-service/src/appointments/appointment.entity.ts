@@ -5,36 +5,25 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
  */
 @Entity()
 export class Appointment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
-  @Column()
-  therapistId: number;
+  therapistId!: number;
 
-  @Column()
-  clientId: number;
+  clientId!: number;
 
-  @Column({ type: 'timestamptz' })
-  startTime: Date;
+  startTime!: Date;
 
-  @Column({ type: 'timestamptz' })
-  endTime: Date;
+  endTime!: Date;
 
-  @Column()
-  type: 'in-person' | 'virtual';
+  type!: 'in-person' | 'virtual';
 
-  @Column({ default: 'scheduled' })
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status!: string;
 
-  @Column({ nullable: true })
-  location: string;
+  location!: string;
 
-  @Column({ nullable: true })
-  meetingUrl: string;
+  meetingUrl!: string;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

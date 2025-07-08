@@ -2,24 +2,17 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('patient_appointment')
 export class Appointment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
-  @Column()
-  patientId: number;
+  patientId!: number;
 
-  @Column()
-  therapistId: number;
+  therapistId!: number;
 
-  @Column({ type: 'timestamptz' })
-  startTime: Date;
+  startTime!: Date;
 
-  @Column({ type: 'timestamptz' })
-  endTime: Date;
+  endTime!: Date;
 
-  @Column()
-  type: string;
+  type!: string;
 
-  @Column('text', { nullable: true })
-  notes: string;
+  notes!: string;
 }

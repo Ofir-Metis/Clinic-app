@@ -2,18 +2,17 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 
 @Entity()
 export class Invoice {
-  @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  patientId: number;
+  patientId!: number;
 
   @Column('decimal')
-  amount: number;
+  amount!: number;
 
   @Column()
-  status: string;
+  status!: string;
 
   @CreateDateColumn()
-  issuedAt: Date;
+  issuedAt!: Date;
 }

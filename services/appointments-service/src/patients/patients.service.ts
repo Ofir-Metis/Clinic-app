@@ -62,8 +62,10 @@ export class PatientsService {
       await this.repo.save(patient);
       this.logger.log(`Created new patient ${patient.email}`);
     } else {
-      await this.linkTherapist(patient, therapistId);
-      this.logger.log(`Patient ${patient.email} already exists`);
+      if (patient) {
+        await this.linkTherapist(patient, therapistId);
+        this.logger.log(`Patient ${patient.email} already exists`);
+      }
     }
     return { patient, existing };
   }

@@ -1,8 +1,7 @@
 import { IsInt, IsOptional, IsISO8601 } from 'class-validator';
 
 export class GetPatientAppointmentsDto {
-  @IsInt()
-  patientId: number;
+  patientId!: number;
 
   @IsOptional()
   @IsInt()

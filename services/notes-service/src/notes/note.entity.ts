@@ -2,15 +2,14 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 
 @Entity()
 export class Note {
-  @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  therapistId: number;
+  therapistId!: number;
 
   @Column('text')
-  content: string;
+  content!: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

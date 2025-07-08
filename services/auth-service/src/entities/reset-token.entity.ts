@@ -4,20 +4,20 @@ import { User } from './user.entity';
 @Entity()
 export class ResetToken {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  token: string;
+  token!: string;
 
   @Column()
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @Column({ default: false })
-  used: boolean;
+  used!: boolean;
 
   @ManyToOne(() => User)
-  user: User;
+  user!: User;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

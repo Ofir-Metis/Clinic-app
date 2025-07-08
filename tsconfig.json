@@ -6,6 +6,8 @@
     "paths": {
       "@clinic/common/*": ["libs/common/src/*"],
       "@clinic/common": ["libs/common/src"]
-    }
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }

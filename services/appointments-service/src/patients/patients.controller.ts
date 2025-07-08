@@ -73,12 +73,16 @@ export class PatientsController {
   @UseGuards(JwtAuthGuard)
   async add(@Body() dto: CreatePatientDto, @Request() req: any) {
     const { patient, existing } = await this.service.addOrInvite(dto, req.user.id);
-    if (!existing) {
-      await this.notifications.sendAppointmentInvite(patient.email, { datetime: new Date().toISOString() });
-      if (patient.whatsappOptIn) {
-        await this.notifications.sendAppointmentInvite(patient.phone, { datetime: new Date().toISOString() });
+    if (patient) {
+      if (!existing) {
+        await this.notifications.sendAppointmentInvite(patient.email, { datetime: new Date().toISOString() });
+        if (patient.whatsappOptIn) {
+          await this.notifications.sendAppointmentInvite(patient.phone, { datetime: new Date().toISOString() });
+        }
       }
+      return { id: patient.id, existing };
+    } else {
+      return { id: null, existing };
     }
-    return { id: patient.id, existing };
   }
 }

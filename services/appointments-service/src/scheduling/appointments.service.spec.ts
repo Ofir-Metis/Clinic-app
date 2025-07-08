@@ -26,7 +26,7 @@ describe('AppointmentsService', () => {
   it('throws if patient missing', async () => {
     patientRepo.findOne.mockResolvedValue(undefined);
     await expect(
-      service.create({ patientId: 1, datetime: new Date().toISOString(), serviceType: 'therapy' })
+      service.create({ patientId: 1, datetime: new Date().toISOString(), serviceType: 'consultation' })
     ).rejects.toThrow('Patient not found');
   });
 });

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
 @Injectable()
 export class OpenaiService {
-  private api = new OpenAIApi(new Configuration({ apiKey: process.env.OPENAI_API_KEY }));
+  private api = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   async complete(prompt: string) {
-    const res = await this.api.createCompletion({ model: 'text-davinci-003', prompt });
-    return res.data.choices[0].text;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const res = await openai.completions.create({ model: 'text-davinci-003', prompt });
+    return res.choices[0].text;
   }
 }

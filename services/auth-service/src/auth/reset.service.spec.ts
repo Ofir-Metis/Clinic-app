@@ -7,7 +7,14 @@ import { User } from '../entities/user.entity';
 describe('ResetService', () => {
   let service: ResetService;
   const tokens: ResetToken[] = [];
-  const users: User[] = [{ id: 1, email: 'a@test.com', password: 'p', roles: [] } as User];
+  const users: User[] = [{
+    id: 1,
+    email: 'a@test.com',
+    password: 'p',
+    roles: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User];
   const tokenRepo = {
     save: jest.fn(async (t) => {
       t.id = 1;

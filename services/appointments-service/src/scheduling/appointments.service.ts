@@ -34,8 +34,7 @@ export class AppointmentsService {
     const entity = this.repo.create({
       patientId: dto.patientId,
       datetime: new Date(dto.datetime),
-      serviceType: dto.serviceType,
-      notes: dto.notes,
+      serviceType: dto.serviceType
     });
     const saved = await this.repo.save(entity);
     if (entity.datetime < new Date()) {

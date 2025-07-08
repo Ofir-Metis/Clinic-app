@@ -28,7 +28,9 @@ services:
       - '9000:9000'
       - '9001:9001'
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
     depends_on:
       - postgres
       - nats
@@ -44,7 +46,9 @@ services:
     ports:
       - '3001:3000'
   appointments-service:
-    build: ./services/appointments-service
+    build:
+      context: .
+      dockerfile: services/appointments-service/Dockerfile
     depends_on:
       - postgres
       - nats
@@ -58,7 +62,9 @@ services:
     ports:
       - '3002:3000'
   files-service:
-    build: ./services/files-service
+    build:
+      context: .
+      dockerfile: services/files-service/Dockerfile
     depends_on:
       - postgres
       - minio
@@ -72,7 +78,9 @@ services:
     ports:
       - '3003:3000'
   notifications-service:
-    build: ./services/notifications-service
+    build:
+      context: .
+      dockerfile: services/notifications-service/Dockerfile
     depends_on:
       - nats
     environment:
@@ -80,7 +88,9 @@ services:
     ports:
       - '3004:3000'
   ai-service:
-    build: ./services/ai-service
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
     depends_on:
       - postgres
       - nats
@@ -94,7 +104,9 @@ services:
     ports:
       - '3005:3000'
   notes-service:
-    build: ./services/notes-service
+    build:
+      context: .
+      dockerfile: services/notes-service/Dockerfile
     depends_on:
       - postgres
     environment:
@@ -106,7 +118,9 @@ services:
     ports:
       - '3006:3000'
   analytics-service:
-    build: ./services/analytics-service
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
     depends_on:
       - postgres
     environment:
@@ -118,7 +132,9 @@ services:
     ports:
       - '3007:3000'
   settings-service:
-    build: ./services/settings-service
+    build:
+      context: .
+      dockerfile: services/settings-service/Dockerfile
     depends_on:
       - postgres
     environment:

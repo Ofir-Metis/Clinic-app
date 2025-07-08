@@ -24,7 +24,6 @@ export class NotificationsService implements OnModuleInit {
   );
 
   async onModuleInit() {
-    this.client.subscribeToResponseOf('appointment.created');
     const sub = this.client.send('appointment.created', {});
     sub.subscribe();
   }

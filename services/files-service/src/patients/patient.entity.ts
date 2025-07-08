@@ -2,27 +2,19 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 @Entity()
 export class Patient {
-  @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
-  @Column()
-  firstName: string;
+  firstName!: string;
 
-  @Column()
-  lastName: string;
+  lastName!: string;
 
-  @Column({ unique: true })
-  email: string;
+  email!: string;
 
-  @Column({ nullable: true })
-  avatarUrl: string;
+  avatarUrl!: string;
 
-  @Column()
-  therapistId: number;
+  therapistId!: number;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }
