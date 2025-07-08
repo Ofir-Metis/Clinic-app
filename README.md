@@ -27,6 +27,7 @@ Clinic App is a full stack application for therapists and clinics. Core features
 - **Session Notes** – secure note taking per session.
 - **Client Portal** – clients can view history and upcoming sessions.
 - **AI Assistant** – integrated GPT assistant for insights and recommendations.
+- **Notifications Center** – view alerts at `/notifications`.
 
 **Tech Stack**
 
@@ -66,6 +67,14 @@ cd clinic-app
 Use `docker compose` for running all services together (as in `scripts/dev.sh`).
 Run `yarn` commands within individual workspaces when developing or testing a
 single service.
+
+## Navigation
+
+The application features a teal bottom navigation bar with quick links to **Home**,
+**Calendar**, **Tools**, **Notifications**, and **Settings**. The active item is highlighted.
+Below is a screenshot of the updated navigation:
+
+![Navigation](docs/navigation.png)
 
 ## Local Setup (Windows)
 

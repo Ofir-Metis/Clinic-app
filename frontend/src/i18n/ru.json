@@ -41,5 +41,10 @@
   "newAppointment": "Новая запись",
   "dashboard": "Панель",
   "addPatient": "Добавить пациента",
-  "settings": "Настройки"
+  "settings": "Настройки",
+  "notifications": "Уведомления"
+  "calendar": "Календарь",
+  "tools": "Инструменты",
+  "notifications": "Уведомления",
+
 }

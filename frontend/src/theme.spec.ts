@@ -10,4 +10,9 @@ describe('createAppTheme', () => {
     const theme = createAppTheme('rtl');
     expect(theme.direction).toBe('rtl');
   });
+
+  it('sets Roboto as global font family', () => {
+    const theme = createAppTheme();
+    expect(theme.typography.fontFamily).toBe('Roboto');
+  });
 });

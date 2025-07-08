@@ -41,8 +41,14 @@
   "newAppointment": "תור חדש",
   "dashboard": "לוח בקרה",
   "addPatient": "הוסף מטופל",
-  "settings": "הגדרות"
-  ,"forgotPassword": "שכחת סיסמה?"
+  "settings": "הגדרות",
+  "notifications": "התראות",
+  "forgotPassword": "שכחת סיסמה?"
+  "calendar": "יומן",
+  "tools": "כלים",
+  "notifications": "התראות",
+  "new": "חדש",
+  "forgotPassword": "שכחת סיסמה?"
   ,"rememberMe": "זכור אותי"
   ,"sendResetLink": "שלח קישור לאיפוס"
   ,"resetPassword": "איפוס סיסמה"

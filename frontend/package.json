@@ -27,12 +27,14 @@
     "react-quill": "^2.0.0",
     "react-router-dom": "^6.17.0",
     "yup": "^1.6.1",
-    "zxcvbn": "^4.4.2"
+    "zxcvbn": "^4.4.2",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.0.0",
     "@types/jest": "^30.0.0",
+    "@types/uuid": "^9.0.1",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.0",

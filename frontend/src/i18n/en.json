@@ -41,7 +41,11 @@
   "newAppointment": "New Appointment",
   "dashboard": "Dashboard",
   "addPatient": "Add Patient",
-  "settings": "Settings"
+  "settings": "Settings",
+  "calendar": "Calendar",
+  "tools": "Tools",
+  "notifications": "Notifications",
+  "new": "New"
   ,"forgotPassword": "Forgot Password?"
   ,"rememberMe": "Remember me"
   ,"sendResetLink": "Send reset link"
@@ -56,4 +60,5 @@
   ,"passwordRequirements": "At least 8 characters with letters and numbers"
   ,"welcomeBackName": "Welcome back, {{name}}!"
   ,"welcomeNewUser": "Nice to meet you, {{name}}!"
+  ,"notifications": "Notifications"
 }

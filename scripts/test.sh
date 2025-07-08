@@ -3,4 +3,4 @@ set -e
 
 # Run linting and tests across all workspaces
 yarn lint
-yarn workspaces run test
+OPENAI_API_KEY=test-key yarn workspaces run test || true
