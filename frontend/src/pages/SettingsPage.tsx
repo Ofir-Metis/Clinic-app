@@ -82,7 +82,7 @@ const SettingsPage: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', p: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {isMobile ? (
-          <IconButton onClick={() => setTab((t) => (t + 1) % categories.length))}>
+          <IconButton onClick={() => setTab((t) => (t + 1) % categories.length)}>
             <MenuIcon />
           </IconButton>
         ) : (

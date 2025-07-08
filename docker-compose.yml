@@ -147,7 +147,9 @@ services:
     ports:
       - '3008:3000'
   api-gateway:
-    build: ./services/api-gateway
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
     depends_on:
       - auth-service
       - appointments-service
@@ -161,7 +163,9 @@ services:
     ports:
       - '4000:3000'
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     depends_on:
       - auth-service
     ports:

@@ -54,7 +54,8 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
   });
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <Card sx={{ width: 400 }}>
           <CardContent>
             <form onSubmit={formik.handleSubmit} noValidate>
@@ -128,7 +129,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
         onClose={() => setSnack(null)}
         message={snack?.message}
       />
-    </Box>
+    </>
   );
 };
 
