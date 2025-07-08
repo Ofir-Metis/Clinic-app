@@ -27,6 +27,7 @@ Clinic App is a full stack application for therapists and clinics. Core features
 - **Session Notes** – secure note taking per session.
 - **Client Portal** – clients can view history and upcoming sessions.
 - **AI Assistant** – integrated GPT assistant for insights and recommendations.
+- **Notifications Center** – view alerts at `/notifications`.
 
 **Tech Stack**
 

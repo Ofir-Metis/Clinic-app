@@ -42,8 +42,9 @@
   "dashboard": "Панель",
   "addPatient": "Добавить пациента",
   "settings": "Настройки",
+  "notifications": "Уведомления"
   "calendar": "Календарь",
   "tools": "Инструменты",
   "notifications": "Уведомления",
-  "new": "Создать"
+
 }
