@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
@@ -12,11 +13,20 @@ export interface PatientAppointmentQuery {
 }
 
 export const getPatientAppointments = async (params: PatientAppointmentQuery) => {
-  const { data } = await api.get('/patient/appointments', { params });
+  const traceId = uuidv4();
+  console.info({ traceId, action: 'getPatientAppointments', payload: params });
+  const { data } = await api.get('/patient/appointments', {
+    params,
+    headers: { 'X-Trace-Id': traceId },
+  });
   return data;
 };
 
 export const getPatientAppointment = async (id: number) => {
-  const { data } = await api.get(`/patient/appointments/${id}`);
+  const traceId = uuidv4();
+  console.info({ traceId, action: 'getPatientAppointment', payload: { id } });
+  const { data } = await api.get(`/patient/appointments/${id}`, {
+    headers: { 'X-Trace-Id': traceId },
+  });
   return data;
 };
