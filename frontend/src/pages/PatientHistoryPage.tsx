@@ -1,20 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  AppBar,
-  Toolbar,
   Typography,
   ThemeProvider,
   CssBaseline,
   Box,
-  IconButton,
-  Menu,
-  MenuItem,
   Alert,
   Skeleton,
   Button,
   TextField,
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
+
+import PageAppBar from '../components/PageAppBar';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { DateRangePicker } from '@mui/x-date-pickers-pro';
 import { Dayjs } from 'dayjs';
@@ -98,21 +94,7 @@ const PatientHistoryPage: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {t('myTreatmentHistory', 'My Treatment History')}
-          </Typography>
-          <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)} aria-label="logout-menu">
-            <LogoutIcon />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-            <MenuItem onClick={() => { localStorage.removeItem('token'); navigate('/'); }}>
-              {t('logout', 'Logout')}
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
+      <PageAppBar avatarUrls={[]} />
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField

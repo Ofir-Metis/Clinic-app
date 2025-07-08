@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
-  AppBar,
-  Toolbar,
   Typography,
   Box,
   Tabs,
@@ -17,6 +15,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import PageAppBar from '../components/PageAppBar';
 import { createAppTheme } from '../theme';
 import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
@@ -106,13 +105,7 @@ const AppointmentPage: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {t('appointments', 'Appointments')}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <PageAppBar avatarUrls={[]} />
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Tabs value={tab} onChange={(_, v) => setTab(v)} aria-label="appointment tabs">
