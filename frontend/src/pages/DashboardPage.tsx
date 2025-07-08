@@ -6,9 +6,7 @@ import {
   ListItem,
   ListItemText,
   Toolbar,
-  AppBar,
   Typography,
-  Button,
   Grid,
   Card,
   CardContent,
@@ -16,6 +14,7 @@ import {
   Fab,
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
+import PageAppBar from '../components/PageAppBar';
 import AIHelper from '../AIHelper';
 import { fetchAppointments, fetchNotes, fetchStats } from '../api/dashboard';
 
@@ -40,14 +39,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex' }}>
-        <AppBar position="fixed" sx={{ zIndex: 1201 }}>
-          <Toolbar>
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              Welcome, User
-            </Typography>
-            <Button color="inherit">Logout</Button>
-          </Toolbar>
-        </AppBar>
+        <PageAppBar position="fixed" avatarUrls={[]} />
         <Drawer
           variant="permanent"
           sx={{ width: drawerWidth, [`& .MuiDrawer-paper`]: { width: drawerWidth } }}

@@ -2,8 +2,6 @@ import React, { useMemo, useState, useEffect } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
-  AppBar,
-  Toolbar,
   Typography,
   TextField,
   Box,
@@ -23,6 +21,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import PageAppBar from '../components/PageAppBar';
 import { useTranslation } from 'react-i18next';
 import { getMyPatients, Patient } from '../api/patients';
 import { createAppTheme } from '../theme';
@@ -68,18 +67,14 @@ const PatientListPage: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {t('myPatients')}
-          </Typography>
-          <TextField
-            size="small"
-            placeholder={t('searchPatients')}
-            onChange={(e) => setPendingSearch(e.target.value)}
-          />
-        </Toolbar>
-      </AppBar>
+      <PageAppBar avatarUrls={[]} />
+      <Box sx={{ p: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        <TextField
+          size="small"
+          placeholder={t('searchPatients')}
+          onChange={(e) => setPendingSearch(e.target.value)}
+        />
+      </Box>
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         {loading ? (

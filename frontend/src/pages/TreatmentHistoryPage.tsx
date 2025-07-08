@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
-  AppBar,
-  Toolbar,
   Typography,
   Tabs,
   Tab,
@@ -18,7 +16,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PageAppBar from '../components/PageAppBar';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
@@ -146,16 +144,7 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="back" href="/profile">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {t('myTreatmentHistory', 'My Treatment History')}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <PageAppBar avatarUrls={[]} />
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Tabs

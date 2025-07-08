@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
-  AppBar,
-  Toolbar,
   IconButton,
   Typography,
   Box,
@@ -18,9 +16,9 @@ import {
   Fab,
   useMediaQuery,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadIcon from '@mui/icons-material/UploadFile';
+import PageAppBar from '../components/PageAppBar';
 import { useTranslation } from 'react-i18next';
 import { createAppTheme } from '../theme';
 import {
@@ -75,17 +73,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="back" href="/patients">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {detail ? `${detail.firstName} ${detail.lastName}` : ''}
-          </Typography>
-          {detail && <Avatar src={detail.avatarUrl} alt={detail.firstName} />}
-        </Toolbar>
-      </AppBar>
+      <PageAppBar avatarUrls={detail ? [detail.avatarUrl] : []} />
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Grid container spacing={2} direction={isMobile ? 'column' : 'row'}>
