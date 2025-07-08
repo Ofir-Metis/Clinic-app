@@ -10,10 +10,12 @@ import {
   Fab,
 } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import BuildIcon from '@mui/icons-material/Build';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
-import ChatIcon from '@mui/icons-material/Chat';
-import AIHelper from '../AIHelper';
+import AddIcon from '@mui/icons-material/Add';
+import NewDialog from '../components/NewDialog';
 import { createAppTheme } from '../theme';
 
 interface Props {
@@ -24,19 +26,23 @@ const MainLayout: React.FC<Props> = ({ children }) => {
   const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
 
   const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const value = useMemo(() => {
-    if (location.pathname.startsWith('/patients/new')) return 'add';
+    if (location.pathname.startsWith('/calendar')) return 'calendar';
+    if (location.pathname.startsWith('/tools')) return 'tools';
+    if (location.pathname.startsWith('/notifications')) return 'notifications';
     if (location.pathname.startsWith('/settings')) return 'settings';
     return 'home';
   }, [location.pathname]);
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
     if (newValue === 'home') navigate('/');
-    if (newValue === 'add') navigate('/patients/new');
+    if (newValue === 'calendar') navigate('/calendar');
+    if (newValue === 'tools') navigate('/tools');
+    if (newValue === 'notifications') navigate('/notifications');
     if (newValue === 'settings') navigate('/settings');
   };
 
@@ -44,22 +50,30 @@ const MainLayout: React.FC<Props> = ({ children }) => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ minHeight: '100vh' }}>{children}</Box>
-      {open && (
-        <Box sx={{ position: 'fixed', bottom: 80, right: 16, width: 300 }}>
-          <AIHelper />
-        </Box>
-      )}
+      <NewDialog open={newOpen} onClose={() => setNewOpen(false)} />
       <Fab
         color="primary"
         sx={{ position: 'fixed', bottom: 80, right: 16 }}
-        onClick={() => setOpen((v) => !v)}
+        aria-label="new"
+        onClick={() => setNewOpen(true)}
       >
-        <ChatIcon />
+        <AddIcon />
       </Fab>
       <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}>
-        <BottomNavigation value={value} onChange={handleChange} showLabels>
+        <BottomNavigation
+          value={value}
+          onChange={handleChange}
+          showLabels
+          sx={{
+            backgroundColor: 'primary.main',
+            '& .Mui-selected': { color: '#fff' },
+            '& .MuiBottomNavigationAction-root': { color: '#fff', opacity: 0.8 },
+          }}
+        >
           <BottomNavigationAction label={t('dashboard')} value="home" icon={<HomeIcon />} />
-          <BottomNavigationAction label={t('addPatient')} value="add" icon={<PersonAddIcon />} />
+          <BottomNavigationAction label={t('calendar')} value="calendar" icon={<CalendarTodayIcon />} />
+          <BottomNavigationAction label={t('tools')} value="tools" icon={<BuildIcon />} />
+          <BottomNavigationAction label={t('notifications')} value="notifications" icon={<NotificationsIcon />} />
           <BottomNavigationAction label={t('settings')} value="settings" icon={<SettingsIcon />} />
         </BottomNavigation>
       </Box>

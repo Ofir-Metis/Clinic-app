@@ -15,8 +15,6 @@ import {
   CircularProgress,
   Fab,
 } from '@mui/material';
-import ChatIcon from '@mui/icons-material/Chat';
-import AIHelper from '../AIHelper';
 import { fetchAppointments, fetchNotes, fetchStats } from '../api/dashboard';
 
 const drawerWidth = 240;
@@ -26,7 +24,6 @@ const DashboardPage: React.FC = () => {
   const [notes, setNotes] = useState<any[]>([]);
   const [stats, setStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     Promise.all([fetchAppointments(), fetchNotes(), fetchStats()])
@@ -117,18 +114,7 @@ const DashboardPage: React.FC = () => {
             </Grid>
           )}
         </Box>
-        {showChat && (
-          <Box sx={{ position: 'fixed', bottom: 80, right: 16, width: 300 }}>
-            <AIHelper />
-          </Box>
-        )}
-        <Fab
-          color="primary"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
-          onClick={() => setShowChat((v) => !v)}
-        >
-          <ChatIcon />
-        </Fab>
+        
       </Box>
   );
 };
