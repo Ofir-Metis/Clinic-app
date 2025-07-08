@@ -1,14 +1,34 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ResetToken } from '../entities/reset-token.entity';
 import { User } from '../entities/user.entity';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
+import { createTransport } from 'nodemailer';
+import { Twilio } from 'twilio';
 
 @Injectable()
 export class ResetService {
   private readonly logger = new Logger('ResetService');
+
+  private mailer = createTransport({
+    host: process.env.SMTP_HOST,
+    port: +(process.env.SMTP_PORT || 1025),
+    auth: process.env.SMTP_USER
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      : undefined,
+  });
+
+  private twilio = new Twilio(
+    process.env.TWILIO_ACCOUNT_SID || '',
+    process.env.TWILIO_AUTH_TOKEN || '',
+  );
 
   constructor(
     @InjectRepository(ResetToken) private readonly tokenRepo: Repository<ResetToken>,
@@ -28,7 +48,21 @@ export class ResetService {
       user,
     });
     this.logger.log(`reset token generated for user ${user.id}`);
-    // TODO: send email/WhatsApp with link containing raw token
+    const url = `${process.env.APP_URL}/reset?token=${raw}`;
+    await this.mailer.sendMail({
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset',
+      html: `<a href="${url}">${url}</a>`,
+    });
+    const phone = (user as any).phone;
+    if (phone) {
+      await this.twilio.messages.create({
+        to: phone,
+        from: process.env.WHATSAPP_FROM || '',
+        body: `Reset your password: ${url}`,
+      });
+    }
     return raw;
   }
 

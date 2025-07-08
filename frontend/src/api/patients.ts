@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { logger } from "../logger";
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../logger';
 
 export interface Patient {
   id: number;
@@ -21,10 +22,14 @@ export const getMyPatients = async (
   limit = 10,
   search = ''
 ): Promise<PatientResponse> => {
+  const traceId = uuidv4();
+  const params = { therapistId, page, limit, search };
+  console.info({ traceId, action: 'getMyPatients', payload: params });
   const { data } = await axios.get<PatientResponse>(
     `${import.meta.env.THERAPIST_SERVICE_URL}/appointments-service/patients`,
     {
-      params: { therapistId, page, limit, search },
+      params,
+      headers: { 'X-Trace-Id': traceId },
     }
   );
   return data;
@@ -48,15 +53,25 @@ export interface AddPatientResponse {
 export async function addPatient(
   data: AddPatientPayload
 ): Promise<AddPatientResponse> {
-  logger.info('Submitting new patient', data);
-  const res = await axios.post(`${import.meta.env.VITE_API_URL}/patients`, data);
-  logger.info('Received addPatient response', res.data);
-  return res.data;
+  const traceId = uuidv4();
+  console.info({ traceId, action: 'addPatient', payload: data });
+  const res = await axios.post(
+    `${import.meta.env.VITE_API_URL}/patients`,
+    data,
+    { headers: { 'X-Trace-Id': traceId } }
+  );
+  return res.data as AddPatientResponse;
 }
 
 export const searchPatients = async (search: string): Promise<PatientResponse> => {
-  const { data } = await axios.get<PatientResponse>(`${import.meta.env.VITE_API_URL}/patients`, {
-    params: { search },
-  });
+  const traceId = uuidv4();
+  console.info({ traceId, action: 'searchPatients', payload: { search } });
+  const { data } = await axios.get<PatientResponse>(
+    `${import.meta.env.VITE_API_URL}/patients`,
+    {
+      params: { search },
+      headers: { 'X-Trace-Id': traceId },
+    }
+  );
   return data;
 };

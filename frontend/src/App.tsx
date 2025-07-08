@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './AuthContext';
 import DashboardPage from './pages/DashboardPage';
 import AddPatientPage from './pages/AddPatientPage';
 import SettingsPage from './pages/SettingsPage';
@@ -11,9 +12,10 @@ import MainLayout from './layouts/MainLayout';
 
 function App() {
   return (
-    <BrowserRouter>
-      <MainLayout>
-        <Routes>
+    <AuthProvider>
+      <BrowserRouter>
+        <MainLayout>
+          <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
@@ -22,9 +24,11 @@ function App() {
           <Route path="/patients/new" element={<AddPatientPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
-        </Routes>
-      </MainLayout>
-    </BrowserRouter>
+          </Routes>
+        </MainLayout>
+      </BrowserRouter>
+    </AuthProvider>
+
   );
 }
 

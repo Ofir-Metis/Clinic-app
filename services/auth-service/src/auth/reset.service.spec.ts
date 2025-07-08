@@ -10,6 +10,8 @@ describe('ResetService', () => {
   const users: User[] = [{
     id: 1,
     email: 'a@test.com',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    phone: 'whatsapp:+15551234567' as any,
     password: 'p',
     roles: [],
     createdAt: new Date(),
@@ -39,10 +41,30 @@ describe('ResetService', () => {
       ],
     }).compile();
     service = module.get<ResetService>(ResetService);
+    // mock transports
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any).mailer = { sendMail: jest.fn().mockResolvedValue({}) } as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (service as any).twilio = { messages: { create: jest.fn().mockResolvedValue({}) } } as any;
   });
 
   it('creates reset token', async () => {
+    process.env.EMAIL_USER = 'noreply@test.com';
+    process.env.WHATSAPP_FROM = 'whatsapp:+11111111111';
     const token = await service.requestReset('a@test.com');
     expect(token).toBeDefined();
+    const mailer = (service as any).mailer;
+    expect(mailer.sendMail).toHaveBeenCalled();
+    const twilio = (service as any).twilio;
+    expect(twilio.messages.create).toHaveBeenCalled();
+  });
+
+  it('skips WhatsApp if phone missing', async () => {
+    // remove phone number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (users[0] as any).phone = undefined;
+    const twilio = (service as any).twilio;
+    await service.requestReset('a@test.com');
+    expect(twilio.messages.create).not.toHaveBeenCalled();
   });
 });
