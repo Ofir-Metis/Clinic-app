@@ -17,8 +17,17 @@ import ChatIcon from '@mui/icons-material/Chat';
 import PageAppBar from '../components/PageAppBar';
 import AIHelper from '../AIHelper';
 import { fetchAppointments, fetchNotes, fetchStats } from '../api/dashboard';
+import { Link } from 'react-router-dom';
 
 const drawerWidth = 240;
+const drawerLinks = [
+  { text: 'Dashboard', to: '/dashboard' },
+  { text: 'Calendar', to: '/calendar' },
+  { text: 'Clients', to: '/patients' },
+  { text: 'Notes', to: '/notes' },
+  { text: 'Files', to: '/files' },
+  { text: 'Settings', to: '/settings' },
+];
 
 const DashboardPage: React.FC = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
@@ -45,13 +54,11 @@ const DashboardPage: React.FC = () => {
         >
           <Toolbar />
           <List>
-            {['Dashboard', 'Calendar', 'Clients', 'Notes', 'Files', 'Settings'].map(
-              (text) => (
-                <ListItem button key={text}>
-                  <ListItemText primary={text} />
-                </ListItem>
-              ),
-            )}
+            {drawerLinks.map((l) => (
+              <ListItem button component={Link} to={l.to} key={l.text}>
+                <ListItemText primary={l.text} />
+              </ListItem>
+            ))}
           </List>
         </Drawer>
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
