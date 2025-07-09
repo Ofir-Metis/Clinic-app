@@ -31,7 +31,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
   const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const value = useMemo(() => {
-    if (location.pathname.startsWith('/calendar')) return 'calendar';
+    if (location.pathname.startsWith('/appointments')) return 'calendar';
     if (location.pathname.startsWith('/tools')) return 'tools';
     if (location.pathname.startsWith('/notifications')) return 'notifications';
     if (location.pathname.startsWith('/settings')) return 'settings';
@@ -40,7 +40,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
     if (newValue === 'home') navigate('/');
-    if (newValue === 'calendar') navigate('/calendar');
+    if (newValue === 'calendar') navigate('/appointments');
     if (newValue === 'tools') navigate('/tools');
     if (newValue === 'notifications') navigate('/notifications');
     if (newValue === 'settings') navigate('/settings');
