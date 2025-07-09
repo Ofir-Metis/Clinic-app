@@ -1711,6 +1711,11 @@
     slash "^3.0.0"
     strip-ansi "^6.0.0"
 
+"@jest/diff-sequences@30.0.1":
+  version "30.0.1"
+  resolved "https://registry.yarnpkg.com/@jest/diff-sequences/-/diff-sequences-30.0.1.tgz#0ededeae4d071f5c8ffe3678d15f3a1be09156be"
+  integrity sha512-n5H8QLDJ47QqbCNn5SuFjCRDrOLEZ0h8vAHCK5RL9Ls7Xa8AQLa/YxAc9UjFqoEDM48muwtBGjtMY5cr0PLDCw==
+
 "@jest/environment-jsdom-abstract@30.0.4":
   version "30.0.4"
   resolved "https://registry.yarnpkg.com/@jest/environment-jsdom-abstract/-/environment-jsdom-abstract-30.0.4.tgz#8026e9776fc9e3ba00ecef7f32f40b90d8e859de"
@@ -1743,6 +1748,13 @@
     "@jest/types" "^29.6.3"
     "@types/node" "*"
     jest-mock "^29.7.0"
+
+"@jest/expect-utils@30.0.4":
+  version "30.0.4"
+  resolved "https://registry.yarnpkg.com/@jest/expect-utils/-/expect-utils-30.0.4.tgz#0512fb2588c7fc463ce26fb38c0d47814266d965"
+  integrity sha512-EgXecHDNfANeqOkcak0DxsoVI4qkDUsR7n/Lr2vtmTBjwLPBnnPOF71S11Q8IObWzxm2QgQoY6f9hzrRD3gHRA==
+  dependencies:
+    "@jest/get-type" "30.0.1"
 
 "@jest/expect-utils@^29.7.0":
   version "29.7.0"
@@ -1782,6 +1794,11 @@
     jest-message-util "^29.7.0"
     jest-mock "^29.7.0"
     jest-util "^29.7.0"
+
+"@jest/get-type@30.0.1":
+  version "30.0.1"
+  resolved "https://registry.yarnpkg.com/@jest/get-type/-/get-type-30.0.1.tgz#0d32f1bbfba511948ad247ab01b9007724fc9f52"
+  integrity sha512-AyYdemXCptSRFirI5EPazNxyPwAL0jXt3zceFjaj8NFiKP9pOi0bfXonf6qkf82z2t3QWPeLCWWw4stPBzctLw==
 
 "@jest/globals@^29.7.0":
   version "29.7.0"
@@ -2980,6 +2997,11 @@
     "@testing-library/dom" "^9.0.0"
     "@types/react-dom" "^18.0.0"
 
+"@testing-library/user-event@^14.4.3":
+  version "14.6.1"
+  resolved "https://registry.yarnpkg.com/@testing-library/user-event/-/user-event-14.6.1.tgz#13e09a32d7a8b7060fe38304788ebf4197cd2149"
+  integrity sha512-vq7fv0rnt+QTXgPxr5Hjc210p6YKq2kmdziLgnsZGgLJ9e6VAShx1pACLuRjd/AS/sr7phAR58OIIpf0LlmQNw==
+
 "@tokenizer/inflate@^0.2.6":
   version "0.2.7"
   resolved "https://registry.yarnpkg.com/@tokenizer/inflate/-/inflate-0.2.7.tgz#32dd9dfc9abe457c89b3d9b760fc0690c85a103b"
@@ -3214,6 +3236,14 @@
   dependencies:
     expect "^29.0.0"
     pretty-format "^29.0.0"
+
+"@types/jest@^30.0.0":
+  version "30.0.0"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-30.0.0.tgz#5e85ae568006712e4ad66f25433e9bdac8801f1d"
+  integrity sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA==
+  dependencies:
+    expect "^30.0.0"
+    pretty-format "^30.0.0"
 
 "@types/jsdom@^21.1.7":
   version "21.1.7"
@@ -5363,6 +5393,18 @@ expect@^29.0.0, expect@^29.7.0:
     jest-message-util "^29.7.0"
     jest-util "^29.7.0"
 
+expect@^30.0.0:
+  version "30.0.4"
+  resolved "https://registry.yarnpkg.com/expect/-/expect-30.0.4.tgz#23ce0eaa9a1dcd72fcb78a228b9babdbcf9ddeca"
+  integrity sha512-dDLGjnP2cKbEppxVICxI/Uf4YemmGMPNy0QytCbfafbpYk9AFQsxb8Uyrxii0RPK7FWgLGlSem+07WirwS3cFQ==
+  dependencies:
+    "@jest/expect-utils" "30.0.4"
+    "@jest/get-type" "30.0.1"
+    jest-matcher-utils "30.0.4"
+    jest-message-util "30.0.2"
+    jest-mock "30.0.2"
+    jest-util "30.0.2"
+
 express@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/express/-/express-5.1.0.tgz#d31beaf715a0016f0d53f47d3b4d7acf28c75cc9"
@@ -6554,6 +6596,16 @@ jest-config@^29.7.0:
     slash "^3.0.0"
     strip-json-comments "^3.1.1"
 
+jest-diff@30.0.4:
+  version "30.0.4"
+  resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-30.0.4.tgz#f6e71d19ed6e8f5c7f1bead9ac406c0dd6abce5a"
+  integrity sha512-TSjceIf6797jyd+R64NXqicttROD+Qf98fex7CowmlSn7f8+En0da1Dglwr1AXxDtVizoxXYZBlUQwNhoOXkNw==
+  dependencies:
+    "@jest/diff-sequences" "30.0.1"
+    "@jest/get-type" "30.0.1"
+    chalk "^4.1.2"
+    pretty-format "30.0.2"
+
 jest-diff@^29.7.0:
   version "29.7.0"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-29.7.0.tgz#017934a66ebb7ecf6f205e84699be10afd70458a"
@@ -6582,7 +6634,7 @@ jest-each@^29.7.0:
     jest-util "^29.7.0"
     pretty-format "^29.7.0"
 
-jest-environment-jsdom@^30.0.2:
+jest-environment-jsdom@^30.0.2, jest-environment-jsdom@^30.0.4:
   version "30.0.4"
   resolved "https://registry.yarnpkg.com/jest-environment-jsdom/-/jest-environment-jsdom-30.0.4.tgz#b9f739077e6cec7dbdca6a8f4043e9473d430d8d"
   integrity sha512-9WmS3oyCLFgs6DUJSoMpVb+AbH62Y2Xecw3XClbRgj6/Z+VjNeSLjrhBgVvTZ40njZTWeDHv8unp+6M/z8ADDg==
@@ -6636,6 +6688,16 @@ jest-leak-detector@^29.7.0:
   dependencies:
     jest-get-type "^29.6.3"
     pretty-format "^29.7.0"
+
+jest-matcher-utils@30.0.4:
+  version "30.0.4"
+  resolved "https://registry.yarnpkg.com/jest-matcher-utils/-/jest-matcher-utils-30.0.4.tgz#1aab71eb7ba401f81d9ef7231feb88392e4a6e54"
+  integrity sha512-ubCewJ54YzeAZ2JeHHGVoU+eDIpQFsfPQs0xURPWoNiO42LGJ+QGgfSf+hFIRplkZDkhH5MOvuxHKXRTUU3dUQ==
+  dependencies:
+    "@jest/get-type" "30.0.1"
+    chalk "^4.1.2"
+    jest-diff "30.0.4"
+    pretty-format "30.0.2"
 
 jest-matcher-utils@^29.7.0:
   version "29.7.0"
@@ -8024,7 +8086,7 @@ prettier@^3.0.0:
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.6.2.tgz#ccda02a1003ebbb2bfda6f83a074978f608b9393"
   integrity sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==
 
-pretty-format@30.0.2:
+pretty-format@30.0.2, pretty-format@^30.0.0:
   version "30.0.2"
   resolved "https://registry.yarnpkg.com/pretty-format/-/pretty-format-30.0.2.tgz#54717b6aa2b4357a2e6d83868e10a2ea8dd647c7"
   integrity sha512-yC5/EBSOrTtqhCKfLHqoUIAXVRZnukHPwWBJWR7h84Q3Be1DRQZLncwcfLoPA5RPQ65qfiCMqgYwdUuQ//eVpg==
@@ -9352,6 +9414,21 @@ typeorm@^0.3.17:
   version "0.3.25"
   resolved "https://registry.yarnpkg.com/typeorm/-/typeorm-0.3.25.tgz#9a416f93cda0f612b20f8450e03d6b0e11b467fb"
   integrity sha512-fTKDFzWXKwAaBdEMU4k661seZewbNYET4r1J/z3Jwf+eAvlzMVpTLKAVcAzg75WwQk7GDmtsmkZ5MfkmXCiFWg==
+  dependencies:
+    "@sqltools/formatter" "^1.2.5"
+    ansis "^3.17.0"
+    app-root-path "^3.1.0"
+    buffer "^6.0.3"
+    dayjs "^1.11.13"
+    debug "^4.4.0"
+    dedent "^1.6.0"
+    dotenv "^16.4.7"
+    glob "^10.4.5"
+    sha.js "^2.4.11"
+    sql-highlight "^6.0.0"
+    tslib "^2.8.1"
+    uuid "^11.1.0"
+    yargs "^17.7.2"
 
 typescript@4.9.5:
   version "4.9.5"
