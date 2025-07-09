@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from './App';
 
-it('renders welcome message', () => {
+it('shows login form on initial load', () => {
   render(<App />);
-  expect(screen.getByText('Welcome')).toBeInTheDocument();
+  expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
 });
