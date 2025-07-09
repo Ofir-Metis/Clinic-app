@@ -26,9 +26,11 @@ import { useTranslation } from 'react-i18next';
 import { getMyPatients, Patient } from '../api/patients';
 import { useAuth } from '../AuthContext';
 import { createAppTheme } from '../theme';
+import { useNavigate } from 'react-router-dom';
 
 const PatientListPage: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -113,8 +115,14 @@ const PatientListPage: React.FC = () => {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        <IconButton color="primary" href={`/patients/${p.id}`}>↗</IconButton>
-                        <IconButton color="primary">+</IconButton>
+                        <IconButton color="primary" href={`/patients/${p.id}`} aria-label="view-patient">↗</IconButton>
+                        <IconButton
+                          color="primary"
+                          aria-label={`add-note-${p.id}`}
+                          onClick={() => navigate(`/patients/${p.id}/sessions/new`)}
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -139,8 +147,14 @@ const PatientListPage: React.FC = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <IconButton color="primary" href={`/patients/${p.id}`}>↗</IconButton>
-                          <IconButton color="primary">+</IconButton>
+                          <IconButton color="primary" href={`/patients/${p.id}`} aria-label="view-patient">↗</IconButton>
+                          <IconButton
+                            color="primary"
+                            aria-label={`add-note-${p.id}`}
+                            onClick={() => navigate(`/patients/${p.id}/sessions/new`)}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
                         </Box>
                       </Box>
                     </CardContent>
@@ -159,7 +173,12 @@ const PatientListPage: React.FC = () => {
           </>
         )}
       </Box>
-      <Fab color="primary" sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+      <Fab
+        color="primary"
+        sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        aria-label="add-patient"
+        onClick={() => navigate('/patients/new')}
+      >
         <AddIcon />
       </Fab>
     </ThemeProvider>

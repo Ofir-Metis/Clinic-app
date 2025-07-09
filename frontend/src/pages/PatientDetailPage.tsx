@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
@@ -21,6 +21,7 @@ import UploadIcon from '@mui/icons-material/UploadFile';
 import PageAppBar from '../components/PageAppBar';
 import { useTranslation } from 'react-i18next';
 import { createAppTheme } from '../theme';
+import { useNavigate } from 'react-router-dom';
 import {
   getPatientDetail,
   getPatientSessions,
@@ -30,6 +31,7 @@ import {
 
 const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const [detail, setDetail] = useState<any | null>(null);
   const [sessions, setSessions] = useState<any[]>([]);
@@ -38,6 +40,21 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const isMobile = useMediaQuery('(max-width:600px)');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = (file?: File) => {
+    if (file) {
+      console.info('upload', file.name);
+    }
+  };
+
+  const handleFabClick = () => {
+    if (tab === 1) {
+      navigate(`/patients/${id}/notes/new`);
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
 
   const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
@@ -178,10 +195,17 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
           </Grid>
         </Grid>
       </Box>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={(e) => handleUpload(e.target.files?.[0])}
+      />
       <Fab
         color="primary"
-        aria-label="actions"
+        aria-label={tab === 1 ? 'new-note' : 'upload-file'}
         sx={{ position: 'fixed', bottom: 16, right: 16 }}
+        onClick={handleFabClick}
       >
         {tab === 1 ? <NoteAddIcon /> : <UploadIcon />}
       </Fab>
