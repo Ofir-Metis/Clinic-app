@@ -8,6 +8,8 @@ import RegistrationPage from './pages/RegistrationPage';
 import ResetRequestPage from './pages/ResetRequestPage';
 import ResetConfirmPage from './pages/ResetConfirmPage';
 import NotificationsPage from './pages/NotificationsPage';
+import CalendarPage from './pages/CalendarPage';
+import ToolsPage from './pages/ToolsPage';
 import MainLayout from './layouts/MainLayout';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -41,6 +43,22 @@ function App() {
               element={(
                 <PrivateRoute>
                   <AddPatientPage />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/calendar"
+              element={(
+                <PrivateRoute>
+                  <CalendarPage />
+                </PrivateRoute>
+              )}
+            />
+            <Route
+              path="/tools"
+              element={(
+                <PrivateRoute>
+                  <ToolsPage />
                 </PrivateRoute>
               )}
             />
