@@ -5,8 +5,8 @@ import AddPatientPage from './AddPatientPage';
 describe('AddPatientPage', () => {
   it('renders form fields', () => {
     render(<AddPatientPage therapistId={1} />);
-    expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/firstName/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/lastName/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
 });

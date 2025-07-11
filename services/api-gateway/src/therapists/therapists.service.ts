@@ -1,4 +1,5 @@
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
@@ -6,9 +7,9 @@ export class TherapistsService {
   constructor(private readonly http: HttpService) {}
 
   async getProfile(id: number) {
-    const { data } = await firstValueFrom(
-      this.http.get(`${process.env.THERAPISTS_URL}/therapists/${id}/profile`),
-    );
+    const url = `${process.env.THERAPISTS_URL}/therapists/${id}/profile`;
+    const response = await firstValueFrom(this.http.get<any>(url));
+    const data = response.data;
     return data;
   }
 

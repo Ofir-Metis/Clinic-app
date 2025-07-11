@@ -10,6 +10,6 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.use(new LoggingMiddleware().use);
   app.enableCors({ origin: process.env.FRONTEND_ORIGIN || '*' });
-  await app.listen(process.env.PORT || 3000);
+  await app.listen(process.env.PORT || 34567);
 }
 bootstrap();

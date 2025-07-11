@@ -11,6 +11,8 @@ import {
   Link,
   Typography,
   LinearProgress,
+  MenuItem,
+  Select,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -22,6 +24,7 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../logger';
 import { createAppTheme } from '../theme';
+import { GOOGLE_CLIENT_ID } from '../env';
 
 const LoginPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -58,10 +61,24 @@ const LoginPage: React.FC = () => {
   const strength = zxcvbn(formik.values.password || '').score * 25;
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ''}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          {/* Language Switcher */}
+          <Box sx={{ position: 'absolute', top: 24, right: 24 }}>
+            <Select
+              value={i18n.language}
+              onChange={e => i18n.changeLanguage(e.target.value)}
+              size="small"
+              aria-label="language switcher"
+            >
+              <MenuItem value="en">English</MenuItem>
+              <MenuItem value="he">עברית</MenuItem>
+              <MenuItem value="ru">Русский</MenuItem>
+              <MenuItem value="ar">العربية</MenuItem>
+            </Select>
+          </Box>
           <Box component="form" onSubmit={formik.handleSubmit} sx={{ p: 3, bgcolor: 'background.paper', boxShadow: 3, width: '100%', maxWidth: 360 }}>
             {error && (
               <Typography role="alert" color="error">
@@ -117,6 +134,12 @@ const LoginPage: React.FC = () => {
             <Box sx={{ textAlign: 'center', my: 2 }}>{t('or')}</Box>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
+            </Box>
+            {/* Sign Up Button */}
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Button component={RouterLink} to="/register" color="secondary" variant="outlined" fullWidth aria-label="sign up">
+                {t('register')}
+              </Button>
             </Box>
           </Box>
         </Box>

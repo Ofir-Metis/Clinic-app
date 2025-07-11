@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../logger';
 import { createAppTheme } from '../theme';
+import { GOOGLE_CLIENT_ID } from '../env';
 
 const RegistrationPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -59,7 +60,7 @@ const RegistrationPage: React.FC = () => {
   const strength = zxcvbn(formik.values.password || '').score * 25;
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ''}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

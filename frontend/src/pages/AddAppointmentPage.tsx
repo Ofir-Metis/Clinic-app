@@ -9,8 +9,8 @@ import {
   CircularProgress,
   Box,
 } from '@mui/material';
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
+import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
 import { useTranslation } from 'react-i18next';
 import { scheduleAppointment } from '../api/appointments';
 

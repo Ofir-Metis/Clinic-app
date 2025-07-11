@@ -1,13 +1,14 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
+    "target": "ES2019",
     "outDir": "dist",
     "baseUrl": "./",
     "paths": {
-      "@clinic/common/*": ["libs/common/src/*"],
-      "@clinic/common": ["libs/common/src"]
+      "@clinic/common/*": ["libs/common/dist/*"],
+      "@clinic/common": ["libs/common/dist"]
     },
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node"
   }
 }

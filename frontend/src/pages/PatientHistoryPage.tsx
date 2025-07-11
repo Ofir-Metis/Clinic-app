@@ -12,13 +12,14 @@ import {
 
 import PageAppBar from '../components/PageAppBar';
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
-import { DateRangePicker } from '@mui/x-date-pickers-pro';
-import { Dayjs } from 'dayjs';
+import { DateRangePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
+import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '../logger';
 import { createAppTheme } from '../theme';
+import { API_URL } from '../env';
 
 interface AppointmentRow {
   id: number;
@@ -37,14 +38,14 @@ const PatientHistoryPage: React.FC = () => {
   const [error, setError] = useState('');
   const [therapists, setTherapists] = useState<{ id: number; name: string }[]>([]);
   const [therapistId, setTherapistId] = useState<number | null>(null);
-  const [range, setRange] = useState<[Dayjs | null, Dayjs | null]>([null, null]);
+  const [range, setRange] = useState<[Date | null, Date | null]>([null, null]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_API_URL}/therapists`)
+      .get(`${API_URL}/therapists`)
       .then((r) => setTherapists(r.data))
       .catch(() => setTherapists([]));
   }, []);
@@ -53,7 +54,7 @@ const PatientHistoryPage: React.FC = () => {
     setLoading(true);
     logger.debug('fetch history');
     axios
-      .get(`${import.meta.env.VITE_API_URL}/patient/appointments`, {
+      .get(`${API_URL}/patient/appointments`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         params: {
           patientId: 0,
@@ -95,6 +96,9 @@ const PatientHistoryPage: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PageAppBar avatarUrls={[]} />
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        {t('myTreatmentHistory', 'My Treatment History')}
+      </Typography>
       <Box sx={{ p: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <TextField
@@ -112,7 +116,9 @@ const PatientHistoryPage: React.FC = () => {
               </option>
             ))}
           </TextField>
-          <DateRangePicker value={range} onChange={(r) => setRange(r)} />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DateRangePicker value={range} onChange={(r) => setRange(r)} />
+          </LocalizationProvider>
           <Button variant="contained" onClick={() => { setPage(0); fetchData(); }} aria-label="apply-filters">
             {t('applyFilters', 'Apply Filters')}
           </Button>

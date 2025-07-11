@@ -1,15 +1,19 @@
 import axios from 'axios';
-import { login } from './auth';
 import { v4 as uuidv4 } from 'uuid';
 
 jest.mock('axios');
 jest.mock('uuid');
 
+const postMock = jest.fn();
+(axios.create as jest.Mock).mockReturnValue({ post: postMock });
+
+import { login } from './auth';
+import { api } from './auth';
+
 describe('login', () => {
   it('logs trace id and sends header', async () => {
     (uuidv4 as jest.Mock).mockReturnValue('trace-123');
-    const postMock = jest.fn().mockResolvedValue({ data: { access_token: 't' } });
-    (axios.create as jest.Mock).mockReturnValue({ post: postMock });
+    postMock.mockResolvedValue({ data: { access_token: 't' } });
     const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
 
     const result = await login('e@example.com', 'pw');

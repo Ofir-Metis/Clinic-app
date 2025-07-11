@@ -5,6 +5,6 @@ import AppointmentPage from './AppointmentPage';
 describe('AppointmentPage', () => {
   it('renders loading state', () => {
     render(<AppointmentPage />);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByTestId('appointments-loading')).toBeInTheDocument();
   });
 });

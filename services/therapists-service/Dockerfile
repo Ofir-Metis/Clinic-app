@@ -1,19 +1,27 @@
 FROM node:18-alpine AS deps
 WORKDIR /app
-COPY package.json yarn.lock tsconfig.json ./
-RUN yarn install --production
+COPY package.json yarn.lock ./
+COPY services ./services
+COPY libs ./libs
+COPY frontend ./frontend
 RUN yarn config set registry https://registry.npmmirror.com
 RUN yarn config set network-timeout 600000 -g
+RUN yarn install
 
 FROM node:18-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+WORKDIR /app/services/therapists-service
+COPY --from=deps /app/node_modules ../../node_modules
+COPY --from=deps /app/services/therapists-service ./
+COPY --from=deps /app/libs /app/libs
+COPY /tsconfig.base.json /app/tsconfig.base.json
+COPY services/therapists-service/tsconfig.json ./tsconfig.json
+COPY services/therapists-service/src ./src
+ENV PATH="../../node_modules/.bin:$PATH"
 RUN yarn build
 
 FROM node:18-alpine
 WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY package.json ./package.json
-RUN yarn install --production
+COPY --from=build /app/services/therapists-service/dist ./dist
+COPY --from=build /app/services/therapists-service/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
 CMD ["node", "dist/main.js"]

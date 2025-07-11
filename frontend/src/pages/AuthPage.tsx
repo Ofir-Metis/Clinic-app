@@ -17,6 +17,7 @@ import {
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { useTranslation } from 'react-i18next';
 import { createAppTheme } from '../theme';
+import { GOOGLE_CLIENT_ID } from '../env';
 
 /**
  * AuthPage renders login and registration forms with Google authentication.
@@ -61,7 +62,7 @@ const AuthPage: React.FC = () => {
     }
   };
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const clientId = GOOGLE_CLIENT_ID || '';
 
   return (
     <GoogleOAuthProvider clientId={clientId}>

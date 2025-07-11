@@ -6,20 +6,20 @@ import { Entity, PrimaryGeneratedColumn, Column, UpdateDateColumn } from 'typeor
 @Entity('user_settings')
 export class UserSettings {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  userId: number;
+  userId!: number;
 
   @Column()
-  key: string;
+  key!: string;
 
   @Column('text')
-  value: string;
+  value!: string;
 
   @Column()
-  category: string;
+  category!: string;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

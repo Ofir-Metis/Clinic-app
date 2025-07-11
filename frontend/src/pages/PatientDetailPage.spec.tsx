@@ -12,6 +12,7 @@ jest.mock('../api/patient');
 
 describe('PatientDetailPage', () => {
   it('shows loader initially', () => {
+    (api.getPatientDetail as jest.Mock).mockReturnValue(new Promise(() => {}));
     render(<PatientDetailPage id={1} />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
@@ -24,6 +25,8 @@ describe('PatientDetailPage', () => {
 
     render(<PatientDetailPage id={2} />);
     await waitFor(() => expect(api.getPatientDetail).toHaveBeenCalled());
+    // Click the 'sessions' tab to ensure the FAB has aria-label 'new-note'
+    fireEvent.click(screen.getByRole('tab', { name: /sessions/i }));
     fireEvent.click(screen.getByLabelText('new-note'));
     expect(navigate).toHaveBeenCalledWith('/patients/2/notes/new');
   });

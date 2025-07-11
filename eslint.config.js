@@ -3,17 +3,19 @@ const tsPlugin = require('@typescript-eslint/eslint-plugin');
 
 module.exports = [
   {
-    files: ['**/*.{ts,tsx,js}'],
     ignores: ['**/dist/**', 'node_modules'],
+  },
+  {
+    files: ['**/*.{ts,tsx,js}'],
     languageOptions: {
-      parser: tsParser,
+      parser: require('@typescript-eslint/parser'),
       parserOptions: {
         ecmaVersion: 2021,
         sourceType: 'module',
       },
     },
     plugins: {
-      '@typescript-eslint': tsPlugin,
+      '@typescript-eslint': require('@typescript-eslint/eslint-plugin'),
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

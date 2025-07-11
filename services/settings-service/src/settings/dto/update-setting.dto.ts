@@ -5,10 +5,10 @@ import { IsString, IsOptional } from 'class-validator';
  */
 export class UpdateSettingDto {
   @IsString()
-  key: string;
+  key!: string;
 
   @IsString()
-  value: string;
+  value!: string;
 
   @IsOptional()
   @IsString()

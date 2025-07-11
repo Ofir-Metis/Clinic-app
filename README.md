@@ -39,8 +39,8 @@ Clinic App is a full stack application for therapists and clinics. Core features
 
 ## Prerequisites
 
-- **Node.js** LTS (18.x recommended)
-- **Yarn** package manager
+- **Node.js** LTS (**20.x or higher required**)
+- **Yarn** package manager (install globally with `npm install -g yarn`)
 - **Docker** and **Docker Compose**
 - **Git**
 - **Cloud CLIs**: [gcloud](https://cloud.google.com/sdk/docs/install), [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [Terraform](https://developer.hashicorp.com/terraform/install)
@@ -51,16 +51,31 @@ Clinic App is a full stack application for therapists and clinics. Core features
 ## Quick Start
 
 ```bash
+# Make sure you are using Node.js 20+
+nvm install 20
+nvm use 20
+
+# Install Yarn globally if not already installed
+npm install -g yarn
+
+# Clone and set up the project
 git clone https://github.com/yourorg/clinic-app.git
 cd clinic-app
 
-# set up environment and dependencies
-./scripts/setup.sh
+# Install dependencies
+corepack enable
+yarn install
 
-# start the full stack using Docker Compose
+# Build shared utilities
+yarn workspace @clinic/common build
+
+# Copy environment variables
+cp .env.example .env
+
+# Start all services
 ./scripts/dev.sh
 
-# run linting and tests
+# Run linting and tests
 ./scripts/test.sh
 ```
 
@@ -84,8 +99,11 @@ git clone https://github.com/yourorg/clinic-app.git
 cd clinic-app
 
 # install nvm and Node 18
-nvm install 18
-nvm use 18
+nvm install 20
+nvm use 20
+
+# environment variables
+cp .env.example .env
 
 # install dependencies
 corepack enable
@@ -93,9 +111,16 @@ yarn install
 
 # build shared utilities
 yarn workspace @clinic/common build
+yarn workspace analytics-service build
+yarn workspace api-gateway run build
+yarn workspace auth-service run build
+yarn workspace appointments-service run build
+yarn workspace files-service run build
+yarn workspace ai-service run build
+yarn workspace notes-service run build
+yarn workspace notifications-service run build
 
-# environment variables
-cp .env.example .env
+docker compose build
 
 # start services
 docker compose up -d
@@ -105,7 +130,12 @@ yarn workspace api-gateway run migration:run
 
 # start backend and frontend
 yarn workspace api-gateway start:dev
-cd frontend && yarn dev
+
+cd frontend 
+yarn dev
+
+cd services\auth-service
+yarn start
 ```
 
 ## Local Setup (Linux)
@@ -119,8 +149,8 @@ cd clinic-app
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
 source "$NVM_DIR/nvm.sh"
-nvm install 18
-nvm use 18
+nvm install 20
+nvm use 20
 
 # install dependencies
 corepack enable
@@ -354,7 +384,22 @@ GitHub Actions workflow [`ci.yml`](.github/workflows/ci.yml) runs lint, tests, b
 
 ## Troubleshooting & Support
 
-Common issues are documented in [docs/Troubleshooting.md](docs/Troubleshooting.md).
+### Common Issues
+
+- **Node version errors:**
+  - The project requires Node.js 20 or higher. Use `nvm install 20 && nvm use 20`.
+- **Yarn not found:**
+  - Install globally: `npm install -g yarn`.
+- **Yarn workspace errors:**
+  - Use the `-W` flag for root-level dependency changes, e.g. `yarn add -W <package>`.
+- **ts-morph TypeScript errors:**
+  - If you see errors about `MapIterator`, downgrade ts-morph: `yarn add -W ts-morph@17.0.1`.
+- **NestJS GraphQL 'Query root type must be provided':**
+  - Ensure at least one `@Query()` is defined in a resolver (see `app.resolver.ts` for a dummy example).
+- **Docker build fails on JSON files:**
+  - Validate all translation files in `frontend/src/i18n/` for correct JSON syntax.
+
+More issues are documented in [docs/Troubleshooting.md](docs/Troubleshooting.md).
 Check container logs with `docker compose logs -f <service>` and enable debug output with `DEBUG=app:*`.
 
 For live support, contact the team or use the integrated AI assistant in the app.

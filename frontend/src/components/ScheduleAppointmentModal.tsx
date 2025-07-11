@@ -12,8 +12,8 @@ import {
   ThemeProvider,
   CssBaseline,
 } from '@mui/material';
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
+import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
 import { useTranslation } from 'react-i18next';
 import { searchPatients } from '../api/patients';
 import { scheduleAppointment } from '../api/appointments';
@@ -111,7 +111,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({ ope
               value={datetime}
               onChange={(val) => setDatetime(val)}
               slotProps={{
-                textField: { fullWidth: true, margin: 'normal', error: datetime && datetime < new Date() },
+                textField: { fullWidth: true, margin: 'normal', error: !!(datetime && datetime < new Date()) },
               }}
             />
             <TextField

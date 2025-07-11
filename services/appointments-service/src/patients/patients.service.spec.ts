@@ -16,7 +16,7 @@ describe('PatientsService', () => {
       getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
     })),
     findOne: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation((d) => d),
+    create: jest.fn().mockImplementation((d) => ({ ...d, id: 1 })),
     save: jest.fn().mockImplementation((d) => Promise.resolve({ id: 1, ...d })),
     update: jest.fn().mockResolvedValue(undefined),
   };

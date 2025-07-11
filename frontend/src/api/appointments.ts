@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { API_URL } from '../env';
 
 export interface Appointment {
   id: number;
@@ -18,9 +19,7 @@ export interface GetAppointmentsFilter {
   view?: 'calendar' | 'list';
 }
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-});
+const api = axios.create({ baseURL: API_URL });
 
 export const getAppointments = async (filter: GetAppointmentsFilter) => {
   const traceId = uuidv4();

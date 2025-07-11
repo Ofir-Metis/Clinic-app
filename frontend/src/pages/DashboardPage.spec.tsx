@@ -24,6 +24,6 @@ describe('DashboardPage', () => {
     render(<DashboardPage />);
     await waitFor(() => expect(api.fetchAppointments).toHaveBeenCalled());
     fireEvent.click(screen.getByText('Calendar'));
-    expect(screen.getByText('Calendar')).toHaveAttribute('href', '/calendar');
+    expect(screen.getByRole('link', { name: 'Calendar' })).toHaveAttribute('href', '/calendar');
   });
 });

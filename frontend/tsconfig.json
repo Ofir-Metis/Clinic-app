@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "esnext",
+    "module": "esnext", // Required for import.meta.env
     "jsx": "react-jsx",
     "strict": true,
     "moduleResolution": "node",

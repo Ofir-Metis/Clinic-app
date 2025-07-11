@@ -5,6 +5,6 @@ import ResetRequestPage from './ResetRequestPage';
 describe('ResetRequestPage', () => {
   it('renders email field', () => {
     render(<ResetRequestPage />);
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
   });
 });

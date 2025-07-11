@@ -17,7 +17,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
-import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import * as RBC from 'react-big-calendar';
+const Calendar = RBC.Calendar as React.ComponentType<any>;
+const dateFnsLocalizer = RBC.dateFnsLocalizer;
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -29,8 +31,9 @@ import {
 } from '../api/appointments';
 import { logger } from '../logger';
 import { createAppTheme } from '../theme';
+import { enUS } from 'date-fns/locale/en-US';
 
-const locales = { en: require('date-fns/locale/en-US') };
+const locales = { en: enUS };
 const localizer = dateFnsLocalizer({
   format,
   parse,
@@ -145,6 +148,9 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <PageAppBar avatarUrls={[]} />
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        {t('myTreatmentHistory', 'My Treatment History')}
+      </Typography>
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Tabs
@@ -175,7 +181,7 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
                     start: new Date(a.startTime),
                     end: new Date(a.endTime),
                   }))}
-                  onSelectEvent={(e) => {
+                  onSelectEvent={(e: any) => {
                     const id = (e as Appointment).id;
                     console.info('event click', id);
                     logger.debug('event click', id);

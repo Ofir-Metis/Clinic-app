@@ -12,8 +12,11 @@
     "baseUrl": "./",
     "incremental": true,
     "paths": {
-      "@clinic/common/*": ["libs/common/src/*"],
-      "@clinic/common": ["libs/common/src"]
-    }
+      "@clinic/common/*": ["libs/common/dist/*"],
+      "@clinic/common": ["libs/common/dist"]
+    },
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "useDefineForClassFields": false
   }
 }

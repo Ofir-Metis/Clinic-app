@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
+import { THERAPIST_SERVICE_URL } from '../env';
 
 export interface Patient {
   id: number;
@@ -26,7 +27,7 @@ export const getMyPatients = async (
   const params = { therapistId, page, limit, search };
   console.info({ traceId, action: 'getMyPatients', payload: params });
   const { data } = await axios.get<PatientResponse>(
-    `${import.meta.env.THERAPIST_SERVICE_URL}/appointments-service/patients`,
+    `${THERAPIST_SERVICE_URL}/appointments-service/patients`,
     {
       params,
       headers: { 'X-Trace-Id': traceId },
@@ -56,7 +57,7 @@ export async function addPatient(
   const traceId = uuidv4();
   console.info({ traceId, action: 'addPatient', payload: data });
   const res = await axios.post(
-    `${import.meta.env.VITE_API_URL}/patients`,
+    `${THERAPIST_SERVICE_URL}/patients`,
     data,
     { headers: { 'X-Trace-Id': traceId } }
   );
@@ -67,7 +68,7 @@ export const searchPatients = async (search: string): Promise<PatientResponse> =
   const traceId = uuidv4();
   console.info({ traceId, action: 'searchPatients', payload: { search } });
   const { data } = await axios.get<PatientResponse>(
-    `${import.meta.env.VITE_API_URL}/patients`,
+    `${THERAPIST_SERVICE_URL}/patients`,
     {
       params: { search },
       headers: { 'X-Trace-Id': traceId },

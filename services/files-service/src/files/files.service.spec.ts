@@ -13,7 +13,7 @@ describe('FilesService', () => {
   });
 
   it('returns signed url', async () => {
-    jest.spyOn(service as any, 'client', 'get').mockReturnValue({});
+    (service as any).client = {};
     jest.spyOn<any, any>(service, 'uploadUrl').mockResolvedValue('url');
     const url = await service.uploadUrl('test');
     expect(url).toBeDefined();

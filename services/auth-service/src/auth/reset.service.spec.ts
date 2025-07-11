@@ -33,6 +33,8 @@ describe('ResetService', () => {
   };
 
   beforeEach(async () => {
+    process.env.TWILIO_ACCOUNT_SID = 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+    process.env.TWILIO_AUTH_TOKEN = 'test-token';
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ResetService,

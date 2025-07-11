@@ -24,7 +24,7 @@ describe('MainLayout navigation', () => {
         <MainLayout>
           <Routes>
             <Route path="/" element={<div>home</div>} />
-            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/appointments" element={<CalendarPage />} />
             <Route path="/tools" element={<ToolsPage />} />
           </Routes>
         </MainLayout>
@@ -32,8 +32,8 @@ describe('MainLayout navigation', () => {
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /calendar/i }));
-    expect(screen.getByRole('heading', { name: /calendar/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /calendar/i })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /tools/i }));
-    expect(screen.getByRole('heading', { name: /tools/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /tools/i })).toBeInTheDocument();
   });
 });

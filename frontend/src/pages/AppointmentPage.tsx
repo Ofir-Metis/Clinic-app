@@ -17,7 +17,10 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
 import { createAppTheme } from '../theme';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import * as RBC from 'react-big-calendar';
+const Calendar = RBC.Calendar as React.ComponentType<any>;
+const dateFnsLocalizer = RBC.dateFnsLocalizer;
+const Views = RBC.Views;
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -29,9 +32,10 @@ import {
   createAppointment,
   Appointment,
 } from '../api/appointments';
+import enUS from 'date-fns/locale/en-US';
 
 const locales = {
-  en: require('date-fns/locale/en-US'),
+  en: enUS,
 };
 const localizer = dateFnsLocalizer({
   format,
@@ -114,7 +118,7 @@ const AppointmentPage: React.FC = () => {
         </Tabs>
         {loading ? (
           <Box sx={{ mt: 2 }}>
-            <Skeleton variant="rectangular" height={200} />
+            <Skeleton variant="rectangular" height={200} data-testid="appointments-loading" />
           </Box>
         ) : (
           <>
@@ -129,7 +133,7 @@ const AppointmentPage: React.FC = () => {
                     end: new Date(a.endTime),
                   }))}
                   views={isMobile ? [Views.DAY, Views.AGENDA] : undefined}
-                  onSelectEvent={(e) => setSelected(e as Appointment)}
+                  onSelectEvent={(e: any) => setSelected(e as Appointment)}
                   style={{ height: '100%' }}
                 />
               </Box>

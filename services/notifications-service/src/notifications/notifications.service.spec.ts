@@ -1,4 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+// Mock NATS client
+jest.mock('@nestjs/microservices', () => {
+  const actual = jest.requireActual('@nestjs/microservices');
+  return {
+    ...actual,
+    ClientProxyFactory: {
+      create: jest.fn(() => ({
+        emit: jest.fn(),
+        send: jest.fn(() => ({ subscribe: jest.fn() })),
+      })),
+    },
+  };
+});
 import { NotificationsService } from './notifications.service';
 
 describe('NotificationsService', () => {

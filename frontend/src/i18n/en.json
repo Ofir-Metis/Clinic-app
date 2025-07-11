@@ -61,4 +61,6 @@
   ,"welcomeBackName": "Welcome back, {{name}}!"
   ,"welcomeNewUser": "Nice to meet you, {{name}}!"
   ,"notifications": "Notifications"
+  ,"firstName": "First Name",
+  "lastName": "Last Name"
 }

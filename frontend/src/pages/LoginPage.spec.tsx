@@ -1,11 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import LoginPage from './LoginPage';
+import { MemoryRouter } from 'react-router-dom';
 
 describe('LoginPage', () => {
   it('renders email and password fields', () => {
-    render(<LoginPage />);
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    render(
+      <MemoryRouter>
+        <LoginPage />
+      </MemoryRouter>
+    );
+    const emailFields = screen.getAllByLabelText(/email/i);
+    expect(emailFields.length).toBeGreaterThan(0);
+    const passwordFields = screen.getAllByLabelText(/password/i);
+    expect(passwordFields.length).toBeGreaterThan(0);
   });
 });

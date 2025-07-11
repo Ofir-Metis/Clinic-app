@@ -5,6 +5,7 @@ describe('OpenaiService', () => {
   let service: OpenaiService;
 
   beforeEach(async () => {
+    process.env.OPENAI_API_KEY = 'test-key';
     const module: TestingModule = await Test.createTestingModule({
       providers: [OpenaiService],
     }).compile();

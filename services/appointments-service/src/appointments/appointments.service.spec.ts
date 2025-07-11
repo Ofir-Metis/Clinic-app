@@ -1,5 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+// Mock NATS client
+jest.mock('@nestjs/microservices', () => {
+  const actual = jest.requireActual('@nestjs/microservices');
+  return {
+    ...actual,
+    ClientProxyFactory: {
+      create: jest.fn(() => ({
+        emit: jest.fn(),
+        send: jest.fn(() => ({ subscribe: jest.fn() })),
+      })),
+    },
+  };
+});
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from './appointment.entity';
 

@@ -5,6 +5,7 @@ import TreatmentHistoryPage from './TreatmentHistoryPage';
 import * as api from '../api/appointments';
 
 jest.mock('../api/appointments');
+(api.getAppointments as jest.Mock).mockResolvedValue([]);
 
 describe('TreatmentHistoryPage', () => {
   it('shows header', () => {
@@ -17,8 +18,13 @@ describe('TreatmentHistoryPage', () => {
     ]);
     (api.getAppointment as jest.Mock).mockResolvedValue({ id: 1, therapistId: 1 });
     render(<TreatmentHistoryPage user={{ id: 1 }} />);
+    // Switch to List View tab
+    const listTab = screen.getByRole('tab', { name: /listview/i });
+    userEvent.click(listTab);
     await waitFor(() => expect(screen.getByText(/virtual/i)).toBeInTheDocument());
-    userEvent.click(screen.getByRole('row', { name: /virtual/i }));
+    // Find the row containing 'virtual' and click it
+    const row = screen.getByRole('row', { name: /virtual/i });
+    userEvent.click(row);
     await waitFor(() => expect(screen.getByLabelText('treatment-detail')).toBeInTheDocument());
   });
 });

@@ -43,23 +43,21 @@
   "addPatient": "הוסף מטופל",
   "settings": "הגדרות",
   "notifications": "התראות",
-  "forgotPassword": "שכחת סיסמה?"
+  "forgotPassword": "שכחת סיסמה?",
   "calendar": "יומן",
   "tools": "כלים",
-  "notifications": "התראות",
   "new": "חדש",
-  "forgotPassword": "שכחת סיסמה?"
-  ,"rememberMe": "זכור אותי"
-  ,"sendResetLink": "שלח קישור לאיפוס"
-  ,"resetPassword": "איפוס סיסמה"
-  ,"newPassword": "סיסמה חדשה"
-  ,"confirmPassword": "אימות סיסמה"
-  ,"confirmNewPassword": "אימות סיסמה חדשה"
-  ,"passwordStrength": "חוזק הסיסמה"
-  ,"requestReset": "בקשת איפוס סיסמה"
-  ,"resetLinkSent": "אם קיים חשבון נשלח קישור"
-  ,"loginFailed": "ההתחברות נכשלה"
-  ,"passwordRequirements": "לפחות 8 תווים עם אותיות ומספרים"
-  ,"welcomeBackName": "ברוך שובך, {{name}}!"
-  ,"welcomeNewUser": "נעים להכיר, {{name}}!"
+  "rememberMe": "זכור אותי",
+  "sendResetLink": "שלח קישור לאיפוס",
+  "resetPassword": "איפוס סיסמה",
+  "newPassword": "סיסמה חדשה",
+  "confirmPassword": "אימות סיסמה",
+  "confirmNewPassword": "אימות סיסמה חדשה",
+  "passwordStrength": "חוזק הסיסמה",
+  "requestReset": "בקשת איפוס סיסמה",
+  "resetLinkSent": "אם קיים חשבון נשלח קישור",
+  "loginFailed": "ההתחברות נכשלה",
+  "passwordRequirements": "לפחות 8 תווים עם אותיות ומספרים",
+  "welcomeBackName": "ברוך שובך, {{name}}!",
+  "welcomeNewUser": "נעים להכיר, {{name}}!"
 }
