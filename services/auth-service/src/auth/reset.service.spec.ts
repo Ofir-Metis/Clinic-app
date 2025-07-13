@@ -54,7 +54,9 @@ describe('ResetService', () => {
     process.env.EMAIL_USER = 'noreply@test.com';
     process.env.WHATSAPP_FROM = 'whatsapp:+11111111111';
     const token = await service.requestReset('a@test.com');
-    expect(token).toHaveProperty('token');
+    expect(typeof token).toBe('string');
+    expect(token).toBeDefined();
+    expect((token as string).length).toBeGreaterThan(0);
   }, 15000);
 
   it('skips WhatsApp if phone missing', async () => {
