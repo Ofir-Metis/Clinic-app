@@ -415,3 +415,30 @@ For live support, contact the team or use the integrated AI assistant in the app
 
 This project follows [Semantic Versioning](https://semver.org/). See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
+## Environment Variables: Required Formats
+
+| Variable              | Example Value                                 | Notes                                 |
+|-----------------------|-----------------------------------------------|---------------------------------------|
+| OPENAI_API_KEY        | sk-testdevkey1234567890abcdefghijklmnopqrstu  | Must be non-empty, looks like sk-...  |
+| TWILIO_ACCOUNT_SID    | AC00000000000000000000000000000000            | Must start with 'AC'                  |
+| TWILIO_AUTH_TOKEN     | twilio-dev-token                              | Must be non-empty                     |
+| ...                   | ...                                           | ...                                   |
+
+## Service-Specific Setup
+
+- **settings-service:**  
+  Import and register `JwtModule` in `settings/settings.module.ts` for JWT guards.
+
+- **notifications-service:**  
+  Install the `nats` package:  
+  `yarn workspace notifications-service add nats`
+
+## Troubleshooting
+
+- `accountSid must start with AC`:  
+  Check your `.env` for a valid Twilio SID.
+- `The OPENAI_API_KEY environment variable is missing or empty`:  
+  Add a dev-safe key to `.env`.
+- `Nest can't resolve dependencies of the JwtAuthGuard`:  
+  Ensure `JwtModule` is imported in the relevant module.
+

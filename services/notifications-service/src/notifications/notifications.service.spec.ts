@@ -18,6 +18,8 @@ describe('NotificationsService', () => {
   let service: NotificationsService;
 
   beforeEach(async () => {
+    process.env.TWILIO_ACCOUNT_SID = 'AC00000000000000000000000000000000';
+    process.env.TWILIO_AUTH_TOKEN = 'twilio-dev-token';
     const module: TestingModule = await Test.createTestingModule({
       providers: [NotificationsService],
     }).compile();

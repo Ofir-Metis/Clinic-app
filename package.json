@@ -53,6 +53,7 @@
     "expect": "^30.0.4",
     "express": "^5.1.0",
     "form-data": "^4.0.3",
+    "joi": "^17.13.3",
     "parse5": "^8.0.0",
     "pretty-format": "^30.0.2",
     "ts-morph": "17.0.1",

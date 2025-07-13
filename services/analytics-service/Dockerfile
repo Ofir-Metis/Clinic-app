@@ -1,9 +1,10 @@
 # --- Base dependencies stage ---
 # This stage installs all dependencies for the entire monorepo.
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 WORKDIR /app
 
 # IMPORTANT: Copy the root tsconfig.json first, so the build stage can access it.
+COPY tsconfig.base.json ./
 COPY tsconfig.json ./
 # If you have other root tsconfig files like tsconfig.build.json, copy them too.
 # COPY tsconfig.build.json ./
@@ -21,10 +22,11 @@ COPY frontend ./frontend
 RUN yarn config set registry https://registry.npmmirror.com
 RUN yarn config set network-timeout 600000 -g
 RUN yarn install --frozen-lockfile
+RUN yarn workspaces run build
 
 # --- Builder stage ---
 # This stage builds only the analytics-service.
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
 
 # Copy the root tsconfig.json from the 'deps' stage. This is the critical fix.
@@ -58,7 +60,7 @@ RUN yarn build
 
 # --- Final Production stage ---
 # This stage creates the small, final image with only production dependencies.
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # Copy the compiled code from the 'build' stage.
@@ -69,6 +71,10 @@ COPY --from=build /app/services/analytics-service/package.json ./package.json
 
 # Install only production dependencies.
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/libs/common/dist /app/libs/common/dist
+RUN rm -rf ./node_modules/@clinic/common && \
+    mkdir -p ./node_modules/@clinic/common && \
+    cp -r /app/libs/common/dist/* ./node_modules/@clinic/common/
 
 # Set the command to run the application.
 CMD ["node", "dist/main.js"]

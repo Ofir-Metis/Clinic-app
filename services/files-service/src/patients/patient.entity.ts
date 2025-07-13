@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 @Entity()
 export class Patient {
+  @PrimaryGeneratedColumn()
   id!: number;
 
   firstName!: string;

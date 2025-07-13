@@ -6,7 +6,7 @@
     "start:dev": "nest start --watch",
     "test": "jest",
     "migration:run": "echo migrating",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p ./tsconfig.json"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",

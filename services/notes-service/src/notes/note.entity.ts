@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 
 @Entity()
 export class Note {
+  @PrimaryGeneratedColumn()
   id!: number;
 
   @Column()

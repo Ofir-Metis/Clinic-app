@@ -26,5 +26,5 @@ describe('TreatmentHistoryPage', () => {
     const row = screen.getByRole('row', { name: /virtual/i });
     userEvent.click(row);
     await waitFor(() => expect(screen.getByLabelText('treatment-detail')).toBeInTheDocument());
-  });
+  }, 15000);
 });

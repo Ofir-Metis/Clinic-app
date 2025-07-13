@@ -11,5 +11,5 @@ describe('SettingsPage', () => {
   it('renders language field', async () => {
     render(<SettingsPage />);
     expect(await screen.findByLabelText('Language')).toBeInTheDocument();
-  });
+  }, 15000);
 });

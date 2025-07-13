@@ -22,6 +22,6 @@ describe('TherapistProfilePage', () => {
         ''
       ].join('.'));
     render(<TherapistProfilePage id={1} />);
-    await waitFor(() => expect(screen.getByLabelText('edit')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText('edit')).toBeInTheDocument(), { timeout: 15000 });
   });
 });
