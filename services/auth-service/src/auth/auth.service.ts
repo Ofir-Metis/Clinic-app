@@ -30,10 +30,14 @@ export class AuthService {
    */
   async register(createUserDto: CreateUserDto) {
     const hashed = await bcrypt.hash(createUserDto.password, 10);
+    const userRole = createUserDto.role && ['therapist', 'patient', 'user'].includes(createUserDto.role)
+      ? createUserDto.role
+      : 'user';
     const user = this.usersRepository.create({
       email: createUserDto.email,
+      name: createUserDto.name,
       password: hashed,
-      roles: ['user'],
+      roles: [userRole],
     });
     await this.usersRepository.save(user);
     const access_token = await this.jwtService.signAsync({

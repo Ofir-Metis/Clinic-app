@@ -30,7 +30,7 @@ import {
   getAppointmentHistory,
 } from '../api/appointments';
 import { logger } from '../logger';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { enUS } from 'date-fns/locale/en-US';
 
 const locales = { en: enUS };
@@ -121,7 +121,7 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
   const [showNew, setShowNew] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
+  const theme = useMemo(() => theme, [i18n.dir()]);
 
   useEffect(() => {
     console.info('TreatmentHistoryPage mount');

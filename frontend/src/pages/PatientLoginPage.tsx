@@ -15,14 +15,14 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../logger';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { API_URL, GOOGLE_CLIENT_ID } from '../env';
 
 const PatientLoginPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [error, setError] = useState('');
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
+  const theme = useMemo(() => theme(i18n.dir()), [i18n]);
 
   const formik = useFormik({
     initialValues: { email: '', password: '' },

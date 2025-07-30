@@ -14,12 +14,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { fetchNotifications, Notification } from '../api/notifications';
 
 const NotificationsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Notification[]>([]);
   const [error, setError] = useState('');

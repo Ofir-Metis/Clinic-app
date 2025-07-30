@@ -8,11 +8,22 @@ import {
   Snackbar,
   CircularProgress,
   Box,
+  Typography,
+  Avatar,
+  Grid,
 } from '@mui/material';
+import {
+  EventAvailable as EventIcon,
+  Person as PersonIcon,
+  Schedule as ScheduleIcon,
+  Notes as NotesIcon,
+  MedicalServices as ServiceIcon,
+} from '@mui/icons-material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
 import { useTranslation } from 'react-i18next';
 import { scheduleAppointment } from '../api/appointments';
+import WellnessLayout from '../layouts/WellnessLayout';
 
 /**
  * Page for scheduling a new appointment.
@@ -48,68 +59,145 @@ const AddAppointmentPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-      <Card sx={{ width: 400 }}>
-        <CardContent>
+    <WellnessLayout
+      title="Schedule Appointment"
+      showFab={false}
+    >
+      {/* Header Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Avatar sx={{ 
+          width: 80, 
+          height: 80, 
+          bgcolor: 'secondary.main', 
+          mx: 'auto', 
+          mb: 2 
+        }}>
+          <EventIcon sx={{ fontSize: 40 }} />
+        </Avatar>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 700,
+            mb: 1,
+            background: 'linear-gradient(135deg, #8B5A87 0%, #A67B9A 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          📅 Schedule New Appointment
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Book a therapy session with your client
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <Card sx={{ width: '100%', maxWidth: 600 }}>
+        <CardContent sx={{ p: 4 }}>
           <form onSubmit={handleSubmit} noValidate>
-            <TextField
-              fullWidth
-              margin="normal"
-              label={t('patientId', 'Patient ID')}
-              value={patientId}
-              onChange={(e) => setPatientId(e.target.value)}
-            />
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DateTimePicker
-                label={t('datetime')}
-                value={datetime}
-                onChange={(val) => setDatetime(val)}
-                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-              />
-            </LocalizationProvider>
-            <TextField
-              select
-              fullWidth
-              margin="normal"
-              label={t('serviceType')}
-              value={serviceType}
-              onChange={(e) => setServiceType(e.target.value)}
-            >
-              <MenuItem value="consultation">Consultation</MenuItem>
-              <MenuItem value="therapy">Therapy</MenuItem>
-            </TextField>
-            <TextField
-              fullWidth
-              margin="normal"
-              label={t('notes')}
-              multiline
-              minRows={3}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-            <Box sx={{ position: 'relative', mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                disabled={saving || !patientId || !datetime}
-              >
-                {t('submit')}
-              </Button>
-              {saving && (
-                <CircularProgress size={24} sx={{ position: 'absolute', top: '50%', left: '50%', mt: -1.5, ml: -1.5 }} />
-              )}
-            </Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('patientId', 'Patient ID')}
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  placeholder="Enter patient ID or search by name"
+                  InputProps={{
+                    startAdornment: <PersonIcon sx={{ mr: 1, color: 'action.active' }} />
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DateTimePicker
+                    label={t('datetime', 'Date & Time')}
+                    value={datetime}
+                    onChange={(val) => setDatetime(val)}
+                    slotProps={{ 
+                      textField: { 
+                        fullWidth: true,
+                        InputProps: {
+                          startAdornment: <ScheduleIcon sx={{ mr: 1, color: 'action.active' }} />
+                        }
+                      } 
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  label={t('serviceType', 'Session Type')}
+                  value={serviceType}
+                  onChange={(e) => setServiceType(e.target.value)}
+                  InputProps={{
+                    startAdornment: <ServiceIcon sx={{ mr: 1, color: 'action.active' }} />
+                  }}
+                >
+                  <MenuItem value="consultation">Initial Consultation</MenuItem>
+                  <MenuItem value="therapy">Individual Therapy</MenuItem>
+                  <MenuItem value="group">Group Therapy</MenuItem>
+                  <MenuItem value="family">Family Therapy</MenuItem>
+                  <MenuItem value="followup">Follow-up Session</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('notes', 'Session Notes')}
+                  multiline
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add any special instructions or notes for this session..."
+                  InputProps={{
+                    startAdornment: <NotesIcon sx={{ mr: 1, color: 'action.active', alignSelf: 'flex-start', mt: 1 }} />
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ position: 'relative' }}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    disabled={saving || !patientId || !datetime}
+                    startIcon={<EventIcon />}
+                    sx={{ height: 56 }}
+                  >
+                    {t('submit', 'Schedule Appointment')}
+                  </Button>
+                  {saving && (
+                    <CircularProgress 
+                      size={24} 
+                      sx={{ 
+                        position: 'absolute', 
+                        top: '50%', 
+                        left: '50%', 
+                        mt: -1.5, 
+                        ml: -1.5 
+                      }} 
+                    />
+                  )}
+                </Box>
+              </Grid>
+            </Grid>
           </form>
         </CardContent>
       </Card>
+      </Box>
+      
       <Snackbar
         open={Boolean(snack)}
         autoHideDuration={4000}
         onClose={() => setSnack(null)}
         message={snack}
       />
-    </Box>
+    </WellnessLayout>
   );
 };
 

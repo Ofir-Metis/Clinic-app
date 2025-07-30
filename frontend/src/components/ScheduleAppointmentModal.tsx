@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { searchPatients } from '../api/patients';
 import { scheduleAppointment } from '../api/appointments';
 import { logger } from '../logger';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 
 interface Option {
   id: number;
@@ -39,8 +39,6 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({ ope
   const [datetime, setDatetime] = useState<Date | null>(new Date());
   const [serviceType, setServiceType] = useState('consultation');
   const [notes, setNotes] = useState('');
-
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   // debounce search
   useEffect(() => {

@@ -23,7 +23,7 @@ import { PatientAppointmentsModule } from './patient-appointments/patient-appoin
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: true,
     }),
     AppointmentsModule,
     PatientsModule,

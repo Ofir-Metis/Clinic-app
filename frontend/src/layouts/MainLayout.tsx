@@ -16,7 +16,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AddIcon from '@mui/icons-material/Add';
 import NewDialog from '../components/NewDialog';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 
 interface Props {
   children: React.ReactNode;
@@ -27,8 +27,6 @@ const MainLayout: React.FC<Props> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [newOpen, setNewOpen] = useState(false);
-
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const value = useMemo(() => {
     if (location.pathname.startsWith('/appointments')) return 'calendar';

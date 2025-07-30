@@ -16,7 +16,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import * as RBC from 'react-big-calendar';
 const Calendar = RBC.Calendar as React.ComponentType<any>;
 const dateFnsLocalizer = RBC.dateFnsLocalizer;
@@ -84,8 +84,6 @@ const AppointmentPage: React.FC = () => {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<Appointment | null>(null);
   const isMobile = useMediaQuery('(max-width:600px)');
-
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     setLoading(true);

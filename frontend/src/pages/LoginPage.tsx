@@ -23,7 +23,7 @@ import zxcvbn from 'zxcvbn';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { logger } from '../logger';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { GOOGLE_CLIENT_ID } from '../env';
 
 const LoginPage: React.FC = () => {
@@ -31,7 +31,6 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const formik = useFormik({
     initialValues: { email: '', password: '' },
@@ -64,7 +63,14 @@ const LoginPage: React.FC = () => {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID || ''}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+        <Box sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          background: 'linear-gradient(135deg, #e0f7fa 0%, #f5f5f5 100%)',
+        }}>
           {/* Language Switcher */}
           <Box sx={{ position: 'absolute', top: 24, right: 24 }}>
             <Select
@@ -72,6 +78,7 @@ const LoginPage: React.FC = () => {
               onChange={e => i18n.changeLanguage(e.target.value)}
               size="small"
               aria-label="language switcher"
+              sx={{ bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, boxShadow: 1 }}
             >
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="he">עברית</MenuItem>
@@ -79,7 +86,22 @@ const LoginPage: React.FC = () => {
               <MenuItem value="ar">العربية</MenuItem>
             </Select>
           </Box>
-          <Box component="form" onSubmit={formik.handleSubmit} sx={{ p: 3, bgcolor: 'background.paper', boxShadow: 3, width: '100%', maxWidth: 360 }}>
+          <Box component="form" onSubmit={formik.handleSubmit} sx={{
+            p: 4,
+            bgcolor: 'rgba(255,255,255,0.6)',
+            boxShadow: '0 8px 32px 0 rgba(31,38,135,0.15)',
+            borderRadius: 4,
+            border: '1px solid rgba(255,255,255,0.18)',
+            width: '100%',
+            maxWidth: 380,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+          }}>
+            <Typography variant="h4" fontWeight={700} mb={2} fontFamily="Roboto, sans-serif">
+              {t('login')}
+            </Typography>
             {error && (
               <Typography role="alert" color="error">
                 {error}
@@ -96,6 +118,7 @@ const LoginPage: React.FC = () => {
               error={formik.touched.email && Boolean(formik.errors.email)}
               helperText={formik.touched.email && formik.errors.email}
               aria-label="email"
+              sx={{ borderRadius: 2, bgcolor: 'rgba(255,255,255,0.7)' }}
             />
             <TextField
               margin="normal"
@@ -109,6 +132,7 @@ const LoginPage: React.FC = () => {
               error={formik.touched.password && Boolean(formik.errors.password)}
               helperText={formik.touched.password && formik.errors.password}
               aria-label="password"
+              sx={{ borderRadius: 2, bgcolor: 'rgba(255,255,255,0.7)' }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -119,25 +143,21 @@ const LoginPage: React.FC = () => {
                 ),
               }}
             />
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="caption">{t('passwordStrength')}</Typography>
-              <LinearProgress variant="determinate" value={strength} aria-label="password strength" />
-            </Box>
-            <Button color="primary" variant="contained" type="submit" fullWidth disabled={formik.isSubmitting} aria-label="login" sx={{ mt: 2 }}>
+            <Button color="primary" variant="contained" type="submit" fullWidth disabled={formik.isSubmitting} aria-label="login" sx={{ mt: 2, borderRadius: 3, fontWeight: 700, fontSize: 18, py: 1.5 }}>
               {formik.isSubmitting ? <CircularProgress size={24} /> : t('login')}
             </Button>
-            <Box sx={{ textAlign: 'right', my: 1 }}>
+            <Box sx={{ textAlign: 'right', my: 1, width: '100%' }}>
               <Link component={RouterLink} to="/reset/request" underline="hover">
                 {t('forgotPassword')}
               </Link>
             </Box>
-            <Box sx={{ textAlign: 'center', my: 2 }}>{t('or')}</Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Box sx={{ textAlign: 'center', my: 2, width: '100%' }}>{t('or')}</Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
             </Box>
             {/* Sign Up Button */}
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
-              <Button component={RouterLink} to="/register" color="secondary" variant="outlined" fullWidth aria-label="sign up">
+            <Box sx={{ textAlign: 'center', mt: 2, width: '100%' }}>
+              <Button component={RouterLink} to="/register" color="secondary" variant="outlined" fullWidth aria-label="sign up" sx={{ borderRadius: 3, fontWeight: 700, fontSize: 18, py: 1.5 }}>
                 {t('register')}
               </Button>
             </Box>

@@ -25,7 +25,7 @@ import PageAppBar from '../components/PageAppBar';
 import { useTranslation } from 'react-i18next';
 import { getMyPatients, Patient } from '../api/patients';
 import { useAuth } from '../AuthContext';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
 
 const PatientListPage: React.FC = () => {
@@ -41,8 +41,6 @@ const PatientListPage: React.FC = () => {
   const [error, setError] = useState('');
   const isMobile = useMediaQuery('(max-width:600px)');
   const { userId } = useAuth();
-
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     const handler = setTimeout(() => setSearch(pendingSearch), 300);

@@ -7,8 +7,11 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 @Index(['patientId'])
 @Index(['datetime'])
 export class Appointment {
+  @PrimaryGeneratedColumn()
   id!: number;
+  @Column()
   patientId!: number;
+  @Column({ type: 'timestamptz' })
   datetime!: Date;
   serviceType!: string;
   createdAt!: Date;

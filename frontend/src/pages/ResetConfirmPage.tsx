@@ -15,13 +15,12 @@ import axios from 'axios';
 import zxcvbn from 'zxcvbn';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 
 const ResetConfirmPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const token = params.get('token') || '';
 

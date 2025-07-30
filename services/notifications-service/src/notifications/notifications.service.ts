@@ -7,7 +7,7 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 export class NotificationsService implements OnModuleInit {
   private client = ClientProxyFactory.create({
     transport: Transport.NATS,
-    options: { url: process.env.NATS_URL || 'nats://localhost:4222' },
+    options: { url: process.env.NATS_URL },
   });
 
   private mailer = createTransport({

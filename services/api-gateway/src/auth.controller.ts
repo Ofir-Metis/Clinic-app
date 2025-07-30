@@ -10,7 +10,7 @@ export class AuthController {
   async register(@Body() body: any) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post('http://localhost:3000/auth/register', body, { withCredentials: true })
+        this.httpService.post('http://auth-service:3000/auth/register', body, { withCredentials: true })
       );
       return response.data;
     } catch (error) {
@@ -22,7 +22,7 @@ export class AuthController {
   async login(@Body() body: any) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post('http://localhost:3000/auth/login', body, { withCredentials: true })
+        this.httpService.post('http://auth-service:3000/auth/login', body, { withCredentials: true })
       );
       return response.data;
     } catch (error) {

@@ -12,12 +12,11 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 
 const ResetRequestPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [sent, setSent] = useState(false);
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   const formik = useFormik({
     initialValues: { email: '' },

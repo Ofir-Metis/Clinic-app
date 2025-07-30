@@ -32,12 +32,12 @@ describe('AuthService', () => {
   });
 
   it('registers a user and returns token', async () => {
-    const result = await service.register({ email: 'a@test.com', password: 'pass123' });
+    const result = await service.register({ email: 'a@test.com', password: 'pass123', name: 'Test User' });
     expect(result).toHaveProperty('access_token');
   });
 
   it('validates user credentials', async () => {
-    await service.register({ email: 'b@test.com', password: 'pass123' });
+    await service.register({ email: 'b@test.com', password: 'pass123', name: 'Test User' });
     const user = await service.validateUser('b@test.com', 'pass123');
     expect(user?.email).toBe('b@test.com');
   });

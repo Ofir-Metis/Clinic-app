@@ -17,6 +17,10 @@ import CalendarPage from './pages/CalendarPage';
 import ToolsPage from './pages/ToolsPage';
 import MainLayout from './layouts/MainLayout';
 import PrivateRoute from './components/PrivateRoute';
+import PatientListPage from './pages/PatientListPage';
+import TreatmentHistoryPage from './pages/TreatmentHistoryPage';
+import PatientLoginPage from './pages/PatientLoginPage';
+import TherapistProfilePage from './pages/TherapistProfilePage';
 
 const PatientDetailRoute = () => {
   const { id } = useParams();
@@ -25,15 +29,14 @@ const PatientDetailRoute = () => {
 
 function App() {
   const token = localStorage.getItem('token');
+  console.log('DEBUG: token in App.tsx:', token);
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route
             path="/"
-            element={
-              <Navigate to={token ? '/dashboard' : '/login'} replace />
-            }
+            element={<Navigate to={token ? '/dashboard' : '/login'} replace />}
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
@@ -44,94 +47,18 @@ function App() {
             element={
               <MainLayout>
                 <Routes>
-                  <Route
-                    path="dashboard"
-                    element={(
-                      <PrivateRoute>
-                        <DashboardPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="patients/new"
-                    element={(
-                      <PrivateRoute>
-                        <AddPatientPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="calendar"
-                    element={(
-                      <PrivateRoute>
-                        <CalendarPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="tools"
-                    element={(
-                      <PrivateRoute>
-                        <ToolsPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="settings"
-                    element={(
-                      <PrivateRoute>
-                        <SettingsPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="notifications"
-                    element={(
-                      <PrivateRoute>
-                        <NotificationsPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="appointments"
-                    element={(
-                      <PrivateRoute>
-                        <AppointmentPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="appointments/new"
-                    element={(
-                      <PrivateRoute>
-                        <AddAppointmentPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="patient/history"
-                    element={(
-                      <PrivateRoute>
-                        <PatientHistoryPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="patient/history/:id"
-                    element={(
-                      <PrivateRoute>
-                        <PatientHistoryPage />
-                      </PrivateRoute>
-                    )}
-                  />
-                  <Route
-                    path="patients/:id"
-                    element={(
-                      <PrivateRoute>
-                        <PatientDetailRoute />
-                      </PrivateRoute>
-                    )}
-                  />
+                  <Route path="dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+                  <Route path="patients" element={<PrivateRoute><PatientListPage /></PrivateRoute>} />
+                  <Route path="patients/new" element={<PrivateRoute><AddPatientPage /></PrivateRoute>} />
+                  <Route path="patients/:id" element={<PrivateRoute><PatientDetailRoute /></PrivateRoute>} />
+                  <Route path="patients/:id/history" element={<PrivateRoute><PatientHistoryPage /></PrivateRoute>} />
+                  <Route path="patients/:id/treatments" element={<PrivateRoute><TreatmentHistoryPage /></PrivateRoute>} />
+                  <Route path="patients/:id/login" element={<PrivateRoute><PatientLoginPage /></PrivateRoute>} />
+                  <Route path="appointments/:id" element={<PrivateRoute><AppointmentPage /></PrivateRoute>} />
+                  <Route path="appointments/new" element={<PrivateRoute><AddAppointmentPage /></PrivateRoute>} />
+                  <Route path="notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
+                  <Route path="settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
+                  <Route path="therapist/profile" element={<PrivateRoute><TherapistProfilePage /></PrivateRoute>} />
                 </Routes>
               </MainLayout>
             }

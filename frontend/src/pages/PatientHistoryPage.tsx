@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '../logger';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { API_URL } from '../env';
 
 interface AppointmentRow {
@@ -32,7 +32,6 @@ interface AppointmentRow {
 const PatientHistoryPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

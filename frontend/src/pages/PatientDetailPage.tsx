@@ -20,7 +20,7 @@ import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadIcon from '@mui/icons-material/UploadFile';
 import PageAppBar from '../components/PageAppBar';
 import { useTranslation } from 'react-i18next';
-import { createAppTheme } from '../theme';
+import { theme } from '../theme';
 import { useNavigate } from 'react-router-dom';
 import {
   getPatientDetail,
@@ -55,8 +55,6 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
       fileInputRef.current?.click();
     }
   };
-
-  const theme = useMemo(() => createAppTheme(i18n.dir()), [i18n]);
 
   useEffect(() => {
     setLoading(true);
