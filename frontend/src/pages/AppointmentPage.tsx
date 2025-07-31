@@ -16,6 +16,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
+import SessionRecorder from '../components/SessionRecorder';
+import { MeetingTypeToggle } from '../components/appointments/MeetingTypeToggle';
 import { theme } from '../theme';
 import * as RBC from 'react-big-calendar';
 const Calendar = RBC.Calendar as React.ComponentType<any>;
@@ -49,32 +51,150 @@ interface DetailProps {
   appointment: Appointment | null;
   open: boolean;
   onClose: () => void;
+  onAppointmentUpdate?: (updatedAppointment: Appointment) => void;
 }
 
-const AppointmentDetail: React.FC<DetailProps> = ({ appointment, open, onClose }) => (
-  <Drawer anchor="right" open={open} onClose={onClose} aria-label="appointment-detail">
-    <Box sx={{ width: 320, p: 2 }}>
-      <IconButton onClick={onClose} aria-label="close">
-        <CloseIcon />
-      </IconButton>
-      {appointment ? (
-        <Box>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            {new Date(appointment.startTime).toLocaleString()}
+const AppointmentDetail: React.FC<DetailProps> = ({ 
+  appointment, 
+  open, 
+  onClose, 
+  onAppointmentUpdate 
+}) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Mock meeting configuration based on appointment data
+  const getMeetingConfig = (apt: Appointment) => ({
+    type: apt.meetingUrl ? 'online' as const : 'in-person' as const,
+    location: apt.location || 'Office Room 1',
+    meetingUrl: apt.meetingUrl,
+    googleMeetEnabled: !!apt.meetingUrl,
+    recordingSettings: {
+      enabled: false, // Could derive from appointment data
+      type: 'none' as const,
+      quality: 'medium' as const,
+      autoStart: false,
+      includeTranscription: false,
+      shareWithClient: false,
+      retentionDays: 30
+    },
+    waitingRoomEnabled: true,
+    allowClientToJoinEarly: false,
+    meetingDuration: 60
+  });
+
+  const handleMeetingTypeChange = async (
+    appointmentId: string,
+    newType: 'in-person' | 'online' | 'hybrid',
+    config: any
+  ) => {
+    setIsUpdating(true);
+    try {
+      // Mock API call to change meeting type
+      console.log('Changing meeting type:', { appointmentId, newType, config });
+      
+      // Simulate API response
+      const updatedAppointment = {
+        ...appointment!,
+        meetingUrl: newType === 'online' ? 'https://meet.google.com/abc-defg-hij' : undefined,
+        location: newType === 'in-person' ? config.location : undefined,
+        // Update other fields as needed
+      };
+
+      if (onAppointmentUpdate) {
+        onAppointmentUpdate(updatedAppointment);
+      }
+
+      return {
+        success: true,
+        meetingUrl: updatedAppointment.meetingUrl,
+        warnings: newType === 'online' ? ['Google Meet link generated automatically'] : []
+      };
+    } catch (error) {
+      console.error('Failed to change meeting type:', error);
+      return { success: false };
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRecordingSettingsChange = async (
+    appointmentId: string,
+    settings: any
+  ) => {
+    try {
+      console.log('Updating recording settings:', { appointmentId, settings });
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to update recording settings:', error);
+      return { success: false };
+    }
+  };
+
+  return (
+    <Drawer anchor="right" open={open} onClose={onClose} aria-label="appointment-detail">
+      <Box sx={{ width: 500, p: 2, maxHeight: '100vh', overflow: 'auto' }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+          <Typography variant="h5" fontWeight={600}>
+            Appointment Details
           </Typography>
-          <Typography>{appointment.type}</Typography>
-          {appointment.meetingUrl && (
-            <Typography component="a" href={appointment.meetingUrl} target="_blank" rel="noopener">
-              Video Link
-            </Typography>
-          )}
+          <IconButton onClick={onClose} aria-label="close">
+            <CloseIcon />
+          </IconButton>
         </Box>
-      ) : (
-        <Skeleton variant="rectangular" width="100%" height={118} />
-      )}
-    </Box>
-  </Drawer>
-);
+        
+        {appointment ? (
+          <Box display="flex" flexDirection="column" gap={3}>
+            <Box>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                {new Date(appointment.startTime).toLocaleString()}
+              </Typography>
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                {appointment.type}
+              </Typography>
+            </Box>
+
+            {/* Meeting Type Toggle */}
+            <MeetingTypeToggle
+              appointmentId={appointment.id.toString()}
+              currentMeetingType={getMeetingConfig(appointment).type}
+              currentConfig={getMeetingConfig(appointment)}
+              canModify={true} // Could be based on user permissions
+              isLoading={isUpdating}
+              onMeetingTypeChange={handleMeetingTypeChange}
+              onRecordingSettingsChange={handleRecordingSettingsChange}
+            />
+            
+            {/* Session Recording Component */}
+            <SessionRecorder
+              sessionId={appointment.id.toString()}
+              participantId={appointment.clientId?.toString() || 'unknown'}
+              meetingUrl={appointment.meetingUrl}
+              onRecordingStart={(recordingId) => {
+                console.log('Recording started:', recordingId);
+              }}
+              onRecordingStop={(recordingId, fileSize) => {
+                console.log('Recording stopped:', recordingId, 'Size:', fileSize);
+              }}
+              onRecordingError={(error) => {
+                console.error('Recording error:', error);
+              }}
+              config={{
+                audioOnly: getMeetingConfig(appointment).type === 'in-person',
+                uploadEndpoint: '/api/recordings/upload'
+              }}
+            />
+          </Box>
+        ) : (
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Skeleton variant="rectangular" width="100%" height={60} />
+            <Skeleton variant="rectangular" width="100%" height={200} />
+            <Skeleton variant="rectangular" width="100%" height={150} />
+          </Box>
+        )}
+      </Box>
+    </Drawer>
+  );
+};
 
 const AppointmentPage: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -84,6 +204,15 @@ const AppointmentPage: React.FC = () => {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<Appointment | null>(null);
   const isMobile = useMediaQuery('(max-width:600px)');
+
+  const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
+    setAppointments(prev => 
+      prev.map(apt => 
+        apt.id === updatedAppointment.id ? updatedAppointment : apt
+      )
+    );
+    setSelected(updatedAppointment);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -143,7 +272,12 @@ const AppointmentPage: React.FC = () => {
             )}
           </>
         )}
-        <AppointmentDetail appointment={selected} open={Boolean(selected)} onClose={() => setSelected(null)} />
+        <AppointmentDetail 
+          appointment={selected} 
+          open={Boolean(selected)} 
+          onClose={() => setSelected(null)}
+          onAppointmentUpdate={handleAppointmentUpdate}
+        />
         <Fab color="primary" sx={{ position: 'fixed', bottom: 16, right: 16 }} aria-label="new" onClick={() => createAppointment({})}>
           <AddIcon />
         </Fab>

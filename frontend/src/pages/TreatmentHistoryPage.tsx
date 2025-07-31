@@ -1,7 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ThemeProvider,
-  CssBaseline,
   Typography,
   Tabs,
   Tab,
@@ -9,14 +7,25 @@ import {
   Alert,
   Drawer,
   IconButton,
-  Fab,
   Skeleton,
-  useMediaQuery,
   Button,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
+  Avatar,
+  Divider,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
-import PageAppBar from '../components/PageAppBar';
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  CalendarToday as CalendarIcon,
+  List as ListIcon,
+  Event as EventIcon,
+  Person as PersonIcon,
+  AccessTime as TimeIcon,
+  Notes as NotesIcon,
+} from '@mui/icons-material';
 import * as RBC from 'react-big-calendar';
 const Calendar = RBC.Calendar as React.ComponentType<any>;
 const dateFnsLocalizer = RBC.dateFnsLocalizer;
@@ -30,8 +39,8 @@ import {
   getAppointmentHistory,
 } from '../api/appointments';
 import { logger } from '../logger';
-import { theme } from '../theme';
 import { enUS } from 'date-fns/locale/en-US';
+import WellnessLayout from '../layouts/WellnessLayout';
 
 const locales = { en: enUS };
 const localizer = dateFnsLocalizer({
@@ -76,18 +85,93 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
         {loading || !appointment ? (
           <Skeleton variant="rectangular" height={120} />
         ) : (
-          <Box>
-            <Typography variant="h6">
-              {new Date(appointment.startTime).toLocaleString()}
-            </Typography>
-            <Typography>{t('client')}: {appointment.clientId}</Typography>
-            <Typography>{t('type')}: {appointment.type}</Typography>
-            <Typography>{t('status')}: {appointment.status}</Typography>
-            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-              <Button variant="contained" size="small">{t('viewNote')}</Button>
-              <Button variant="outlined" size="small">{t('reschedule')}</Button>
+          <Stack spacing={3}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Avatar sx={{ 
+                width: 64, 
+                height: 64, 
+                bgcolor: 'primary.main',
+                mx: 'auto',
+                mb: 2,
+              }}>
+                <EventIcon sx={{ fontSize: 32 }} />
+              </Avatar>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Treatment Session
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {new Date(appointment.startTime).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </Typography>
             </Box>
-          </Box>
+            
+            <Divider />
+            
+            <Stack spacing={2}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <TimeIcon color="action" />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Time</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {new Date(appointment.startTime).toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <PersonIcon color="action" />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Client ID</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {appointment.clientId}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <EventIcon color="action" />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Session Type</Typography>
+                  <Chip 
+                    label={appointment.type} 
+                    size="small" 
+                    color="primary" 
+                    variant="outlined"
+                  />
+                </Box>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <NotesIcon color="action" />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Status</Typography>
+                  <Chip 
+                    label={appointment.status} 
+                    size="small" 
+                    color={appointment.status === 'completed' ? 'success' : 'warning'}
+                  />
+                </Box>
+              </Box>
+            </Stack>
+            
+            <Divider />
+            
+            <Stack direction="row" spacing={2}>
+              <Button variant="contained" fullWidth startIcon={<NotesIcon />}>
+                {t('viewNote', 'View Notes')}
+              </Button>
+              <Button variant="outlined" fullWidth startIcon={<EventIcon />}>
+                {t('reschedule', 'Reschedule')}
+              </Button>
+            </Stack>
+          </Stack>
         )}
       </Box>
     </Drawer>
@@ -110,18 +194,15 @@ const NewAppointmentDrawer: React.FC<NewDrawerProps> = ({ open, onClose }) => {
   );
 };
 
-interface Props { user: { id: number }; }
-const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
-  const { t, i18n } = useTranslation();
+interface Props { user?: { id: number }; }
+const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState(0);
   const [items, setItems] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showNew, setShowNew] = useState(false);
-  const isMobile = useMediaQuery('(max-width:600px)');
-
-  const theme = useMemo(() => theme, [i18n.dir()]);
 
   useEffect(() => {
     console.info('TreatmentHistoryPage mount');
@@ -145,76 +226,204 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user }) => {
   ];
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <PageAppBar avatarUrls={[]} />
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        {t('myTreatmentHistory', 'My Treatment History')}
-      </Typography>
-      <Box sx={{ p: 2 }}>
-        {error && <Alert severity="error">{error}</Alert>}
-        <Tabs
-          value={tab}
-          onChange={(_, v) => {
-            console.info('tab switch', v);
-            logger.debug('tab switch', v);
-            setTab(v);
+    <WellnessLayout
+      title="Treatment History"
+      showFab={true}
+      fabIcon={<AddIcon />}
+      fabAction={() => setShowNew(true)}
+      fabAriaLabel="Schedule new appointment"
+    >
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 700,
+            mb: 1,
+            background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
           }}
-          aria-label="history-tabs"
         >
-          <Tab label={t('calendarView')} />
-          <Tab label={t('listView')} />
-        </Tabs>
-        {loading ? (
-          <Box sx={{ mt: 2 }}>
-            <Skeleton variant="rectangular" height={200} />
-          </Box>
-        ) : (
-          <>
-            {tab === 0 && (
-              <Box sx={{ height: 500, mt: 2 }}>
-                <Calendar
-                  localizer={localizer}
-                  events={items.map((a) => ({
-                    ...a,
-                    title: a.type,
-                    start: new Date(a.startTime),
-                    end: new Date(a.endTime),
-                  }))}
-                  onSelectEvent={(e: any) => {
-                    const id = (e as Appointment).id;
-                    console.info('event click', id);
-                    logger.debug('event click', id);
-                    setSelectedId(id);
-                  }}
-                  style={{ height: '100%' }}
-                />
-              </Box>
-            )}
-            {tab === 1 && (
-              <Box sx={{ height: 500, mt: 2 }}>
-                <DataGrid
-                  rows={items}
-                  columns={columns}
-                  autoHeight
-                  disableRowSelectionOnClick
-                  onRowClick={(p) => {
-                    console.info('row click', p.row.id);
-                    logger.debug('row click', p.row.id);
-                    setSelectedId(p.row.id);
-                  }}
-                />
-              </Box>
-            )}
-          </>
-        )}
+          🕰️ Treatment History
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Comprehensive view of your therapy sessions and appointments
+        </Typography>
       </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+      
+      {/* View Toggle */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent sx={{ pb: 2 }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => {
+              console.info('tab switch', v);
+              logger.debug('tab switch', v);
+              setTab(v);
+            }}
+            aria-label="history-tabs"
+            sx={{
+              '& .MuiTab-root': {
+                minHeight: 48,
+                textTransform: 'none',
+                fontWeight: 600,
+              },
+            }}
+          >
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarIcon fontSize="small" />
+                  {t('calendarView', 'Calendar View')}
+                </Box>
+              } 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <ListIcon fontSize="small" />
+                  {t('listView', 'List View')}
+                </Box>
+              } 
+            />
+          </Tabs>
+        </CardContent>
+      </Card>
+      {/* Content Area */}
+      <Card>
+        <CardContent>
+          {loading ? (
+            <Stack spacing={2}>
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} variant="rectangular" height={80} />
+              ))}
+            </Stack>
+          ) : (
+            <>
+              {tab === 0 && (
+                <Box sx={{ height: 600 }}>
+                  <Calendar
+                    localizer={localizer}
+                    events={items.map((a) => ({
+                      ...a,
+                      title: a.type,
+                      start: new Date(a.startTime),
+                      end: new Date(a.endTime),
+                    }))}
+                    onSelectEvent={(e: any) => {
+                      const id = (e as Appointment).id;
+                      console.info('event click', id);
+                      logger.debug('event click', id);
+                      setSelectedId(id);
+                    }}
+                    style={{ 
+                      height: '100%',
+                      backgroundColor: 'transparent',
+                    }}
+                    eventPropGetter={() => ({
+                      style: {
+                        backgroundColor: '#2E7D6B',
+                        borderRadius: '6px',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '0.875rem',
+                      },
+                    })}
+                  />
+                </Box>
+              )}
+              {tab === 1 && (
+                <Box sx={{ height: 500 }}>
+                  <DataGrid
+                    rows={items}
+                    columns={[
+                      { 
+                        field: 'date', 
+                        headerName: 'Date', 
+                        flex: 1, 
+                        renderCell: ({ row }) => (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <EventIcon fontSize="small" color="action" />
+                            {new Date(row.startTime).toLocaleDateString()}
+                          </Box>
+                        )
+                      },
+                      { 
+                        field: 'clientId', 
+                        headerName: 'Client', 
+                        flex: 1,
+                        renderCell: (params) => (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PersonIcon fontSize="small" color="action" />
+                            {params.value}
+                          </Box>
+                        )
+                      },
+                      { 
+                        field: 'type', 
+                        headerName: 'Type', 
+                        flex: 1,
+                        renderCell: (params) => (
+                          <Chip 
+                            label={params.value} 
+                            size="small" 
+                            color="primary" 
+                            variant="outlined"
+                          />
+                        )
+                      },
+                      { 
+                        field: 'status', 
+                        headerName: 'Status', 
+                        flex: 1,
+                        renderCell: (params) => (
+                          <Chip 
+                            label={params.value} 
+                            size="small" 
+                            color={params.value === 'completed' ? 'success' : 'warning'}
+                          />
+                        )
+                      },
+                    ]}
+                    autoHeight
+                    disableRowSelectionOnClick
+                    onRowClick={(p) => {
+                      console.info('row click', p.row.id);
+                      logger.debug('row click', p.row.id);
+                      setSelectedId(p.row.id);
+                    }}
+                    sx={{
+                      border: 'none',
+                      '& .MuiDataGrid-cell': {
+                        borderBottom: '1px solid rgba(46, 125, 107, 0.12)',
+                      },
+                      '& .MuiDataGrid-columnHeaders': {
+                        backgroundColor: 'rgba(46, 125, 107, 0.08)',
+                        borderBottom: '2px solid rgba(46, 125, 107, 0.2)',
+                      },
+                      '& .MuiDataGrid-row:hover': {
+                        backgroundColor: 'rgba(46, 125, 107, 0.04)',
+                        cursor: 'pointer',
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
       <TreatmentDetailDrawer id={selectedId} open={Boolean(selectedId)} onClose={() => setSelectedId(null)} />
       <NewAppointmentDrawer open={showNew} onClose={() => setShowNew(false)} />
-      <Fab color="primary" sx={{ position: 'fixed', bottom: 16, right: 16 }} aria-label="new" onClick={() => setShowNew(true)}>
-        <AddIcon />
-      </Fab>
-    </ThemeProvider>
+    </WellnessLayout>
   );
 };
 

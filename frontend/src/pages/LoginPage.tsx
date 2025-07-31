@@ -69,43 +69,86 @@ const LoginPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           position: 'relative',
-          background: 'linear-gradient(135deg, #e0f7fa 0%, #f5f5f5 100%)',
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 3, sm: 4 },
         }}>
           {/* Language Switcher */}
-          <Box sx={{ position: 'absolute', top: 24, right: 24 }}>
+          <Box sx={{ 
+            position: 'absolute', 
+            top: { xs: 16, sm: 24 }, 
+            right: { xs: 16, sm: 24 },
+            zIndex: 10,
+          }}>
             <Select
               value={i18n.language}
               onChange={e => i18n.changeLanguage(e.target.value)}
               size="small"
               aria-label="language switcher"
-              sx={{ bgcolor: 'rgba(255,255,255,0.7)', borderRadius: 2, boxShadow: 1 }}
+              sx={{ 
+                minWidth: 120,
+                '& .MuiSelect-select': {
+                  py: 1,
+                  fontSize: '0.875rem',
+                },
+              }}
             >
-              <MenuItem value="en">English</MenuItem>
-              <MenuItem value="he">עברית</MenuItem>
-              <MenuItem value="ru">Русский</MenuItem>
-              <MenuItem value="ar">العربية</MenuItem>
+              <MenuItem value="en">🇺🇸 English</MenuItem>
+              <MenuItem value="he">🇮🇱 עברית</MenuItem>
+              <MenuItem value="ru">🇷🇺 Русский</MenuItem>
+              <MenuItem value="ar">🇸🇦 العربية</MenuItem>
             </Select>
           </Box>
           <Box component="form" onSubmit={formik.handleSubmit} sx={{
-            p: 4,
-            bgcolor: 'rgba(255,255,255,0.6)',
-            boxShadow: '0 8px 32px 0 rgba(31,38,135,0.15)',
-            borderRadius: 4,
-            border: '1px solid rgba(255,255,255,0.18)',
+            p: { xs: 3, sm: 4, md: 5 },
             width: '100%',
-            maxWidth: 380,
+            maxWidth: { xs: '100%', sm: 420, md: 460 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 2,
+            gap: { xs: 2, sm: 2.5 },
+            position: 'relative',
           }}>
-            <Typography variant="h4" fontWeight={700} mb={2} fontFamily="Roboto, sans-serif">
-              {t('login')}
-            </Typography>
-            {error && (
-              <Typography role="alert" color="error">
-                {error}
+            {/* Welcome Header */}
+            <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                  fontWeight: 700,
+                  mb: 1,
+                  background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Welcome Back
               </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'text.secondary',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  maxWidth: 280,
+                  mx: 'auto',
+                }}
+              >
+                Continue your journey in mental wellness and growth
+              </Typography>
+            </Box>
+            {error && (
+              <Box sx={{ 
+                width: '100%', 
+                p: 2, 
+                mb: 2,
+                borderRadius: 2,
+                background: 'rgba(244, 67, 54, 0.1)',
+                border: '1px solid rgba(244, 67, 54, 0.2)',
+              }}>
+                <Typography role="alert" color="error" variant="body2" textAlign="center">
+                  {error}
+                </Typography>
+              </Box>
             )}
             <TextField
               margin="normal"
@@ -113,12 +156,14 @@ const LoginPage: React.FC = () => {
               id="email"
               name="email"
               label={t('email')}
+              placeholder="Enter your email address"
               value={formik.values.email}
               onChange={formik.handleChange}
               error={formik.touched.email && Boolean(formik.errors.email)}
               helperText={formik.touched.email && formik.errors.email}
               aria-label="email"
-              sx={{ borderRadius: 2, bgcolor: 'rgba(255,255,255,0.7)' }}
+              size="medium"
+              sx={{ mb: 2 }}
             />
             <TextField
               margin="normal"
@@ -127,37 +172,115 @@ const LoginPage: React.FC = () => {
               name="password"
               type={showPassword ? 'text' : 'password'}
               label={t('password')}
+              placeholder="Enter your password"
               value={formik.values.password}
               onChange={formik.handleChange}
               error={formik.touched.password && Boolean(formik.errors.password)}
               helperText={formik.touched.password && formik.errors.password}
               aria-label="password"
-              sx={{ borderRadius: 2, bgcolor: 'rgba(255,255,255,0.7)' }}
+              size="medium"
+              sx={{ mb: 1 }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword((p) => !p)} aria-label="toggle password visibility" edge="end">
+                    <IconButton 
+                      onClick={() => setShowPassword((p) => !p)} 
+                      aria-label="toggle password visibility" 
+                      edge="end"
+                      sx={{ mr: 0.5 }}
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
-            <Button color="primary" variant="contained" type="submit" fullWidth disabled={formik.isSubmitting} aria-label="login" sx={{ mt: 2, borderRadius: 3, fontWeight: 700, fontSize: 18, py: 1.5 }}>
-              {formik.isSubmitting ? <CircularProgress size={24} /> : t('login')}
-            </Button>
-            <Box sx={{ textAlign: 'right', my: 1, width: '100%' }}>
-              <Link component={RouterLink} to="/reset/request" underline="hover">
+            <Box sx={{ textAlign: 'right', mb: 3, width: '100%' }}>
+              <Link 
+                component={RouterLink} 
+                to="/reset/request" 
+                underline="hover"
+                sx={{ 
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
+                  '&:hover': { color: 'primary.main' },
+                }}
+              >
                 {t('forgotPassword')}
               </Link>
             </Box>
-            <Box sx={{ textAlign: 'center', my: 2, width: '100%' }}>{t('or')}</Box>
-            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
+
+            <Button 
+              color="primary" 
+              variant="contained" 
+              type="submit" 
+              fullWidth 
+              disabled={formik.isSubmitting} 
+              aria-label="login" 
+              size="large"
+              sx={{ 
+                mb: 3,
+                py: { xs: 1.5, sm: 1.75 },
+                fontSize: { xs: '1rem', sm: '1.125rem' },
+                height: { xs: 48, sm: 52 },
+              }}
+            >
+              {formik.isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                t('login')
+              )}
+            </Button>
+
+            {/* Divider */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              width: '100%', 
+              my: 3,
+            }}>
+              <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
+              <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
+                {t('or')}
+              </Typography>
+              <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
             </Box>
+
+            {/* Google Login */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              width: '100%',
+              mb: 3,
+            }}>
+              <GoogleLogin 
+                onSuccess={() => {}} 
+                onError={() => {}} 
+                width="100%" 
+                theme="outline"
+                size="large"
+              />
+            </Box>
+
             {/* Sign Up Button */}
-            <Box sx={{ textAlign: 'center', mt: 2, width: '100%' }}>
-              <Button component={RouterLink} to="/register" color="secondary" variant="outlined" fullWidth aria-label="sign up" sx={{ borderRadius: 3, fontWeight: 700, fontSize: 18, py: 1.5 }}>
+            <Box sx={{ textAlign: 'center', width: '100%' }}>
+              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                Don't have an account?
+              </Typography>
+              <Button 
+                component={RouterLink} 
+                to="/register" 
+                color="secondary" 
+                variant="outlined" 
+                fullWidth 
+                aria-label="sign up" 
+                size="large"
+                sx={{ 
+                  py: { xs: 1.5, sm: 1.75 },
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  height: { xs: 48, sm: 52 },
+                }}
+              >
                 {t('register')}
               </Button>
             </Box>

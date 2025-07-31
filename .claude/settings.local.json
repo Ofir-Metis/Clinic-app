@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(yarn --version)",
+      "Bash(docker:*)",
+      "Bash(yarn install)",
+      "Bash(yarn workspace @clinic/common:*)",
+      "Bash(start \"\" \"C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe\")",
+      "Bash(powershell:*)",
+      "Bash(yarn dev)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(yarn build)",
+      "Bash(yarn add:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(yarn dev:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run build:*)",
+      "Bash(git rm:*)",
+      "Bash(git filter-branch:*)"
+    ],
+    "deny": []
+  }
+}

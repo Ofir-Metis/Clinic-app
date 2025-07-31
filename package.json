@@ -16,6 +16,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
+    "@playwright/test": "^1.54.1",
     "@tsconfig/node18": "^1.0.1",
     "@types/react-big-calendar": "^1.16.2",
     "@types/zxcvbn": "^4.4.5",

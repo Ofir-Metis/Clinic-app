@@ -164,6 +164,27 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - '3008:3000'
+  google-integration-service:
+    build:
+      context: .
+      dockerfile: services/google-integration-service/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      NODE_ENV: ${NODE_ENV}
+    ports:
+      - '3009:3009'
   api-gateway:
     build:
       context: .
@@ -174,6 +195,7 @@ services:
       - notes-service
       - analytics-service
       - settings-service
+      - google-integration-service
     environment:
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}

@@ -2,6 +2,211 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🏗️ ARCHITECTURAL PRINCIPLES & CODE STANDARDS
+
+### Core Development Standards
+1. **🎯 Microservices Architecture**: All code MUST be built to scale using microservices architecture patterns with proper service isolation, event-driven communication, and independent deployability
+2. **✨ Best Practices**: Implement industry best practices for best-of-breed application development including SOLID principles, clean architecture, and enterprise patterns  
+3. **🎨 Material Design 3**: Strictly follow Material UI M3 design guidelines for all UI components - use the latest Material Design 3 principles for colors, typography, spacing, and component behavior
+
+### Enterprise-Grade Code Quality Requirements
+
+#### SOLID Principles (Mandatory)
+- **Single Responsibility**: Each class/function has one reason to change
+- **Open/Closed**: Open for extension, closed for modification  
+- **Liskov Substitution**: Derived classes must be substitutable for base classes
+- **Interface Segregation**: Many specific interfaces better than one general
+- **Dependency Inversion**: Depend on abstractions, not concretions
+
+#### Core Development Principles
+- **DRY (Don't Repeat Yourself)**: Eliminate code duplication through proper abstraction and shared utilities
+- **KISS (Keep It Simple, Stupid)**: Maintain simplicity and clarity - prefer readable code over clever code
+- **YAGNI (You Aren't Gonna Need It)**: Don't build features until they're actually needed
+- **Separation of Concerns**: Clear boundaries between business logic, data access, presentation, and infrastructure layers
+- **Fail Fast**: Validate inputs early, fail explicitly with meaningful error messages
+- **Immutability**: Prefer immutable data structures and functional programming patterns where possible
+
+#### Architecture Patterns (Required)
+- **Domain-Driven Design**: Model business domains explicitly with bounded contexts
+- **CQRS**: Separate read and write operations for complex business logic
+- **Event Sourcing**: Store domain events for audit trails and state reconstruction  
+- **Repository Pattern**: Abstract data access behind interfaces
+- **Dependency Injection**: Use DI containers for loose coupling and testability
+- **Circuit Breaker**: Implement fault tolerance between services
+- **Saga Pattern**: Manage distributed transactions across microservices
+
+#### Security Standards (Non-Negotiable)
+- **Zero Trust Architecture**: Never trust, always verify - authenticate and authorize every request
+- **Input Validation**: Sanitize and validate all inputs at service boundaries  
+- **SQL Injection Prevention**: Use parameterized queries and ORMs properly
+- **XSS Protection**: Sanitize outputs and use Content Security Policy
+- **HTTPS Everywhere**: All communication must be encrypted
+- **JWT Security**: Proper token validation, expiration, and rotation
+- **Rate Limiting**: Implement throttling to prevent abuse
+- **Secrets Management**: Never hardcode secrets, use environment variables or secret managers
+- **OWASP Compliance**: Follow OWASP Top 10 security guidelines
+
+#### Performance & Scalability Standards
+- **Horizontal Scaling**: Design services to scale out, not just up
+- **Database Optimization**: Use proper indexing, connection pooling, and query optimization
+- **Caching Strategy**: Implement multi-level caching (Redis, CDN, browser cache)
+- **Lazy Loading**: Load resources only when needed
+- **Pagination**: Always paginate large datasets
+- **Async Processing**: Use queues for non-critical operations
+- **Memory Management**: Monitor and optimize memory usage
+- **Load Testing**: Performance test all critical paths
+
+#### Testing Requirements (Mandatory)
+- **Test Pyramid**: Unit tests (70%) > Integration tests (20%) > E2E tests (10%)
+- **80% Code Coverage**: Minimum coverage threshold enforced
+- **TDD/BDD**: Write tests first, then implementation
+- **Test Isolation**: Tests must be independent and repeatable
+- **Mock External Dependencies**: Use mocks for external services
+- **Contract Testing**: Verify API contracts between services
+- **Performance Testing**: Load and stress testing for critical components
+
+#### Documentation Standards
+- **Self-Documenting Code**: Clear variable names, function names, and structure
+- **API Documentation**: OpenAPI/Swagger for all REST endpoints
+- **Architecture Decision Records (ADRs)**: Document significant architectural decisions
+- **README Files**: Clear setup and usage instructions for each service
+- **Code Comments**: Only when explaining complex business logic or algorithms
+- **Database Schema**: Document entity relationships and constraints
+
+#### Error Handling & Observability
+- **Structured Logging**: Use structured logs with correlation IDs
+- **Error Classification**: Distinguish between business errors, validation errors, and system errors
+- **Graceful Degradation**: System should degrade gracefully when dependencies fail
+- **Health Checks**: Implement liveness and readiness probes
+- **Metrics & Monitoring**: Track key business and technical metrics
+- **Distributed Tracing**: Trace requests across service boundaries
+- **Alerting**: Set up meaningful alerts for critical failures
+
+### Frontend-Specific Standards
+
+#### React Best Practices (Mandatory)
+- **Functional Components**: Use hooks-based functional components exclusively
+- **Custom Hooks**: Extract reusable logic into custom hooks
+- **React.memo()**: Memoize expensive components to prevent unnecessary re-renders
+- **useCallback/useMemo**: Optimize re-renders for complex computations and references
+- **Error Boundaries**: Implement error boundaries for graceful error handling
+- **Strict TypeScript**: Use strict TypeScript configuration with no `any` types
+- **Component Composition**: Prefer composition over inheritance
+- **Props Interface**: Define explicit TypeScript interfaces for all component props
+
+#### State Management Standards
+- **Context + Hooks**: Use React Context with useReducer for complex state
+- **Immutable Updates**: Always create new state objects, never mutate existing state
+- **State Normalization**: Normalize complex state structures for performance
+- **Local vs Global State**: Keep state as local as possible, global only when necessary
+- **State Machines**: Use state machines (XState) for complex UI workflows
+
+#### Performance Optimization (Required)
+- **Code Splitting**: Lazy load routes and components with React.lazy()
+- **Bundle Analysis**: Regular bundle size analysis and optimization
+- **Image Optimization**: WebP format, lazy loading, responsive images
+- **Virtual Scrolling**: For large lists (1000+ items)
+- **Debouncing**: Debounce search inputs and API calls
+- **Service Workers**: Implement for offline capability and caching
+
+### Backend-Specific Standards
+
+#### NestJS Best Practices (Mandatory)
+- **Module Organization**: One feature per module with clear boundaries
+- **Guards**: Implement role-based and permission-based guards
+- **Interceptors**: Use for logging, transformation, and error handling
+- **Pipes**: Validate and transform input data at controller level
+- **Exception Filters**: Centralized exception handling across services
+- **Configuration Module**: Environment-based configuration management
+- **Swagger Documentation**: Auto-generated API documentation for all endpoints
+
+#### Database Standards (Critical)
+- **Connection Pooling**: Configure appropriate pool sizes for production
+- **Query Optimization**: Use EXPLAIN ANALYZE for query performance tuning
+- **Indexing Strategy**: Create indexes for all frequently queried columns
+- **Migration Strategy**: Backward-compatible migrations with rollback plans
+- **Data Validation**: Database-level constraints AND application-level validation
+- **Audit Trails**: Track who, what, when, where for critical data changes
+- **Soft Deletes**: Use soft deletes for data integrity and audit requirements
+
+#### API Design Standards (Non-Negotiable)
+- **REST Principles**: Follow REST maturity model level 2-3
+- **HTTP Status Codes**: Proper use of 2xx, 4xx, 5xx status codes
+- **API Versioning**: Version APIs with backward compatibility strategy
+- **Rate Limiting**: Implement per-user and per-endpoint rate limits
+- **Request/Response Validation**: Validate all inputs and outputs with DTOs
+- **Pagination**: Consistent pagination across all list endpoints
+- **HATEOAS**: Include relevant links in API responses where applicable
+
+### Development Workflow Standards
+
+#### Git & Version Control (Mandatory)
+- **Conventional Commits**: Use conventional commit format for automated changelogs
+- **Feature Branches**: One feature per branch with descriptive names
+- **Pull Request Reviews**: Mandatory code reviews before merging
+- **Merge Strategy**: Squash and merge for clean commit history
+- **Git Hooks**: Pre-commit hooks for linting and testing
+- **Branch Protection**: Protect main/develop branches with required checks
+- **Semantic Versioning**: Follow semver for all package releases
+
+#### CI/CD Standards (Required)
+- **Automated Testing**: All tests must pass before deployment
+- **Code Quality Gates**: SonarQube or similar for code quality metrics
+- **Security Scanning**: Automated vulnerability scanning in CI pipeline
+- **Environment Promotion**: Dev → Staging → Production deployment pipeline
+- **Blue-Green Deployment**: Zero-downtime deployments for production
+- **Rollback Strategy**: Automated rollback capability for failed deployments
+- **Infrastructure as Code**: All infrastructure defined in code (Terraform/CDK)
+
+#### Monitoring & Observability (Critical)
+- **Application Metrics**: Track business KPIs and technical metrics
+- **Log Aggregation**: Centralized logging with structured log format
+- **Distributed Tracing**: End-to-end request tracing across services
+- **Error Tracking**: Real-time error tracking and alerting (Sentry/Bugsnag)
+- **Performance Monitoring**: APM tools for performance insights
+- **Uptime Monitoring**: Synthetic monitoring for critical user journeys
+- **Dashboard Creation**: Business and technical dashboards for stakeholders
+
+### Code Review Standards
+
+#### Review Checklist (Every PR Must Address)
+- **Functionality**: Does the code do what it's supposed to do?
+- **Design Patterns**: Are appropriate design patterns used?
+- **Performance**: Are there any performance implications?
+- **Security**: Are there any security vulnerabilities?
+- **Testability**: Is the code easily testable?
+- **Maintainability**: Is the code easy to understand and modify?
+- **Documentation**: Is the code self-documenting with clear naming?
+- **Standards Compliance**: Does it follow our architectural guidelines?
+
+#### Review Process
+- **Author Checklist**: Self-review before requesting review
+- **Reviewer Assignment**: At least one senior developer review required
+- **Response Time**: Reviews completed within 24 hours
+- **Constructive Feedback**: Focus on code, not the person
+- **Learning Opportunity**: Use reviews as teaching moments
+- **Approval Criteria**: All comments resolved before approval
+
+### Technology Stack Decisions
+
+#### Approved Technologies (Use These)
+- **Backend**: NestJS, TypeORM, PostgreSQL, Redis, NATS
+- **Frontend**: React, TypeScript, Material-UI, Vite
+- **Testing**: Jest, React Testing Library, Supertest
+- **Infrastructure**: Docker, Docker Compose, AWS/GCP
+- **Monitoring**: Prometheus, Grafana, ELK Stack
+- **CI/CD**: GitHub Actions, ArgoCD, Helm
+
+#### Technology Evaluation Criteria
+Before adopting new technologies, evaluate:
+- **Community Support**: Active community and long-term viability
+- **Learning Curve**: Team's ability to adopt and maintain
+- **Integration**: How well it integrates with existing stack
+- **Performance**: Impact on application performance
+- **Security**: Security track record and best practices
+- **Cost**: Licensing and operational costs
+- **Maintenance**: Long-term maintenance requirements
+
 ## Development Commands
 
 ### Build and Development
@@ -118,44 +323,65 @@ services/
 
 ## 🎨 Wellness-Focused Design System
 
-This clinic management app uses a comprehensive design system tailored for mental health professionals and self-development therapists. The design emphasizes trust, healing, growth, and professional warmth.
+This clinic management app uses a comprehensive design system tailored for self-development coaches and personal growth professionals. The design emphasizes empowerment, transformation, achievement, and inspirational guidance while maintaining professional credibility.
 
-### Color Palette & Psychology
+### 🎨 Material Design 3 Color System & Psychology
 
-#### Primary Colors (Trust & Healing)
-- **Primary**: `#2E7D6B` - Deep teal representing trust, healing, and balance
-- **Primary Light**: `#4A9B8A` - For hover states and light backgrounds
-- **Primary Dark**: `#1F5A4E` - For emphasis and depth
+#### M3 Color Tokens & Wellness Theme
+Following Material Design 3's dynamic color system with empowerment-focused palette:
 
-#### Secondary Colors (Wisdom & Transformation) 
-- **Secondary**: `#8B5A87` - Muted purple for wisdom and transformation
-- **Secondary Light**: `#A47BA0` - For accents and highlights
-- **Secondary Dark**: `#6B446A` - For contrast and depth
+##### Primary Color System (Trust & Empowerment)
+- **Primary**: `#2E7D6B` - Deep teal representing trust, empowerment, and growth
+- **On Primary**: `#FFFFFF` - High contrast text on primary
+- **Primary Container**: `#4A9B8A` - For primary contained buttons and selection states
+- **On Primary Container**: `#1F5A4E` - Text on primary container
+- **Primary Fixed**: `#A4F4E7` - Fixed primary for accessibility
+- **Primary Fixed Dim**: `#88D8CB` - Dimmed primary fixed
 
-#### Accent Colors (Optimism & Energy)
-- **Accent**: `#F4A261` - Warm orange for optimism and energy
-- **Accent Light**: `#F6B685` - For gentle emphasis
-- **Accent Dark**: `#E8934A` - For warnings and calls-to-action
+##### Secondary Color System (Wisdom & Personal Growth) 
+- **Secondary**: `#8B5A87` - Muted purple for wisdom and personal development
+- **On Secondary**: `#FFFFFF` - High contrast text on secondary
+- **Secondary Container**: `#A47BA0` - For secondary actions and highlights
+- **On Secondary Container**: `#6B446A` - Text on secondary container
+- **Secondary Fixed**: `#E1D4DF` - Fixed secondary for accessibility
+- **Secondary Fixed Dim**: `#C5B8C3` - Dimmed secondary fixed
 
-#### Wellness Backgrounds
-- **Wellness Light**: `#F0F8F4` - Very light mint for main backgrounds
-- **Wellness Ultra Light**: `#FAFCFB` - For subtle contrast areas
+##### Tertiary Color System (Achievement & Motivation)
+- **Tertiary**: `#F4A261` - Warm orange for achievement and motivation
+- **On Tertiary**: `#FFFFFF` - High contrast text on tertiary
+- **Tertiary Container**: `#F6B685` - For tertiary actions and gentle emphasis
+- **On Tertiary Container**: `#E8934A` - Text on tertiary container
+- **Tertiary Fixed**: `#FFEEE6` - Fixed tertiary for accessibility
+- **Tertiary Fixed Dim**: `#FFD9CA` - Dimmed tertiary fixed
 
-#### Glass Effects (Glassmorphism)
-- **Light Glass**: `rgba(255, 255, 255, 0.85)` - Main cards and forms
-- **Medium Glass**: `rgba(255, 255, 255, 0.70)` - Input fields and secondary surfaces
-- **Dark Glass**: `rgba(255, 255, 255, 0.60)` - Overlays and modals
+##### Surface Color System (M3 Surfaces)
+- **Surface**: `#FAFCFB` - Main background surface
+- **On Surface**: `#191C1B` - Primary text on surface
+- **Surface Variant**: `#F0F8F4` - Secondary surface for cards
+- **On Surface Variant**: `#404943` - Secondary text on surface variant
+- **Surface Container Lowest**: `#FFFFFF` - Elevated surface level 0
+- **Surface Container Low**: `rgba(255, 255, 255, 0.85)` - Elevated surface level 1
+- **Surface Container**: `rgba(255, 255, 255, 0.70)` - Elevated surface level 2  
+- **Surface Container High**: `rgba(255, 255, 255, 0.60)` - Elevated surface level 3
+- **Surface Container Highest**: `rgba(255, 255, 255, 0.50)` - Elevated surface level 4
 
-#### Gradients
-- **Primary Gradient**: `linear-gradient(135deg, #F0F8F4 0%, #E6F3F0 25%, #D4E9E2 100%)`
-- **Warm Gradient**: `linear-gradient(135deg, #FFF8F0 0%, #F4F1E8 50%, #E8F0E6 100%)`
+##### Outline & Border System
+- **Outline**: `#707970` - Default border color
+- **Outline Variant**: `#C0C9C0` - Secondary border color for dividers
 
-#### Usage Guidelines
-- Use primary colors for main actions, navigation, and key UI elements
-- Secondary colors for accents, badges, and secondary actions  
-- Accent colors sparingly for warnings, success states, and CTAs
-- Glass effects for all cards, modals, forms, and overlay surfaces
-- Gradients for body backgrounds and large surface areas
+##### Error & State Colors (M3 Semantic)
+- **Error**: `#BA1A1A` - Error states and destructive actions
+- **On Error**: `#FFFFFF` - Text on error
+- **Error Container**: `#FFDAD6` - Error container background
+- **On Error Container**: `#410002` - Text on error container
+
+##### M3 Usage Guidelines
+- **Surface Tonal Palette**: Use container colors for cohesive color relationships
+- **Dynamic Color**: Colors adapt based on user's wallpaper (when supported)
+- **Accessibility**: Minimum 3:1 contrast for UI elements, 4.5:1 for text
+- **State Layers**: Use surface tonal variations for hover/focus/pressed states
+- **Elevation**: Use Surface Container tokens instead of shadows for Material You
+- **Color Roles**: Always use semantic color roles (primary, secondary, error) instead of literal colors
 
 ### Typography System
 
@@ -322,41 +548,53 @@ gap: { xs: 2, sm: 2.5 }  // 16px, 20px
 </Grid>
 ```
 
-### Wellness-Specific UI Elements
+### Self-Development Coaching UI Elements
 
 #### Empty States
-- Use encouraging, wellness-focused messaging
-- Include nature emojis (🌿, 🌱, ✨)
-- Suggest positive actions or self-care
+- Use motivational, empowerment-focused messaging
+- Include growth emojis (🚀, 💪, ⭐, 🎯)
+- Suggest actionable steps or goal-setting activities
+- Examples: "Ready to start your growth journey?", "Your transformation begins here"
 
 #### Loading States
-- Professional loading screens with context
-- Example: "Loading your wellness dashboard..."
-- Use thicker CircularProgress (thickness={4})
+- Professional loading screens with empowering context
+- Examples: "Preparing your growth dashboard...", "Loading your achievement tracker..."
+- Use thicker CircularProgress (thickness={4}) with motivational micro-copy
 
-#### Success/Growth Indicators
-- Use growth metaphors ("Your progress is blooming")
-- Green colors for positive outcomes
-- Celebration emojis (🎉, ⭐, 🌟)
+#### Success/Achievement Indicators
+- Use achievement and progress metaphors ("Level up!", "Milestone reached!")
+- Vibrant colors for positive outcomes and victories
+- Achievement emojis (🏆, 🎉, 🚀, ⭐, 💎, 🎯)
+- Progress bars and completion indicators
 
-#### Therapeutic Language
-- Avoid medical jargon, use warm, accessible language
-- "Clients" instead of "Patients"
-- "Sessions" instead of "Appointments" when appropriate
-- "Wellness journey" instead of "treatment"
+#### Coaching Language & Terminology
+- Use empowering, action-oriented language
+- "Clients" instead of "Patients" (never use medical terminology)  
+- "Coaching Sessions" instead of "Appointments"
+- "Growth Journey" instead of "Treatment"
+- "Personal Development Plan" instead of "Treatment Plan"
+- "Life Goals" instead of "Health Goals"
+- "Breakthrough" instead of "Recovery"
+- "Transformation" instead of "Healing"
+- "Empowerment" instead of "Therapy"
+- "Self-Discovery" and "Personal Growth"
+- "Achievement Tracking" and "Progress Monitoring"
+- "Life Coaching" and "Performance Coaching"
 
 ### Implementation Checklist
 
 For every new component/page:
-- [ ] Use the established color palette
+- [ ] Use the established color palette (empowerment-focused)
 - [ ] Implement glassmorphism effects (blur, transparency, borders)
 - [ ] Add responsive spacing and typography
 - [ ] Include smooth hover/focus animations
 - [ ] Test on mobile, tablet, and desktop
 - [ ] Verify accessibility (contrast, touch targets, keyboard nav)
-- [ ] Use wellness-focused language and messaging
-- [ ] Add appropriate micro-interactions
+- [ ] Use empowering, coaching-focused language and messaging
+- [ ] Add appropriate micro-interactions with achievement feel
 - [ ] Follow the established component patterns
+- [ ] Avoid all medical/clinical terminology
+- [ ] Focus on growth, achievement, and personal development themes
 
 ## Development Troubleshooting
 
