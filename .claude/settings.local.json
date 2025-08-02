@@ -39,7 +39,8 @@
       "Bash(DATABASE_HOST=localhost DATABASE_NAME=clinic DATABASE_USER=postgres DATABASE_PASSWORD=postgres ./scripts/check-database-health.sh)",
       "Bash(./scripts/start-monitoring.sh:*)",
       "Bash(./scripts/test-alerts.sh:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

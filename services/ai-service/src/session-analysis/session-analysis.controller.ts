@@ -84,7 +84,9 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      this.logger.error(`Session analysis failed: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Session analysis failed: ${errorMessage}`, errorStack);
       
       if (error instanceof HttpException) {
         throw error;
@@ -216,8 +218,9 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      if (error.message.includes('not found') || error.message.includes('access denied')) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('not found') || errorMessage.includes('access denied')) {
+        throw new HttpException(errorMessage, HttpStatus.NOT_FOUND);
       }
       throw error;
     }
@@ -241,11 +244,12 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      if (error.message.includes('Cannot share')) {
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('Cannot share')) {
+        throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
       }
-      if (error.message.includes('not found') || error.message.includes('access denied')) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      if (errorMessage.includes('not found') || errorMessage.includes('access denied')) {
+        throw new HttpException(errorMessage, HttpStatus.NOT_FOUND);
       }
       throw error;
     }
@@ -307,11 +311,13 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      this.logger.error(`NATS analysis request failed: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`NATS analysis request failed: ${errorMessage}`, errorStack);
       
       return {
         success: false,
-        error: error.message
+        error: errorMessage
       };
     }
   }
@@ -327,11 +333,12 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      this.logger.error(`Get summary request failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Get summary request failed: ${errorMessage}`);
       
       return {
         success: false,
-        error: error.message
+        error: errorMessage
       };
     }
   }
@@ -347,11 +354,12 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      this.logger.error(`Get transcription request failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Get transcription request failed: ${errorMessage}`);
       
       return {
         success: false,
-        error: error.message
+        error: errorMessage
       };
     }
   }
@@ -367,11 +375,12 @@ export class SessionAnalysisController {
       };
 
     } catch (error) {
-      this.logger.error(`Stats request failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Stats request failed: ${errorMessage}`);
       
       return {
         success: false,
-        error: error.message
+        error: errorMessage
       };
     }
   }

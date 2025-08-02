@@ -190,12 +190,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Technology Stack Decisions
 
 #### Approved Technologies (Use These)
-- **Backend**: NestJS, TypeORM, PostgreSQL, Redis, NATS
-- **Frontend**: React, TypeScript, Material-UI, Vite
-- **Testing**: Jest, React Testing Library, Supertest
+- **Backend**: NestJS 10.x, TypeORM, PostgreSQL 15, Redis 7, NATS 2
+- **Frontend**: React 18.x, TypeScript 5.3.x, Material-UI 5.x, Vite 4.x
+- **Testing**: Jest 29.x, React Testing Library, Supertest, Playwright
 - **Infrastructure**: Docker, Docker Compose, AWS/GCP
 - **Monitoring**: Prometheus, Grafana, ELK Stack
 - **CI/CD**: GitHub Actions, ArgoCD, Helm
+- **AI/ML**: OpenAI GPT-4, Whisper API
+- **Storage**: MinIO (S3-compatible), AWS S3
+- **Payments**: Stripe, Tranzilla, CardCom (Israeli compliance)
 
 #### Technology Evaluation Criteria
 Before adopting new technologies, evaluate:
@@ -207,6 +210,65 @@ Before adopting new technologies, evaluate:
 - **Cost**: Licensing and operational costs
 - **Maintenance**: Long-term maintenance requirements
 
+## 📋 Scripts Reference
+
+### Development & Setup Scripts
+- `scripts/setup.sh` - Complete project initialization and setup
+- `scripts/dev.sh` - Start all services for development using Docker Compose
+- `scripts/setup-storage.sh` - Configure MinIO/S3 storage buckets and policies
+- `scripts/init-database.sh` - Initialize database schemas and basic data
+- `scripts/init-storage.sh` - Initialize storage containers and file system
+
+### Testing & Quality Scripts
+- `scripts/test.sh` - Run linting and tests across all workspaces with environment setup
+- `scripts/test-e2e.sh` - Comprehensive E2E testing with Playwright (cross-browser support)
+
+### Monitoring & Operations Scripts
+- `scripts/setup-monitoring.sh` - Configure Prometheus, Grafana, and Alertmanager stack
+- `scripts/start-monitoring.sh` - Start monitoring services (Prometheus, Grafana)
+- `scripts/monitor-health.sh` - Check health status of all services
+- `scripts/monitor-performance.sh` - Generate performance monitoring report
+- `scripts/test-alerts.sh` - Test alerting systems and notification channels
+
+### Database & Maintenance Scripts
+- `scripts/backup-database.sh` - Create database backups with rotation
+- `scripts/check-database-health.sh` - Verify database connectivity and performance
+- `scripts/database-maintenance.sh` - Database cleanup and maintenance tasks
+- `scripts/migrate.sh` - Run database migrations across all services
+
+### Admin Management Scripts
+- `scripts/create-admin.sh` - Create admin users (recommended method)
+- `scripts/create-admin.js` - Node.js script for admin user creation
+- `scripts/seed-admin.sql` - SQL script for fallback admin creation
+
+### Script Usage Examples
+
+```bash
+# Complete development setup
+./scripts/setup.sh
+./scripts/dev.sh
+
+# Run comprehensive testing
+./scripts/test.sh                          # Unit/integration tests
+./scripts/test-e2e.sh                      # Full E2E test suite
+./scripts/test-e2e.sh --browser firefox    # Specific browser testing
+./scripts/test-e2e.sh --headed --debug     # Debug mode with browser UI
+
+# Database operations
+./scripts/check-database-health.sh         # Health check
+./scripts/backup-database.sh               # Create backup
+DATABASE_HOST=localhost ./scripts/init-database.sh  # Initialize with custom host
+
+# Admin user creation
+./scripts/create-admin.sh admin@clinic.com SecurePassword123
+node scripts/create-admin.js admin@clinic.com SecurePassword123
+
+# Monitoring setup
+./scripts/setup-monitoring.sh              # Setup monitoring stack
+./scripts/start-monitoring.sh              # Start monitoring services
+./scripts/test-alerts.sh                   # Test alert configuration
+```
+
 ## Development Commands
 
 ### Build and Development
@@ -215,6 +277,7 @@ Before adopting new technologies, evaluate:
 - `yarn workspace @clinic/common build` - Build shared common library (required first)
 - `yarn workspace <service-name> start:dev` - Run individual service in development mode
 - `cd frontend && yarn dev` - Run frontend development server on port 5173
+- `docker compose up postgres nats minio maildev redis` - Start infrastructure services only
 
 ### Testing and Quality
 - `./scripts/test.sh` - Run linting and tests across all workspaces
@@ -229,7 +292,7 @@ Before adopting new technologies, evaluate:
 - `yarn workspace <service-name> migration:generate` - Generate new TypeORM migration
 - `yarn workspace <service-name> migration:run` - Run pending migrations
 - `yarn workspace <service-name> migration:revert` - Revert last migration
-- Services include: auth-service, appointments-service, files-service, notifications-service, ai-service, notes-service, analytics-service, settings-service, api-gateway
+- Services include: auth-service, appointments-service, files-service, notifications-service, ai-service, notes-service, analytics-service, settings-service, therapists-service, billing-service, google-integration-service, api-gateway
 
 ### Debugging and Development
 - `docker compose logs <service-name>` - View logs for specific service
@@ -243,25 +306,31 @@ This is a microservices-based clinic management application with the following s
 
 ### Core Architecture
 - **Frontend**: React + Vite + Material-UI (port 5173)
-- **API Gateway**: NestJS GraphQL gateway (port 4000) - main entry point
+- **API Gateway**: NestJS gateway (port 4000) - main entry point
 - **Backend Services**: NestJS microservices communicating via NATS
 - **Database**: PostgreSQL (port 5432)
 - **File Storage**: MinIO S3-compatible storage (port 9000)
 - **Email**: MailDev for development (port 1080/1025)
+- **Message Broker**: NATS (port 4222)
+- **Cache**: Redis (port 6379)
 
 ### Service Structure
 ```
 services/
-├── api-gateway/         # Main GraphQL API gateway (port 4000)
-├── auth-service/        # Authentication & user management (port 3001)
-├── appointments-service/ # Scheduling & appointments (port 3002)
-├── files-service/       # File upload & management (port 3003)
-├── notifications-service/ # Notifications & messaging (port 3004)
-├── ai-service/          # OpenAI integration (port 3005)
-├── notes-service/       # Session notes (port 3006)
-├── analytics-service/   # Analytics & reporting (port 3007)
-├── settings-service/    # User settings (port 3008)
-└── therapists-service/  # Therapist profiles
+├── api-gateway/              # Main API gateway (port 4000)
+├── auth-service/             # Authentication & user management (port 3001)
+├── appointments-service/     # Scheduling & appointments (port 3002)
+├── files-service/            # File upload & management (port 3003)
+├── notifications-service/    # Notifications & messaging (port 3004)
+├── ai-service/              # OpenAI integration (port 3005)
+├── notes-service/           # Session notes (port 3006)
+├── analytics-service/       # Analytics & reporting (port 3007)
+├── settings-service/        # User settings (port 3008)
+├── billing-service/         # Israeli billing & payments (port 3009)
+├── therapists-service/      # Therapist profiles
+├── google-integration-service/ # Google Calendar/Gmail integration
+├── client-relationships-service/ # Client-coach relationships
+└── progress-service/        # Progress tracking & goals
 ```
 
 ### Key Dependencies
@@ -271,6 +340,10 @@ services/
 - **JWT**: Authentication across services
 - **Twilio**: SMS notifications
 - **OpenAI**: AI assistant features
+- **Redis**: Session caching and queue management
+- **MinIO**: S3-compatible file storage
+- **Google APIs**: Calendar and Gmail integration
+- **Israeli Payment Processors**: Tranzilla, CardCom for local compliance
 
 ## Important Development Notes
 
@@ -282,9 +355,10 @@ services/
 
 ### Common Development Workflow
 1. Build shared library: `yarn workspace @clinic/common build`
-2. Start infrastructure: `docker compose up postgres nats minio maildev`
+2. Start infrastructure: `docker compose up postgres nats minio maildev redis`
 3. Start services: `./scripts/dev.sh` or individual services
 4. Frontend development: `cd frontend && yarn dev`
+5. For testing: `./scripts/test.sh` - includes environment setup and runs tests across all workspaces
 
 ### Testing Requirements
 - All services have Jest test suites
@@ -320,6 +394,938 @@ services/
 - **JWT Flow**: Frontend → API Gateway → Service (JWT passed through headers)
 - **Health Checks**: All services expose `/health` endpoints for monitoring
 - **Error Handling**: Consistent exception filters across all services via @clinic/common
+- **File Uploads**: Chunked upload system with MinIO storage for recordings and documents
+- **AI Integration**: OpenAI GPT-4 for session summaries and Whisper for transcription
+- **Recording System**: WebSocket-based recording status updates with S3 storage
+- **Internationalization**: Mandatory translation system for all user-visible text
+- **Israeli Compliance**: VAT, CTC, and local payment processor integration
+
+## 🎙️ Recording & AI Features
+
+### Session Recording System
+- **WebSocket Integration**: Real-time recording status updates via Socket.IO
+- **Chunked Upload**: Large file support with resumable uploads to MinIO/S3
+- **Supported Formats**: MP4, MOV, AVI, MP3, WAV, M4A, WebM
+- **File Size Limits**: Configurable up to 500MB per recording
+- **Storage Strategy**: MinIO for development, S3 for production
+
+### AI-Powered Features
+- **Session Summaries**: GPT-4 powered analysis and insights
+- **Transcription**: Whisper API for accurate speech-to-text
+- **Real-time Processing**: Background processing with NATS messaging
+- **Session Analysis**: Advanced coaching insights and recommendations
+
+### Google Integration
+- **Calendar Sync**: Two-way sync with Google Calendar
+- **Gmail Integration**: Automated email communications
+- **OAuth Flow**: Secure Google account connection
+- **Webhook Support**: Real-time updates from Google services
+
+## 🏠 Client Portal Architecture
+
+### Client-Facing Features
+The application includes a comprehensive client portal with dedicated pages and functionality:
+
+#### Client Dashboard & Progress
+- **ClientDashboard.tsx**: Personal growth dashboard with achievements and progress tracking
+- **ClientGoals.tsx**: Goal setting and milestone tracking for personal development
+- **ClientAchievements.tsx**: Achievement display with motivational progress indicators
+- **ClientProgressSharing.tsx**: Share progress updates with coaches and support network
+
+#### Booking & Scheduling System
+- **ClientBookingSystem.tsx**: Self-service session booking with coach availability
+- **ClientAppointments.tsx**: View and manage upcoming coaching sessions
+- **CoachDiscovery.tsx**: Find and connect with available coaches based on specialization
+
+#### Onboarding & Account Management
+- **ClientOnboardingPage.tsx**: Guided onboarding flow for new clients
+- **ClientLoginPage.tsx**: Dedicated client authentication portal
+- **ClientRegisterPage.tsx**: Client registration with intake forms
+- **ClientInvitations.tsx**: Handle coach invitations and relationship requests
+
+#### Client-Coach Relationship Management
+- **Client-Coach Relationships**: Managed via `client-relationships-service`
+- **Shared Goals**: Collaborative goal setting between clients and coaches
+- **Progress Tracking**: Real-time progress updates and milestone celebrations
+- **Achievement System**: Gamified progress with coaching-focused terminology
+
+### Client Portal Access
+- **URL Pattern**: `/client/*` routes for all client features
+- **Authentication**: Separate client authentication flow with JWT
+- **Role-Based Access**: Client-specific permissions and data isolation
+- **Mobile-First Design**: Optimized for mobile client usage
+
+### Client Portal Development Patterns
+```typescript
+// Client portal components use coaching terminology
+// Never use medical terms - always empowerment-focused language
+
+// Example: Client Goal Component
+import { useTranslation } from '../contexts/LanguageContext';
+
+const ClientGoal = () => {
+  const { t } = useTranslation();
+  
+  return (
+    <Card>
+      <Typography variant="h5">
+        {t.clientPortal.goals.title} // "Your Growth Goals"
+      </Typography>
+      <Typography variant="body1">
+        {t.clientPortal.goals.subtitle} // "Track your transformation journey"
+      </Typography>
+    </Card>
+  );
+};
+```
+
+## 👑 Admin Dashboard Features
+
+### Administrative Interface
+The application includes a comprehensive admin dashboard for system management and oversight:
+
+#### System Management Pages
+- **AdminDashboardPage.tsx**: Central admin hub with system metrics and quick actions
+- **ConfigurationManagementPage.tsx**: System-wide configuration and feature toggles
+- **ApiManagementPage.tsx**: API key management and rate limiting configuration
+- **SecuritySettingsPage.tsx**: Advanced security configuration and access controls
+
+#### User & Subscription Management
+- **InvitationManagementPage.tsx**: Manage coach and client invitations
+- **SubscriptionManagementPage.tsx**: Handle billing, subscriptions, and payment plans
+- **TherapistBillingPage.tsx**: Coach billing management and payout systems
+
+#### Data & Compliance
+- **BackupManagementPage.tsx**: Database backup scheduling and restoration
+- **ComplianceAuditPage.tsx**: Compliance reporting and audit trail management
+- **LogViewer.tsx**: System log analysis and troubleshooting interface
+
+#### Monitoring & Health
+- **SystemHealthOverview.tsx**: Real-time system health monitoring
+- **SystemMetrics.tsx**: Performance metrics and resource utilization
+- **SystemSettings.tsx**: Core system configuration and maintenance
+
+### Admin Dashboard Access & Security
+- **URL Pattern**: `/admin/*` routes for all administrative features
+- **Authentication**: Admin-only JWT authentication with elevated permissions
+- **Role Hierarchy**: Multiple admin levels with different access permissions
+- **Audit Logging**: All admin actions are logged for compliance
+
+### Admin Component Architecture
+```typescript
+// Admin components require special authentication and logging
+import { useAdminData } from '../hooks/useAdminData';
+import { useViewSwitching } from '../hooks/useViewSwitching';
+
+const AdminDashboard = () => {
+  const { systemMetrics, users, loading } = useAdminData();
+  const { switchToUser, currentView } = useViewSwitching();
+  
+  return (
+    <AdminLayout>
+      <SystemHealthOverview metrics={systemMetrics} />
+      <UserManagement 
+        users={users} 
+        onImpersonate={switchToUser}
+      />
+    </AdminLayout>
+  );
+};
+```
+
+### View Switching & Impersonation
+The admin system includes sophisticated user impersonation capabilities:
+
+- **View Switching**: Admin can switch between admin and user views
+- **User Impersonation**: Debug user issues by viewing as that user
+- **Audit Trail**: All view switches are logged for security
+- **Session Management**: Secure session handling during impersonation
+
+### Admin Database Service
+The admin system uses dedicated database entities and repositories:
+
+```typescript
+// Admin entities in services/api-gateway/src/admin/entities/
+- admin-user.entity.ts        // Admin user management
+- api-key.entity.ts          // API key management
+- audit-event.entity.ts      // Audit logging
+- backup-job.entity.ts       // Backup management
+- system-alert.entity.ts     // System alerting
+- system-config.entity.ts    // Configuration management
+```
+
+### Admin Development Patterns
+- **Security First**: All admin components require authentication guards
+- **Audit Everything**: Admin actions must be logged via audit service
+- **Error Boundaries**: Admin interface has comprehensive error handling
+- **Progressive Enhancement**: Admin features degrade gracefully if services are down
+
+## 🧪 Testing Infrastructure
+
+### E2E Testing with Playwright
+The application includes comprehensive end-to-end testing with cross-browser support:
+
+#### Test Configuration
+- **Playwright Config**: `playwright.config.ts` with multi-browser setup
+- **Test Environment**: Isolated Docker environment with `docker-compose.test.yml`
+- **Cross-Browser Testing**: Chrome, Firefox, Safari, and mobile device simulation
+- **Visual Regression**: Screenshot comparison and responsive design testing
+
+#### Test Execution Scripts
+```bash
+# Run full E2E test suite
+./scripts/test-e2e.sh
+
+# Browser-specific testing
+./scripts/test-e2e.sh --browser firefox
+./scripts/test-e2e.sh --browser webkit     # Safari
+./scripts/test-e2e.sh --browser chromium
+
+# Debug mode with browser UI
+./scripts/test-e2e.sh --headed --debug
+
+# Test specific functionality
+./scripts/test-e2e.sh --grep "authentication"
+./scripts/test-e2e.sh --grep "patient-management"
+```
+
+#### Test Organization
+```
+tests/
+├── auth.spec.ts                 # Authentication flows
+├── appointment-scheduling.spec.ts # Booking and scheduling
+├── patient-management.spec.ts   # Patient/client management
+├── navigation.spec.ts           # Navigation and routing
+├── responsive-design.spec.ts    # Mobile responsiveness
+├── cross-browser.spec.ts        # Cross-browser compatibility
+├── fixtures/
+│   ├── auth-helpers.ts         # Authentication test helpers
+│   └── test-data.ts           # Test data factories
+└── README.md                   # Test documentation
+```
+
+### Unit & Integration Testing
+
+#### Jest Configuration
+- **Multi-Project Setup**: Jest configured for frontend and all backend services
+- **Coverage Threshold**: 80% minimum coverage enforced across all workspaces
+- **Environment Setup**: `scripts/test.sh` handles environment variable setup
+- **Mocking Strategy**: External services mocked for reliable testing
+
+#### Frontend Testing Setup
+```typescript
+// Frontend test configuration in frontend/jest.config.ts
+export default {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  moduleNameMapping: {
+    '\\.(css|less|scss)$': 'identity-obj-proxy',
+  },
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/vite-env.d.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
+};
+```
+
+#### Backend Service Testing
+Each microservice includes comprehensive test suites:
+
+```bash
+# Run tests for specific service
+yarn workspace auth-service test
+yarn workspace appointments-service test
+yarn workspace ai-service test
+
+# Run tests with coverage
+yarn workspace auth-service test --coverage
+
+# Run tests in watch mode for development
+yarn workspace auth-service test --watch
+```
+
+### Test Environment Management
+
+#### Environment Variables for Testing
+The test environment requires specific variables set by `scripts/test.sh`:
+
+```bash
+# Test-specific environment setup
+export OPENAI_API_KEY=test-key
+export TWILIO_ACCOUNT_SID=AC00000000000000000000000000000000
+export TWILIO_AUTH_TOKEN=twilio-dev-token
+export NODE_ENV=test
+```
+
+#### Docker Test Environment
+- **Isolated Testing**: `docker-compose.test.yml` provides clean test environment
+- **Database Seeding**: Fresh database with test data for each run
+- **Service Mocking**: External APIs mocked for consistent testing
+- **Parallel Execution**: Tests can run in parallel without conflicts
+
+### Test Data Management
+
+#### Test Fixtures and Helpers
+```typescript
+// tests/fixtures/auth-helpers.ts
+export const createTestUser = async (page: Page) => {
+  await page.goto('/auth');
+  await page.fill('[data-testid=email]', 'test@clinic.com');
+  await page.fill('[data-testid=password]', 'testpassword');
+  await page.click('[data-testid=login-button]');
+  await page.waitForURL('/dashboard');
+};
+
+// tests/fixtures/test-data.ts
+export const testAppointment = {
+  patientName: 'John Doe',
+  appointmentTime: '2024-08-15T10:00:00Z',
+  type: 'Coaching Session',
+  status: 'scheduled',
+};
+```
+
+### Testing Best Practices
+
+#### Component Testing Patterns
+```typescript
+// Example component test with translation system
+import { render, screen } from '@testing-library/react';
+import { LanguageProvider } from '../contexts/LanguageContext';
+import ClientDashboard from './ClientDashboard';
+
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    <LanguageProvider>
+      {component}
+    </LanguageProvider>
+  );
+};
+
+test('displays client dashboard with translations', () => {
+  renderWithProviders(<ClientDashboard />);
+  expect(screen.getByText('Your Growth Dashboard')).toBeInTheDocument();
+});
+```
+
+#### API Testing Patterns
+```typescript
+// Backend service testing with Supertest
+import request from 'supertest';
+import { Test } from '@nestjs/testing';
+import { AppModule } from '../src/app.module';
+
+describe('Appointments API', () => {
+  let app: INestApplication;
+
+  beforeEach(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
+  });
+
+  it('creates appointment with valid data', async () => {
+    return request(app.getHttpServer())
+      .post('/appointments')
+      .send(testAppointmentData)
+      .expect(201)
+      .expect((res) => {
+        expect(res.body.id).toBeDefined();
+        expect(res.body.status).toBe('scheduled');
+      });
+  });
+});
+```
+
+### Continuous Integration Testing
+- **GitHub Actions**: Automated testing on pull requests
+- **Parallel Test Execution**: Tests run in parallel for faster feedback
+- **Test Result Reporting**: Detailed test reports and coverage analysis
+- **Failure Notifications**: Immediate notification on test failures
+
+## 🔐 Security & Admin Management
+
+### Admin User Creation
+Multiple secure methods are available for creating admin users:
+
+#### Method 1: Admin Creation Script (Recommended)
+```bash
+# Create admin user via shell script
+./scripts/create-admin.sh admin@clinic.com SecurePassword123
+
+# With custom role and permissions
+./scripts/create-admin.sh admin@clinic.com SecurePassword123 super-admin
+```
+
+#### Method 2: Node.js Admin Script
+```bash
+# Create admin user via Node.js script
+node scripts/create-admin.js admin@clinic.com SecurePassword123
+
+# For development environment
+NODE_ENV=development node scripts/create-admin.js dev-admin@clinic.com DevPassword123
+```
+
+#### Method 3: Direct SQL (Fallback)
+```bash
+# Use SQL script for emergency admin creation
+psql -h localhost -p 5432 -U postgres -d clinic -f scripts/seed-admin.sql
+
+# Or connect and run manually
+psql -h localhost -p 5432 -U postgres -d clinic
+\i scripts/seed-admin.sql
+```
+
+### Advanced Security Features
+
+#### View Switching & Impersonation
+Secure admin impersonation system for troubleshooting:
+
+```typescript
+// View switching implementation
+import { useViewSwitching } from '../hooks/useViewSwitching';
+
+const AdminUserManagement = () => {
+  const { switchToUser, currentView, originalAdmin } = useViewSwitching();
+  
+  const handleImpersonate = async (userId: string) => {
+    // All view switches are logged for audit
+    await switchToUser(userId);
+    // Admin can now see the application as this user
+  };
+  
+  const returnToAdmin = () => {
+    // Return to original admin view
+    switchToUser(originalAdmin.id);
+  };
+};
+```
+
+#### API Key Management
+Comprehensive API access control system:
+
+- **API Key Generation**: Secure key generation with expiration
+- **Rate Limiting**: Per-key rate limiting and usage tracking
+- **Scope Control**: Fine-grained permission scopes per API key
+- **Usage Analytics**: Detailed API usage monitoring and reporting
+
+#### Audit Logging System
+All administrative actions are logged for compliance:
+
+```typescript
+// Audit logging entities
+interface AuditEvent {
+  id: string;
+  adminId: string;
+  action: string;          // 'VIEW_SWITCH', 'USER_CREATE', 'CONFIG_CHANGE'
+  targetUserId?: string;   // For user-related actions
+  metadata: object;        // Action-specific details
+  timestamp: Date;
+  ipAddress: string;
+  userAgent: string;
+}
+```
+
+### Security Configuration
+
+#### JWT Security Implementation
+- **Token Expiration**: Configurable token expiration times
+- **Token Rotation**: Automatic token refresh for active sessions
+- **Secure Headers**: HTTPS-only, secure cookie settings
+- **CSRF Protection**: Cross-site request forgery protection
+
+#### Role-Based Access Control (RBAC)
+```typescript
+// Role hierarchy implementation
+enum UserRole {
+  CLIENT = 'client',
+  COACH = 'coach', 
+  ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin'
+}
+
+// Permission-based guards
+@UseGuards(JwtAuthGuard, RoleGuard)
+@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+export class AdminController {
+  // Admin-only endpoints
+}
+```
+
+#### Security Configuration Management
+- **Security Settings Page**: Web interface for security configuration
+- **Password Policies**: Configurable password complexity requirements
+- **Session Management**: Session timeout and concurrent session limits
+- **Two-Factor Authentication**: TOTP-based 2FA for admin accounts
+
+### Database Security
+
+#### Connection Security
+- **Connection Pooling**: Secure database connection management
+- **Encrypted Connections**: SSL/TLS encryption for database connections
+- **Credential Management**: Environment-based credential configuration
+- **Query Protection**: Parameterized queries and SQL injection prevention
+
+#### Data Encryption
+```typescript
+// Sensitive data encryption
+import { encrypt, decrypt } from '@clinic/common/encryption';
+
+// Personal data encryption
+const encryptedData = encrypt(sensitiveUserData);
+const decryptedData = decrypt(encryptedData);
+
+// File encryption for stored recordings
+const encryptedRecording = await encryptFile(recordingBuffer);
+```
+
+### Monitoring & Alerting
+
+#### Security Monitoring
+- **Failed Login Attempts**: Automatic lockout after failed attempts
+- **Suspicious Activity**: Automated detection of unusual patterns
+- **Real-time Alerts**: Immediate notification of security events
+- **Compliance Reporting**: Regular security and compliance reports
+
+#### Health Check Security
+```typescript
+// Secure health check endpoints
+@Controller('health')
+export class HealthController {
+  @Get()
+  @UseGuards(InternalApiGuard) // Only accessible internally
+  async check(): Promise<HealthStatus> {
+    return {
+      status: 'healthy',
+      timestamp: new Date(),
+      services: await this.checkServices(),
+    };
+  }
+}
+```
+
+### Production Security Checklist
+
+#### Environment Security
+- [ ] All secrets stored in environment variables or secret managers
+- [ ] JWT secrets are cryptographically secure (256+ bits)
+- [ ] Database passwords are strong and rotated regularly
+- [ ] API keys for external services are properly secured
+- [ ] HTTPS enabled for all production endpoints
+
+#### Application Security
+- [ ] Input validation on all endpoints
+- [ ] Output encoding to prevent XSS
+- [ ] CSRF protection enabled
+- [ ] Rate limiting configured
+- [ ] Error messages don't leak sensitive information
+
+#### Infrastructure Security
+- [ ] Database access restricted to application servers
+- [ ] Network segmentation between services
+- [ ] Regular security updates applied
+- [ ] Backup encryption enabled
+- [ ] Log rotation and secure storage configured
+
+### Incident Response
+
+#### Security Incident Procedures
+1. **Detection**: Automated monitoring detects security events
+2. **Alerting**: Immediate notification to admin team
+3. **Response**: Predefined response procedures activated
+4. **Recovery**: System restoration and security hardening
+5. **Review**: Post-incident analysis and improvement
+
+#### Emergency Admin Access
+```bash
+# Emergency admin creation for system recovery
+DATABASE_URL=postgresql://... node scripts/create-admin.js emergency@clinic.com TempPassword123!
+
+# Reset all user sessions in emergency
+redis-cli FLUSHDB
+
+# Disable specific user account
+psql -d clinic -c "UPDATE users SET is_active = false WHERE email = 'suspicious@user.com';"
+```
+
+## ⚛️ Frontend Architecture Patterns
+
+### Component Organization & Structure
+The frontend follows a structured approach with clear separation of concerns:
+
+#### Page Components
+```
+frontend/src/pages/
+├── client/                    # Client portal pages
+│   ├── ClientDashboard.tsx    # Main client dashboard
+│   ├── ClientBookingSystem.tsx # Booking interface
+│   ├── ClientGoals.tsx        # Goal management
+│   └── CoachDiscovery.tsx     # Find coaches
+├── admin/                     # Admin management pages
+│   ├── AdminDashboardPage.tsx # Admin overview
+│   ├── BackupManagementPage.tsx # System backups
+│   └── SecuritySettingsPage.tsx # Security config
+└── [other pages]             # General application pages
+```
+
+#### Reusable Components
+```
+frontend/src/components/
+├── appointments/              # Appointment-related components
+│   └── MeetingTypeToggle.tsx # Meeting type selection
+├── google/                   # Google integration components
+│   ├── GoogleAccountConnection.tsx
+│   ├── GoogleIntegrationSettings.tsx
+│   └── GoogleOAuthCallback.tsx
+├── progress/                 # Progress tracking
+│   └── ProgressDashboard.tsx
+├── session-summary/          # AI session analysis
+│   ├── SessionSummaryCard.tsx
+│   └── SessionSummaryList.tsx
+└── admin/                    # Admin-specific components
+    ├── LogViewer.tsx
+    ├── SystemHealthOverview.tsx
+    └── UserManagement.tsx
+```
+
+### Custom Hooks Architecture
+
+#### Core Application Hooks
+```typescript
+// Custom hooks for complex functionality
+import { useGoogleIntegration } from '../hooks/useGoogleIntegration';
+import { useViewSwitching } from '../hooks/useViewSwitching';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { useAdminData } from '../hooks/useAdminData';
+
+// Example: Google Integration Hook
+const MyComponent = () => {
+  const { 
+    isConnected, 
+    connectAccount, 
+    syncCalendar, 
+    permissions 
+  } = useGoogleIntegration();
+  
+  const handleConnect = async () => {
+    await connectAccount(['calendar', 'gmail']);
+    await syncCalendar();
+  };
+};
+```
+
+#### Hook Patterns
+- **useGoogleIntegration**: Google Workspace integration management
+- **useViewSwitching**: Admin impersonation capabilities
+- **useWebSocket**: Real-time updates for recordings and notifications
+- **useAdminData**: Admin dashboard data fetching and management
+
+### Service Layer Architecture
+
+#### Frontend Services
+```typescript
+// Service layer for complex operations
+import { RecordingService } from '../services/RecordingService';
+import { WebSocketService } from '../services/WebSocketService';
+import { sessionAnalysisService } from '../services/sessionAnalysisService';
+
+// Recording service with chunked uploads
+const recordingService = new RecordingService({
+  endpoint: '/api/recordings',
+  chunkSize: 1024 * 1024, // 1MB chunks
+  maxFileSize: 500 * 1024 * 1024, // 500MB max
+});
+
+// WebSocket service for real-time updates
+const wsService = new WebSocketService({
+  url: 'ws://localhost:4000',
+  reconnect: true,
+  maxReconnectAttempts: 5,
+});
+```
+
+### State Management Patterns
+
+#### Context-Based State Management
+```typescript
+// Language context for internationalization
+import { LanguageContext, useTranslation } from '../contexts/LanguageContext';
+
+const App = () => {
+  return (
+    <LanguageProvider>
+      <Router>
+        <Routes>
+          <Route path="/client/*" element={<ClientRoutes />} />
+          <Route path="/admin/*" element={<AdminRoutes />} />
+        </Routes>
+      </Router>
+    </LanguageProvider>
+  );
+};
+
+// Usage in components
+const MyComponent = () => {
+  const { t, currentLanguage, changeLanguage } = useTranslation();
+  
+  return (
+    <Typography>
+      {t.dashboard.welcome} {/* Translated text */}
+    </Typography>
+  );
+};
+```
+
+#### Component State Patterns
+```typescript
+// State management for complex components
+import React, { useState, useEffect, useCallback } from 'react';
+
+const ClientBookingSystem = () => {
+  const [coaches, setCoaches] = useState([]);
+  const [selectedCoach, setSelectedCoach] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Memoized callbacks for performance
+  const handleCoachSelect = useCallback((coach) => {
+    setSelectedCoach(coach);
+    fetchAvailableSlots(coach.id);
+  }, []);
+  
+  // Effect for data fetching
+  useEffect(() => {
+    fetchCoaches();
+  }, []);
+};
+```
+
+### Routing & Navigation Architecture
+
+#### Route Organization
+```typescript
+// Route structure with role-based access
+import { ClientPrivateRoute } from '../components/ClientPrivateRoute';
+import { PrivateRoute } from '../components/PrivateRoute';
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/client/login" element={<ClientLoginPage />} />
+      
+      {/* Client-only routes */}
+      <Route path="/client/*" element={
+        <ClientPrivateRoute>
+          <ClientRoutes />
+        </ClientPrivateRoute>
+      } />
+      
+      {/* Admin/Coach routes */}
+      <Route path="/admin/*" element={
+        <PrivateRoute requiredRole="admin">
+          <AdminRoutes />
+        </PrivateRoute>
+      } />
+    </Routes>
+  );
+};
+```
+
+#### Layout Components
+```typescript
+// Layout components for different user types
+import { MainLayout } from '../layouts/MainLayout';
+import { WellnessLayout } from '../layouts/WellnessLayout';
+
+// Coach/Admin layout with full navigation
+const CoachDashboard = () => (
+  <MainLayout>
+    <DashboardContent />
+  </MainLayout>
+);
+
+// Client layout with wellness-focused design
+const ClientDashboard = () => (
+  <WellnessLayout>
+    <ClientDashboardContent />
+  </WellnessLayout>
+);
+```
+
+### API Integration Patterns
+
+#### Axios Configuration & Error Handling
+```typescript
+// API configuration with interceptors
+import axios from 'axios';
+
+const apiClient = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
+  timeout: 10000,
+});
+
+// Request interceptor for auth
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('authToken');
+      window.location.href = '/auth';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+#### API Service Functions
+```typescript
+// API service functions with TypeScript
+export const appointmentsApi = {
+  getAppointments: async (): Promise<Appointment[]> => {
+    const response = await apiClient.get('/appointments');
+    return response.data;
+  },
+  
+  createAppointment: async (data: CreateAppointmentDto): Promise<Appointment> => {
+    const response = await apiClient.post('/appointments', data);
+    return response.data;
+  },
+  
+  updateAppointment: async (id: string, data: UpdateAppointmentDto): Promise<Appointment> => {
+    const response = await apiClient.put(`/appointments/${id}`, data);
+    return response.data;
+  },
+};
+```
+
+### Performance Optimization Patterns
+
+#### Code Splitting & Lazy Loading
+```typescript
+// Route-based code splitting
+import { lazy, Suspense } from 'react';
+
+const ClientDashboard = lazy(() => import('../pages/client/ClientDashboard'));
+const AdminDashboard = lazy(() => import('../pages/AdminDashboardPage'));
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/client/dashboard" element={
+      <Suspense fallback={<CircularProgress />}>
+        <ClientDashboard />
+      </Suspense>
+    } />
+  </Routes>
+);
+```
+
+#### Component Memoization
+```typescript
+// Memoized components for performance
+import React, { memo, useMemo, useCallback } from 'react';
+
+const SessionSummaryCard = memo(({ session, onUpdate }) => {
+  // Memoized computed values
+  const formattedDate = useMemo(() => 
+    new Date(session.date).toLocaleDateString(), 
+    [session.date]
+  );
+  
+  // Memoized callbacks
+  const handleUpdate = useCallback(() => {
+    onUpdate(session.id);
+  }, [session.id, onUpdate]);
+  
+  return (
+    <Card>
+      <Typography>{formattedDate}</Typography>
+      <Button onClick={handleUpdate}>Update</Button>
+    </Card>
+  );
+});
+```
+
+### Error Handling & Loading States
+
+#### Error Boundary Implementation
+```typescript
+// Global error boundary for error handling
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error, errorInfo) {
+    console.error('App Error Boundary caught an error:', error, errorInfo);
+    // Send error to monitoring service
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback error={this.state.error} />;
+    }
+    
+    return this.props.children;
+  }
+}
+```
+
+#### Loading State Management
+```typescript
+// Consistent loading state patterns
+const useAsyncOperation = (asyncFn) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+  
+  const execute = useCallback(async (...args) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await asyncFn(...args);
+      setData(result);
+      return result;
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [asyncFn]);
+  
+  return { loading, error, data, execute };
+};
+```
 
 ## 🎨 Wellness-Focused Design System
 
@@ -645,6 +1651,162 @@ For every new component/page:
 #### Translation System Usage (Non-Negotiable)
 **ALL user-visible text MUST use the translation system - NO EXCEPTIONS**
 
+#### Translation System Architecture
+The application supports multiple languages with a comprehensive i18n infrastructure:
+
+```
+frontend/src/i18n/
+├── index.ts                 # i18n configuration
+├── ar.json                  # Arabic translations
+├── en.json                  # English translations (base)
+├── he.json                  # Hebrew translations
+├── ru.json                  # Russian translations
+└── translations/
+    ├── en.ts               # TypeScript translations (primary)
+    ├── es.ts               # Spanish translations
+    └── he.ts               # Hebrew translations
+```
+
+#### Language Context Implementation
+```typescript
+// Language context provides translation functionality
+import { LanguageContext, LanguageProvider } from '../contexts/LanguageContext';
+
+// App setup with language provider
+const App = () => {
+  return (
+    <LanguageProvider>
+      <Router>
+        <Routes>
+          <Route path="*" element={<AppRoutes />} />
+        </Routes>
+      </Router>
+    </LanguageProvider>
+  );
+};
+
+// Hook usage in components
+const MyComponent = () => {
+  const { t, currentLanguage, changeLanguage, availableLanguages } = useTranslation();
+  
+  return (
+    <Box>
+      <Typography>{t.dashboard.welcome}</Typography>
+      <Select value={currentLanguage} onChange={changeLanguage}>
+        {availableLanguages.map(lang => (
+          <MenuItem key={lang.code} value={lang.code}>
+            {lang.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </Box>
+  );
+};
+```
+
+#### Translation Key Structure (Coaching-Focused)
+The translation system uses empowerment-focused language throughout:
+
+```typescript
+// frontend/src/i18n/translations/en.ts
+export const translations = {
+  // Client Portal - Growth & Achievement Focus
+  clientPortal: {
+    dashboard: {
+      title: "Your Growth Dashboard",
+      subtitle: "Track your transformation journey",
+      welcomeBack: "Welcome back, {name}! Ready to continue your growth?",
+      stats: {
+        totalSessions: "Coaching Sessions Completed",
+        activeGoals: "Active Growth Goals",
+        achievements: "Milestones Achieved",
+        progressThisMonth: "Progress This Month"
+      }
+    },
+    goals: {
+      title: "Your Growth Goals",
+      subtitle: "Define and track your personal development",
+      createNew: "Set New Goal",
+      milestones: "Milestones",
+      celebrate: "Celebrate Your Progress!"
+    },
+    booking: {
+      title: "Book Your Coaching Session",
+      selectCoach: "Choose Your Coach",
+      availableSlots: "Available Time Slots",
+      confirmBooking: "Confirm Your Session"
+    },
+    achievements: {
+      title: "Your Achievements",
+      subtitle: "Celebrate your transformation milestones",
+      unlockedBadges: "Unlocked Badges",
+      nextMilestone: "Next Milestone"
+    }
+  },
+
+  // Admin Dashboard - Management Focus
+  admin: {
+    dashboard: {
+      title: "System Administration",
+      userManagement: "User Management",
+      systemHealth: "System Health",
+      analytics: "Platform Analytics"
+    },
+    security: {
+      title: "Security Settings",
+      apiKeys: "API Key Management",
+      auditLogs: "Audit Trail",
+      accessControl: "Access Control"
+    }
+  },
+
+  // Coach/Therapist Portal - Professional Focus
+  coaching: {
+    dashboard: {
+      title: "Coaching Dashboard",
+      upcomingSessions: "Upcoming Sessions",
+      clientProgress: "Client Progress",
+      sessionNotes: "Session Notes"
+    },
+    sessions: {
+      title: "Coaching Sessions",
+      schedule: "Schedule Session",
+      notes: "Session Notes",
+      summary: "AI-Generated Summary"
+    }
+  },
+
+  // Common UI Elements
+  common: {
+    navigation: {
+      dashboard: "Dashboard",
+      calendar: "Calendar",
+      goals: "Goals",
+      achievements: "Achievements",
+      sessions: "Sessions",
+      settings: "Settings"
+    },
+    actions: {
+      save: "Save Progress",
+      cancel: "Cancel",
+      continue: "Continue Journey",
+      complete: "Mark Complete",
+      schedule: "Schedule",
+      update: "Update"
+    },
+    states: {
+      loading: "Loading your progress...",
+      saving: "Saving your achievements...",
+      error: "Oops! Let's try that again",
+      success: "Great progress! Well done!",
+      empty: "Ready to start your growth journey?"
+    }
+  }
+};
+```
+
+#### Translation System Implementation Rules
+
 1. **Import Translation Hook**: Every component MUST import and use the translation system
    ```typescript
    import { useTranslation } from '../contexts/LanguageContext';
@@ -657,41 +1819,106 @@ For every new component/page:
    <Typography>Welcome to your dashboard</Typography>
    
    // ✅ CORRECT - Always use translation keys
-   <Typography>{t.dashboard.welcome}</Typography>
+   <Typography>{t.clientPortal.dashboard.title}</Typography>
    ```
 
-3. **Add Translation Keys First**: Before or during component development, add translation keys to `frontend/src/i18n/translations/en.ts`
-   ```typescript
-   // Add keys organized by feature/section
-   dashboard: {
-     welcome: "Welcome to your dashboard",
-     subtitle: "Track your progress and achievements"
-   }
-   ```
-
-4. **Dynamic Content Support**: Use `.replace()` method for dynamic values
+3. **Dynamic Content Support**: Use `.replace()` method for dynamic values
    ```typescript
    // For dynamic content like names, counts, etc.
-   {t.dashboard.welcome.replace('{name}', userName)}
-   {t.stats.totalItems.replace('{count}', itemCount.toString())}
+   {t.clientPortal.dashboard.welcomeBack.replace('{name}', userName)}
+   {t.clientPortal.dashboard.stats.totalSessions.replace('{count}', sessionCount.toString())}
    ```
 
-5. **Nested Translation Structure**: Organize translation keys hierarchically by feature
+4. **Coaching Terminology**: Always use empowerment-focused language
    ```typescript
-   clientPortal: {
-     dashboard: {
-       title: "Your Wellness Dashboard",
-       stats: {
-         totalSessions: "Total Sessions",
-         activeGoals: "Active Goals"
-       }
-     },
-     booking: {
-       title: "Book Your Session",
-       selectCoach: "Select Coach"
-     }
-   }
+   // ✅ CORRECT - Coaching/Growth language
+   t.clientPortal.goals.title           // "Your Growth Goals"
+   t.coaching.sessions.title            // "Coaching Sessions"
+   t.clientPortal.achievements.title    // "Your Achievements"
+   
+   // ❌ WRONG - Medical/Clinical language
+   "Your Treatment Plan"
+   "Patient Appointments"
+   "Medical Records"
    ```
+
+#### Multi-Language Support Implementation
+
+```typescript
+// Language switching component
+const LanguageSwitcher = () => {
+  const { currentLanguage, changeLanguage, availableLanguages } = useTranslation();
+  
+  const handleLanguageChange = (langCode: string) => {
+    changeLanguage(langCode);
+    // Persist language preference
+    localStorage.setItem('preferredLanguage', langCode);
+  };
+  
+  return (
+    <Select value={currentLanguage} onChange={handleLanguageChange}>
+      <MenuItem value="en">English</MenuItem>
+      <MenuItem value="he">עברית (Hebrew)</MenuItem>
+      <MenuItem value="ar">العربية (Arabic)</MenuItem>
+      <MenuItem value="ru">Русский (Russian)</MenuItem>
+      <MenuItem value="es">Español (Spanish)</MenuItem>
+    </Select>
+  );
+};
+```
+
+#### RTL (Right-to-Left) Language Support
+The system supports RTL languages like Hebrew and Arabic:
+
+```typescript
+// RTL support in theme configuration
+import { createTheme } from '@mui/material/styles';
+
+const getTheme = (language: string) => {
+  const isRTL = ['he', 'ar'].includes(language);
+  
+  return createTheme({
+    direction: isRTL ? 'rtl' : 'ltr',
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            direction: isRTL ? 'rtl' : 'ltr',
+          },
+        },
+      },
+    },
+  });
+};
+```
+
+#### Translation Validation & Testing
+```typescript
+// Test translation completeness
+const validateTranslations = (translations: any, basePath = '') => {
+  Object.keys(translations).forEach(key => {
+    const path = basePath ? `${basePath}.${key}` : key;
+    const value = translations[key];
+    
+    if (typeof value === 'object') {
+      validateTranslations(value, path);
+    } else if (typeof value !== 'string' || value.trim() === '') {
+      console.warn(`Missing translation for key: ${path}`);
+    }
+  });
+};
+
+// Component test with translation
+test('displays translated content', () => {
+  const { getByText } = render(
+    <LanguageProvider>
+      <ClientDashboard />
+    </LanguageProvider>
+  );
+  
+  expect(getByText('Your Growth Dashboard')).toBeInTheDocument();
+});
+```
 
 #### Translation Key Organization Standards
 

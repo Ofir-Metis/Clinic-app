@@ -98,8 +98,10 @@ export class OpenaiService {
       return summary;
 
     } catch (error) {
-      this.logger.error(`Failed to generate session summary: ${error.message}`, error.stack);
-      throw new Error(`Session summary generation failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Failed to generate session summary: ${errorMessage}`, errorStack);
+      throw new Error(`Session summary generation failed: ${errorMessage}`);
     }
   }
 
@@ -146,8 +148,10 @@ export class OpenaiService {
       return result;
 
     } catch (error) {
-      this.logger.error(`Failed to transcribe audio: ${error.message}`, error.stack);
-      throw new Error(`Audio transcription failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Failed to transcribe audio: ${errorMessage}`, errorStack);
+      throw new Error(`Audio transcription failed: ${errorMessage}`);
     }
   }
 
@@ -206,8 +210,10 @@ export class OpenaiService {
       return JSON.parse(response);
 
     } catch (error) {
-      this.logger.error(`Failed to generate progress insights: ${error.message}`, error.stack);
-      throw new Error(`Progress insights generation failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Failed to generate progress insights: ${errorMessage}`, errorStack);
+      throw new Error(`Progress insights generation failed: ${errorMessage}`);
     }
   }
 
@@ -318,7 +324,8 @@ ${request.coachNotes}
       
       return completion.choices[0]?.message?.content || '';
     } catch (error) {
-      this.logger.error(`Legacy completion failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Legacy completion failed: ${errorMessage}`);
       throw error;
     }
   }

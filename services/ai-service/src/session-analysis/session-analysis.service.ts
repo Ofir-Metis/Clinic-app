@@ -127,7 +127,8 @@ export class SessionAnalysisService {
           processingComplete: true
         });
       } catch (error) {
-        warnings.push(`Failed to notify appointment service: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        warnings.push(`Failed to notify appointment service: ${errorMessage}`);
       }
 
       const processingTime = Date.now() - startTime;
@@ -142,12 +143,14 @@ export class SessionAnalysisService {
       };
 
     } catch (error) {
-      this.logger.error(`Session analysis failed for ${request.appointmentId}: ${error.message}`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Session analysis failed for ${request.appointmentId}: ${errorMessage}`, errorStack);
       
       return {
         success: false,
         processingTimeMs: Date.now() - startTime,
-        errors: [error.message, ...errors]
+        errors: [errorMessage, ...errors]
       };
     }
   }
@@ -231,7 +234,8 @@ export class SessionAnalysisService {
         summaryId: summary.id
       }));
     } catch (error) {
-      this.logger.warn(`Failed to notify client about summary: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`Failed to notify client about summary: ${errorMessage}`);
     }
   }
 
@@ -336,7 +340,8 @@ export class SessionAnalysisService {
       );
       return result.buffer;
     } catch (error) {
-      this.logger.error(`Failed to download audio file: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to download audio file: ${errorMessage}`);
       return null;
     }
   }
@@ -378,8 +383,10 @@ export class SessionAnalysisService {
       return { success: true, text: result.text };
 
     } catch (error) {
-      this.logger.error(`Transcription failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Transcription failed: ${errorMessage}`, errorStack);
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -411,8 +418,10 @@ export class SessionAnalysisService {
       return { success: true };
 
     } catch (error) {
-      this.logger.error(`Summary generation failed: ${error.message}`, error.stack);
-      return { success: false, error: error.message };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Summary generation failed: ${errorMessage}`, errorStack);
+      return { success: false, error: errorMessage };
     }
   }
 
