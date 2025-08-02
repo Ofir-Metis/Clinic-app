@@ -626,3 +626,106 @@ For every new component/page:
 - **Backend**: Implement pagination for large datasets, use proper database indexing
 - **Database**: Connection pooling is configured, monitor connection usage
 - **NATS**: Messages are fire-and-forget by default, use request-reply for critical operations
+
+## Task Management Instructions
+
+### Done List Management
+- When tasks are completed, move them from the active todo list to `DONE.md`
+- To add completed tasks to DONE.md:
+  1. Use Edit tool to add the task under the appropriate section
+  2. Format: `- ✅ [Task description]`
+  3. Update the total count at the bottom
+- Keep the active todo list clean by only showing pending/in-progress tasks
+- Categories in DONE.md: Recording & Session Management, Google Integration, Appointment & Meeting Management, AI & Session Analysis, Client Portal & Dashboard, Internationalization & Settings, etc.
+
+## 🌐 TRANSLATION SYSTEM REQUIREMENTS
+
+### Mandatory Internationalization Standards (Critical)
+
+#### Translation System Usage (Non-Negotiable)
+**ALL user-visible text MUST use the translation system - NO EXCEPTIONS**
+
+1. **Import Translation Hook**: Every component MUST import and use the translation system
+   ```typescript
+   import { useTranslation } from '../contexts/LanguageContext';
+   const { t } = useTranslation();
+   ```
+
+2. **NO Hardcoded Strings**: Never use hardcoded English (or any language) strings in components
+   ```typescript
+   // ❌ WRONG - Never do this
+   <Typography>Welcome to your dashboard</Typography>
+   
+   // ✅ CORRECT - Always use translation keys
+   <Typography>{t.dashboard.welcome}</Typography>
+   ```
+
+3. **Add Translation Keys First**: Before or during component development, add translation keys to `frontend/src/i18n/translations/en.ts`
+   ```typescript
+   // Add keys organized by feature/section
+   dashboard: {
+     welcome: "Welcome to your dashboard",
+     subtitle: "Track your progress and achievements"
+   }
+   ```
+
+4. **Dynamic Content Support**: Use `.replace()` method for dynamic values
+   ```typescript
+   // For dynamic content like names, counts, etc.
+   {t.dashboard.welcome.replace('{name}', userName)}
+   {t.stats.totalItems.replace('{count}', itemCount.toString())}
+   ```
+
+5. **Nested Translation Structure**: Organize translation keys hierarchically by feature
+   ```typescript
+   clientPortal: {
+     dashboard: {
+       title: "Your Wellness Dashboard",
+       stats: {
+         totalSessions: "Total Sessions",
+         activeGoals: "Active Goals"
+       }
+     },
+     booking: {
+       title: "Book Your Session",
+       selectCoach: "Select Coach"
+     }
+   }
+   ```
+
+#### Translation Key Organization Standards
+
+- **Feature-based grouping**: Group keys by main features (dashboard, booking, achievements, etc.)
+- **Hierarchical structure**: Use nested objects for related content
+- **Descriptive key names**: Use clear, descriptive key names that indicate content purpose
+- **Consistent naming**: Use camelCase for keys, descriptive English for values
+- **Context preservation**: Include enough context in key names to understand usage
+
+#### Implementation Checklist (Every Component)
+- [ ] Import `useTranslation` hook at component level
+- [ ] Declare `const { t } = useTranslation()` 
+- [ ] Replace ALL hardcoded strings with `t.section.key` references
+- [ ] Add corresponding translation keys to `en.ts` before or during development
+- [ ] Use `.replace()` for any dynamic content (names, numbers, dates)
+- [ ] Test component with translation system active
+- [ ] Verify no hardcoded strings remain in component
+
+#### Development Workflow Integration
+1. **Design Phase**: Plan translation key structure alongside component design
+2. **Development Phase**: Add translation keys to `en.ts` as you build components
+3. **Review Phase**: Code reviews MUST verify no hardcoded strings exist
+4. **Testing Phase**: Test components with translation system to ensure all text displays correctly
+
+#### Why This Is Critical
+- **Future Internationalization**: Enables easy addition of multiple languages
+- **Consistent Messaging**: Centralizes all user-facing text for consistency
+- **Professional Standards**: Enterprise applications require internationalization support
+- **Maintenance**: Easier to update messaging across the entire application
+- **User Experience**: Enables personalized and localized user experiences
+
+### Important Instructions
+- Do what has been asked; nothing more, nothing less
+- NEVER create files unless they're absolutely necessary for achieving your goal
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User
+- **ALWAYS use the translation system for ALL user-visible text - this is mandatory and non-negotiable**

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppBar, Toolbar, Avatar, Typography, Box, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import ViewSwitchingButton from './ViewSwitchingButton';
 
 /**
  * Displays a top application bar with avatars and the current month/year.
@@ -43,11 +44,12 @@ const PageAppBar: React.FC<PageAppBarProps> = ({
         <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>
           {title}
         </Typography>
-        {/* Placeholder to balance layout */}
-        <Box sx={{ visibility: 'hidden', display: 'flex', gap: 1 }}>
-          {avatarUrls.map((url, idx) => (
-            <Avatar key={idx} src={url} />
-          ))}
+        {/* View switching button for therapists */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ViewSwitchingButton />
+          {avatarUrls.length === 0 && (
+            <Box sx={{ width: 40 }} /> 
+          )}
         </Box>
       </Toolbar>
     </AppBar>

@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts/*.yml"
+
+scrape_configs:
+  - job_name: 'clinic-app-api-gateway'
+    static_configs:
+      - targets: ['localhost:4000']
+    metrics_path: '/health/metrics'
+    scrape_interval: 10s
+    
+  - job_name: 'clinic-app-services'
+    static_configs:
+      - targets: 
+        - 'localhost:3001'  # auth-service
+        - 'localhost:3002'  # appointments-service
+        - 'localhost:3003'  # files-service
+        - 'localhost:3004'  # notifications-service
+        - 'localhost:3005'  # ai-service
+        - 'localhost:3006'  # notes-service
+        - 'localhost:3007'  # analytics-service
+        - 'localhost:3008'  # settings-service
+    metrics_path: '/health'
+    scrape_interval: 30s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093

@@ -29,7 +29,17 @@
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
       "Bash(git rm:*)",
-      "Bash(git filter-branch:*)"
+      "Bash(git filter-branch:*)",
+      "Bash(rm:*)",
+      "Bash(yarn:*)",
+      "Bash(npm test:*)",
+      "Bash(./scripts/init-database.sh:*)",
+      "Bash(POSTGRES_HOST=localhost ./scripts/init-database.sh)",
+      "Bash(DATABASE_HOST=localhost DATABASE_NAME=clinic DATABASE_USER=postgres DATABASE_PASSWORD=postgres ./scripts/init-database.sh)",
+      "Bash(DATABASE_HOST=localhost DATABASE_NAME=clinic DATABASE_USER=postgres DATABASE_PASSWORD=postgres ./scripts/check-database-health.sh)",
+      "Bash(./scripts/start-monitoring.sh:*)",
+      "Bash(./scripts/test-alerts.sh:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

@@ -17,6 +17,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
 import SessionRecorder from '../components/SessionRecorder';
+import AppointmentRecordingManager from '../components/AppointmentRecordingManager';
 import { MeetingTypeToggle } from '../components/appointments/MeetingTypeToggle';
 import { theme } from '../theme';
 import * as RBC from 'react-big-calendar';
@@ -26,7 +27,7 @@ const Views = RBC.Views;
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import {
   getAppointments,
   getAppointment,
@@ -60,6 +61,7 @@ const AppointmentDetail: React.FC<DetailProps> = ({
   onClose, 
   onAppointmentUpdate 
 }) => {
+  const { t } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Mock meeting configuration based on appointment data
@@ -135,7 +137,7 @@ const AppointmentDetail: React.FC<DetailProps> = ({
       <Box sx={{ width: 500, p: 2, maxHeight: '100vh', overflow: 'auto' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
           <Typography variant="h5" fontWeight={600}>
-            Appointment Details
+            {t.nav.appointments} Details
           </Typography>
           <IconButton onClick={onClose} aria-label="close">
             <CloseIcon />
@@ -164,24 +166,26 @@ const AppointmentDetail: React.FC<DetailProps> = ({
               onRecordingSettingsChange={handleRecordingSettingsChange}
             />
             
-            {/* Session Recording Component */}
-            <SessionRecorder
+            {/* Comprehensive Recording Management */}
+            <AppointmentRecordingManager
+              appointmentId={appointment.id.toString()}
               sessionId={appointment.id.toString()}
               participantId={appointment.clientId?.toString() || 'unknown'}
+              userId="current-user-id" // TODO: Get from auth context
+              userRole="coach" // TODO: Get from auth context
               meetingUrl={appointment.meetingUrl}
-              onRecordingStart={(recordingId) => {
-                console.log('Recording started:', recordingId);
+              sessionType={appointment.meetingUrl ? 'online' : 'in-person'}
+              existingRecordings={[]} // TODO: Load from API
+              onRecordingAdded={(recording) => {
+                console.log('Recording added:', recording);
+                // TODO: Update appointment with new recording
               }}
-              onRecordingStop={(recordingId, fileSize) => {
-                console.log('Recording stopped:', recordingId, 'Size:', fileSize);
+              onSummaryGenerated={(summary) => {
+                console.log('AI Summary generated:', summary);
+                // TODO: Save summary to appointment
               }}
-              onRecordingError={(error) => {
-                console.error('Recording error:', error);
-              }}
-              config={{
-                audioOnly: getMeetingConfig(appointment).type === 'in-person',
-                uploadEndpoint: '/api/recordings/upload'
-              }}
+              canManageRecordings={true} // TODO: Check user permissions
+              maxFileSize={500} // 500MB max file size
             />
           </Box>
         ) : (
@@ -197,7 +201,7 @@ const AppointmentDetail: React.FC<DetailProps> = ({
 };
 
 const AppointmentPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [tab, setTab] = useState(0);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,8 +244,8 @@ const AppointmentPage: React.FC = () => {
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Tabs value={tab} onChange={(_, v) => setTab(v)} aria-label="appointment tabs">
-          <Tab label={t('calendar', 'Calendar')} />
-          <Tab label={t('list', 'List')} />
+          <Tab label={t.nav.calendar} />
+          <Tab label="List View" />
         </Tabs>
         {loading ? (
           <Box sx={{ mt: 2 }}>

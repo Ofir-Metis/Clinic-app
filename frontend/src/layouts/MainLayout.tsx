@@ -16,6 +16,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AddIcon from '@mui/icons-material/Add';
 import NewDialog from '../components/NewDialog';
+import ViewSwitchingBanner from '../components/ViewSwitchingBanner';
 import { theme } from '../theme';
 
 interface Props {
@@ -47,6 +48,7 @@ const MainLayout: React.FC<Props> = ({ children }) => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <ViewSwitchingBanner />
       <Box sx={{ minHeight: '100vh' }}>{children}</Box>
       <NewDialog open={newOpen} onClose={() => setNewOpen(false)} />
       <Fab

@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ThemeProvider,
-  CssBaseline,
   Tabs,
   Tab,
   Box,
@@ -18,6 +16,13 @@ import {
   Divider,
   Avatar,
   Stack,
+  Grid,
+  Chip,
+  IconButton,
+  Fade,
+  CircularProgress,
+  alpha,
+  useTheme
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -26,13 +31,14 @@ import {
   Payment as PaymentIcon,
   Language as LanguageIcon,
   Settings as SettingsIcon,
+  Palette as ThemeIcon,
+  Security as PrivacyIcon,
+  Check as CheckIcon,
+  Translate as TranslateIcon,
+  AutoAwesome as SparkleIcon
 } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
-import { useFormik } from 'formik';
-import * as Yup from 'yup';
-import { fetchSettings, saveSettings } from '../api/settings';
-import { logger } from '../logger';
-import { theme } from '../theme';
+import { useLanguage, useTranslation } from '../contexts/LanguageContext';
+import { SUPPORTED_LANGUAGES } from '../i18n/index';
 import WellnessLayout from '../layouts/WellnessLayout';
 
 interface Setting {
@@ -41,304 +47,837 @@ interface Setting {
   category: string;
 }
 
-const categories = [
-  { key: 'Profile', label: 'Profile', icon: <PersonIcon /> },
-  { key: 'Notifications', label: 'Notifications', icon: <NotificationsIcon /> },
-  { key: 'Security', label: 'Security', icon: <SecurityIcon /> },
-  { key: 'Billing', label: 'Billing & Subscription', icon: <PaymentIcon /> },
-  { key: 'Language', label: 'Language & Region', icon: <LanguageIcon /> },
-];
-
 const SettingsPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const { language, changeLanguage, isChangingLanguage, currentLanguageInfo, t } = useLanguage();
   const [tab, setTab] = useState(0);
-  const [initial, setInitial] = useState<Setting[]>([]);
   const [snack, setSnack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-
-  useEffect(() => {
-    logger.debug('load settings');
-    fetchSettings()
-      .then(setInitial)
-      .catch(() => setError('load error'));
-  }, []);
-
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      lang: initial.find((s) => s.key === 'lang')?.value || 'en',
-      emailAlerts: initial.find((s) => s.key === 'emailAlerts')?.value === 'true',
+  const categories = [
+    { 
+      key: 'profile', 
+      title: t.settings.sections.profile.title,
+      description: t.settings.sections.profile.description,
+      icon: <PersonIcon /> 
     },
-    validationSchema: Yup.object({
-      lang: Yup.string().required(),
-      emailAlerts: Yup.boolean(),
-    }),
-    onSubmit: async (values) => {
-      logger.debug('save settings', values);
-      try {
-        await saveSettings([
-          { key: 'lang', value: values.lang, category: 'Profile' },
-          { key: 'emailAlerts', value: String(values.emailAlerts), category: 'Notifications' },
-        ]);
-        setSnack('saved');
-      } catch (e) {
-        logger.debug('save error', e);
-        setError('save failed');
-      }
+    { 
+      key: 'preferences', 
+      title: t.settings.sections.preferences.title,
+      description: t.settings.sections.preferences.description,
+      icon: <SettingsIcon /> 
     },
-  });
+    { 
+      key: 'language', 
+      title: t.settings.sections.language.title,
+      description: t.settings.sections.language.description,
+      icon: <TranslateIcon /> 
+    },
+    { 
+      key: 'theme', 
+      title: t.settings.sections.theme.title,
+      description: t.settings.sections.theme.description,
+      icon: <ThemeIcon /> 
+    },
+    { 
+      key: 'notifications', 
+      title: t.settings.sections.notifications.title,
+      description: t.settings.sections.notifications.description,
+      icon: <NotificationsIcon /> 
+    },
+    { 
+      key: 'privacy', 
+      title: t.settings.sections.privacy.title,
+      description: t.settings.sections.privacy.description,
+      icon: <PrivacyIcon /> 
+    }
+  ];
 
-  const handleReset = () => {
-    logger.debug('reset');
-    formik.resetForm();
+
+  const handleLanguageChange = async (newLanguage: any) => {
+    setIsLoading(true);
+    try {
+      await changeLanguage(newLanguage);
+      setSnack(t.settings.language.changeSuccess);
+    } catch (error) {
+      setError(t.errors.general);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setSnack(t.status.saved);
+    } catch (error) {
+      setError(t.errors.general);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <WellnessLayout
-        title="Settings"
-        showFab={false}
-      >
-        {/* Header Section */}
-        <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 700,
-              mb: 1,
-              background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            ⚙️ Settings
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Customize your wellness platform experience
-          </Typography>
-        </Box>
+      title={t.settings.title}
+      showFab={false}
+    >
+      {/* Header Section */}
+      <Box sx={{ 
+        mb: 4, 
+        textAlign: 'center',
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`,
+        borderRadius: 3,
+        p: 4
+      }}>
+        <SparkleIcon sx={{ fontSize: 48, color: theme.palette.primary.main, mb: 2 }} />
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            fontWeight: 700,
+            mb: 2,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          {t.settings.title}
+        </Typography>
+        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+          {t.settings.subtitle}
+        </Typography>
+        <Chip 
+          label={`${t.settings.language.current}: ${currentLanguageInfo.flag} ${currentLanguageInfo.nativeName}`}
+          color="primary"
+          variant="outlined"
+          sx={{ mt: 2 }}
+        />
+      </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
-          {/* Settings Navigation */}
-          <Card sx={{ 
-            width: { xs: '100%', md: 280 },
-            height: 'fit-content',
-            position: { md: 'sticky' },
-            top: { md: 100 },
-          }}>
-            <CardContent sx={{ p: 0 }}>
-              <Tabs
-                orientation={{ xs: 'horizontal', md: 'vertical' }}
-                value={tab}
-                onChange={(_, v) => setTab(v)}
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  '& .MuiTab-root': {
-                    minHeight: 60,
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    textAlign: 'left',
-                    px: 3,
-                    py: 2,
-                    '&.Mui-selected': {
-                      background: 'rgba(46, 125, 107, 0.08)',
-                      borderRight: { md: '3px solid' },
-                      borderBottom: { xs: '3px solid', md: 'none' },
-                      borderColor: 'primary.main',
-                    },
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
+        {/* Settings Navigation */}
+        <Card sx={{ 
+          width: { xs: '100%', md: 320 },
+          height: 'fit-content',
+          position: { md: 'sticky' },
+          top: { md: 100 },
+          background: alpha(theme.palette.background.paper, 0.85),
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          borderRadius: 3,
+          boxShadow: '0 12px 40px rgba(46, 125, 107, 0.08)'
+        }}>
+          <CardContent sx={{ p: 0 }}>
+            <Tabs
+              orientation={{ xs: 'horizontal', md: 'vertical' }}
+              value={tab}
+              onChange={(_, v) => setTab(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                '& .MuiTab-root': {
+                  minHeight: 80,
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                  textAlign: 'left',
+                  px: 3,
+                  py: 2,
+                  borderRadius: 2,
+                  margin: 1,
+                  transition: 'all 0.3s ease',
+                  '&.Mui-selected': {
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+                    borderLeft: { md: `4px solid ${theme.palette.primary.main}` },
+                    borderBottom: { xs: `4px solid ${theme.palette.primary.main}`, md: 'none' },
+                    '& .MuiAvatar-root': {
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      transform: 'scale(1.1)'
+                    }
                   },
-                }}
-              >
-                {categories.map((category, index) => (
-                  <Tab 
-                    key={category.key} 
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                        <Avatar sx={{ 
-                          width: 32, 
-                          height: 32, 
-                          bgcolor: tab === index ? 'primary.main' : 'grey.100',
-                          color: tab === index ? 'white' : 'grey.600',
-                        }}>
-                          {category.icon}
-                        </Avatar>
+                  '&:hover': {
+                    background: alpha(theme.palette.primary.light, 0.05),
+                    transform: 'translateY(-1px)'
+                  }
+                },
+              }}
+            >
+              {categories.map((category, index) => (
+                <Tab 
+                  key={category.key} 
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, width: '100%', textAlign: 'left' }}>
+                      <Avatar sx={{ 
+                        width: 40, 
+                        height: 40, 
+                        bgcolor: tab === index ? 'primary.main' : alpha(theme.palette.grey[400], 0.3),
+                        color: tab === index ? 'white' : 'grey.600',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        {category.icon}
+                      </Avatar>
+                      <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }}>
                         <Typography 
-                          variant="body2" 
+                          variant="subtitle1" 
                           sx={{ 
-                            fontWeight: tab === index ? 600 : 400,
-                            display: { xs: 'none', sm: 'block' },
+                            fontWeight: tab === index ? 600 : 500,
+                            mb: 0.5,
+                            color: tab === index ? 'primary.main' : 'text.primary'
                           }}
                         >
-                          {t(category.label)}
+                          {category.title}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {category.description}
                         </Typography>
                       </Box>
-                    }
-                  />
-                ))}
-              </Tabs>
-            </CardContent>
-          </Card>
+                    </Box>
+                  }
+                />
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
 
-          {/* Settings Content */}
-          <Card sx={{ flex: 1 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
-                {categories[tab]?.label}
-              </Typography>
-              
-              <form onSubmit={formik.handleSubmit}>
+        {/* Settings Content */}
+        <Card sx={{ 
+          flex: 1,
+          background: alpha(theme.palette.background.paper, 0.85),
+          backdropFilter: 'blur(20px)',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          borderRadius: 3,
+          boxShadow: '0 12px 40px rgba(46, 125, 107, 0.08)'
+        }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <Avatar sx={{ 
+                mr: 2, 
+                bgcolor: 'primary.main',
+                width: 48,
+                height: 48
+              }}>
+                {categories[tab]?.icon}
+              </Avatar>
+              <Box>
+                <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
+                  {categories[tab]?.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {categories[tab]?.description}
+                </Typography>
+              </Box>
+            </Box>
+            
+            <Fade in timeout={300}>
+              <Box>
+                {/* Language Settings Tab */}
+                {tab === 2 && (
+                  <Stack spacing={4}>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <TranslateIcon color="primary" />
+                        {t.settings.language.title}
+                      </Typography>
+                      
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                        {t.settings.language.description}
+                      </Typography>
+
+                      {/* Current Language Display */}
+                      <Card sx={{ 
+                        mb: 4, 
+                        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`,
+                        border: `2px solid ${theme.palette.primary.main}`,
+                        borderRadius: 3
+                      }}>
+                        <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                            {t.settings.language.current}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                            <Typography variant="h2">{currentLanguageInfo.flag}</Typography>
+                            <Box>
+                              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                                {currentLanguageInfo.nativeName}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {currentLanguageInfo.description}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+
+                      {/* Available Languages */}
+                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        {t.settings.language.available}
+                      </Typography>
+                      
+                      <Grid container spacing={3}>
+                        {SUPPORTED_LANGUAGES.map((lang) => (
+                          <Grid item xs={12} sm={6} md={4} key={lang.code}>
+                            <Card
+                              sx={{
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                border: language === lang.code 
+                                  ? `2px solid ${theme.palette.primary.main}` 
+                                  : `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+                                background: language === lang.code
+                                  ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`
+                                  : alpha(theme.palette.background.paper, 0.5),
+                                '&:hover': {
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`,
+                                  border: `2px solid ${theme.palette.primary.light}`
+                                },
+                                position: 'relative'
+                              }}
+                              onClick={() => handleLanguageChange(lang.code)}
+                            >
+                              <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                                {language === lang.code && (
+                                  <CheckIcon 
+                                    sx={{ 
+                                      position: 'absolute',
+                                      top: 8,
+                                      right: 8,
+                                      color: 'primary.main',
+                                      fontSize: 24
+                                    }} 
+                                  />
+                                )}
+                                
+                                <Typography variant="h1" sx={{ mb: 2 }}>
+                                  {lang.flag}
+                                </Typography>
+                                
+                                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                                  {lang.nativeName}
+                                </Typography>
+                                
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                  {lang.name}
+                                </Typography>
+                                
+                                <Typography variant="caption" color="text.secondary" sx={{ 
+                                  display: 'block',
+                                  fontSize: '0.75rem',
+                                  lineHeight: 1.3
+                                }}>
+                                  {lang.description}
+                                </Typography>
+                                
+                                {isChangingLanguage && language !== lang.code && (
+                                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                    <CircularProgress size={20} />
+                                  </Box>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  </Stack>
+                )}
+
+                {/* Theme Settings Tab */}
+                {tab === 3 && (
+                  <Stack spacing={4}>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <ThemeIcon color="primary" />
+                        {t.settings.theme.title}
+                      </Typography>
+                      
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} sm={4}>
+                          <Card sx={{ 
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            p: 3,
+                            border: `2px solid ${theme.palette.divider}`,
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-2px)'
+                            }
+                          }}>
+                            <Typography variant="h4" sx={{ mb: 2 }}>☀️</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              {t.settings.theme.light}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={4}>
+                          <Card sx={{ 
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            p: 3,
+                            border: `2px solid ${theme.palette.divider}`,
+                            '&:hover': {
+                              borderColor: 'primary.main',
+                              transform: 'translateY(-2px)'
+                            }
+                          }}>
+                            <Typography variant="h4" sx={{ mb: 2 }}>🌙</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              {t.settings.theme.dark}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={4}>
+                          <Card sx={{ 
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            p: 3,
+                            border: `2px solid ${theme.palette.primary.main}`,
+                            background: alpha(theme.palette.primary.light, 0.1),
+                            '&:hover': {
+                              borderColor: 'primary.dark',
+                              transform: 'translateY(-2px)'
+                            }
+                          }}>
+                            <Typography variant="h4" sx={{ mb: 2 }}>🌗</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                              {t.settings.theme.auto}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Stack>
+                )}
+
+                {/* Notifications Tab */}
+                {tab === 4 && (
+                  <Stack spacing={4}>
+                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <NotificationsIcon color="primary" />
+                      Notification Preferences
+                    </Typography>
+                    
+                    <Stack spacing={3}>
+                      <FormControlLabel
+                        control={<Switch defaultChecked />}
+                        label={t.settings.notifications.email}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={<Switch defaultChecked />}
+                        label={t.settings.notifications.push}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={<Switch />}
+                        label={t.settings.notifications.sms}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={<Switch defaultChecked />}
+                        label={t.settings.notifications.coaching}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={<Switch defaultChecked />}
+                        label={t.settings.notifications.goals}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={<Switch defaultChecked />}
+                        label={t.settings.notifications.milestones}
+                        sx={{ 
+                          '& .MuiFormControlLabel-label': { 
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }
+                        }}
+                      />
+                    </Stack>
+                  </Stack>
+                )}
+
                 {/* Profile Tab */}
                 {tab === 0 && (
                   <Stack spacing={4}>
                     <Box>
-                      <Typography variant="h6" sx={{ mb: 2 }}>Personal Information</Typography>
-                      <Stack spacing={3}>
-                        <TextField
-                          fullWidth
-                          label="Full Name"
-                          placeholder="Enter your full name"
-                          variant="outlined"
-                        />
-                        <TextField
-                          fullWidth
-                          label="Email Address"
-                          placeholder="Enter your email"
-                          variant="outlined"
-                        />
-                        <TextField
-                          fullWidth
-                          label="Professional Title"
-                          placeholder="e.g., Licensed Clinical Social Worker"
-                          variant="outlined"
-                        />
-                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PersonIcon color="primary" />
+                        Profile Information
+                      </Typography>
+                      
+                      <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                          <Stack spacing={3}>
+                            <TextField
+                              fullWidth
+                              label="Full Name"
+                              placeholder={t.placeholders.name}
+                              variant="outlined"
+                              defaultValue="Dr. Sarah Johnson"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Email Address"
+                              placeholder={t.placeholders.email}
+                              variant="outlined"
+                              defaultValue="sarah.johnson@coaching.com"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Phone Number"
+                              placeholder="+1 (555) 123-4567"
+                              variant="outlined"
+                              defaultValue="+1 (555) 123-4567"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                          </Stack>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                          <Stack spacing={3}>
+                            <TextField
+                              fullWidth
+                              label="Professional Title"
+                              placeholder="e.g., Life Coach, Personal Development Expert"
+                              variant="outlined"
+                              defaultValue="Certified Life & Wellness Coach"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Specialization"
+                              placeholder="e.g., Career Coaching, Mindfulness, Goal Achievement"
+                              variant="outlined"
+                              defaultValue="Personal Growth & Mindfulness"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                            <TextField
+                              fullWidth
+                              label="Location"
+                              placeholder="City, Country"
+                              variant="outlined"
+                              defaultValue="San Francisco, CA"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            />
+                          </Stack>
+                        </Grid>
+                      </Grid>
                     </Box>
                     
                     <Divider />
                     
                     <Box>
-                      <Typography variant="h6" sx={{ mb: 2 }}>Professional Information</Typography>
-                      <Stack spacing={3}>
-                        <TextField
-                          fullWidth
-                          label="License Number"
-                          placeholder="Enter your license number"
-                          variant="outlined"
-                        />
-                        <TextField
-                          fullWidth
-                          label="Specialization"
-                          placeholder="e.g., Cognitive Behavioral Therapy"
-                          variant="outlined"
-                        />
-                      </Stack>
+                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        Bio & Description
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        label="Professional Bio"
+                        placeholder="Share your coaching philosophy and approach..."
+                        variant="outlined"
+                        defaultValue="I'm passionate about helping individuals unlock their potential and create meaningful, fulfilling lives. With over 5 years of experience in personal development coaching, I specialize in mindfulness-based approaches to goal achievement and life transformation."
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            background: alpha(theme.palette.background.paper, 0.5)
+                          }
+                        }}
+                      />
                     </Box>
                   </Stack>
                 )}
-                
-                {/* Notifications Tab */}
+
+                {/* Preferences Tab */}
                 {tab === 1 && (
-                  <Stack spacing={3}>
-                    <Typography variant="h6">Notification Preferences</Typography>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={formik.values.emailAlerts}
-                          onChange={(e) => {
-                            formik.handleChange(e);
-                            logger.debug('change emailAlerts', e.target.checked);
-                          }}
-                          name="emailAlerts"
-                        />
-                      }
-                      label="Email Notifications"
-                    />
-                    <FormControlLabel
-                      control={<Switch defaultChecked />}
-                      label="Appointment Reminders"
-                    />
-                    <FormControlLabel
-                      control={<Switch />}
-                      label="New Client Notifications"
-                    />
-                    <FormControlLabel
-                      control={<Switch defaultChecked />}
-                      label="System Updates"
-                    />
-                  </Stack>
-                )}
-                
-                {/* Security Tab */}
-                {tab === 2 && (
                   <Stack spacing={4}>
                     <Box>
-                      <Typography variant="h6" sx={{ mb: 2 }}>Password & Security</Typography>
-                      <Stack spacing={3}>
-                        <Button variant="outlined" sx={{ alignSelf: 'flex-start' }}>
-                          Change Password
-                        </Button>
-                        <FormControlLabel
-                          control={<Switch defaultChecked />}
-                          label="Two-Factor Authentication"
-                        />
-                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SettingsIcon color="primary" />
+                        Application Preferences
+                      </Typography>
+                      
+                      <Grid container spacing={4}>
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                            Session Defaults
+                          </Typography>
+                          <Stack spacing={3}>
+                            <TextField
+                              select
+                              fullWidth
+                              label="Default Session Duration"
+                              defaultValue="60"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            >
+                              <MenuItem value="30">30 minutes</MenuItem>
+                              <MenuItem value="45">45 minutes</MenuItem>
+                              <MenuItem value="60">60 minutes</MenuItem>
+                              <MenuItem value="90">90 minutes</MenuItem>
+                            </TextField>
+                            
+                            <TextField
+                              select
+                              fullWidth
+                              label="Default Meeting Type"
+                              defaultValue="online"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            >
+                              <MenuItem value="online">🌐 Online Session</MenuItem>
+                              <MenuItem value="in-person">🏢 In-Person Meeting</MenuItem>
+                              <MenuItem value="hybrid">🔄 Hybrid (Client Choice)</MenuItem>
+                            </TextField>
+                            
+                            <FormControlLabel
+                              control={<Switch defaultChecked />}
+                              label="Auto-generate session summaries"
+                              sx={{ 
+                                '& .MuiFormControlLabel-label': { 
+                                  fontSize: '1rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                            <FormControlLabel
+                              control={<Switch defaultChecked />}
+                              label="Send session reminders 24h before"
+                              sx={{ 
+                                '& .MuiFormControlLabel-label': { 
+                                  fontSize: '1rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                          </Stack>
+                        </Grid>
+                        
+                        <Grid item xs={12} md={6}>
+                          <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                            Interface Options
+                          </Typography>
+                          <Stack spacing={3}>
+                            <TextField
+                              select
+                              fullWidth
+                              label="Dashboard View"
+                              defaultValue="cards"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  background: alpha(theme.palette.background.paper, 0.5)
+                                }
+                              }}
+                            >
+                              <MenuItem value="cards">📋 Card View</MenuItem>
+                              <MenuItem value="list">📝 List View</MenuItem>
+                              <MenuItem value="calendar">📅 Calendar View</MenuItem>
+                            </TextField>
+                            
+                            <FormControlLabel
+                              control={<Switch defaultChecked />}
+                              label="Show motivational quotes"
+                              sx={{ 
+                                '& .MuiFormControlLabel-label': { 
+                                  fontSize: '1rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                            <FormControlLabel
+                              control={<Switch />}
+                              label="Enable celebration animations"
+                              sx={{ 
+                                '& .MuiFormControlLabel-label': { 
+                                  fontSize: '1rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                            <FormControlLabel
+                              control={<Switch defaultChecked />}
+                              label="Compact navigation menu"
+                              sx={{ 
+                                '& .MuiFormControlLabel-label': { 
+                                  fontSize: '1rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                          </Stack>
+                        </Grid>
+                      </Grid>
                     </Box>
                   </Stack>
                 )}
-                
-                {/* Language Tab */}
-                {tab === 4 && (
-                  <Stack spacing={3}>
-                    <Typography variant="h6">Language & Region</Typography>
-                    <TextField
-                      label={t('Language')}
-                      name="lang"
-                      value={formik.values.lang}
-                      onChange={(e) => {
-                        formik.handleChange(e);
-                        logger.debug('change lang', e.target.value);
-                      }}
-                      select
-                      fullWidth
-                    >
-                      <MenuItem value="en">🇺🇸 English</MenuItem>
-                      <MenuItem value="he">🇮🇱 עברית</MenuItem>
-                      <MenuItem value="es">🇪🇸 Español</MenuItem>
-                      <MenuItem value="ar">🇸🇦 العربية</MenuItem>
-                    </TextField>
-                  </Stack>
+
+                {/* Privacy Tab placeholder */}
+                {tab === 5 && (
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 8,
+                    color: 'text.secondary'
+                  }}>
+                    <SparkleIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
+                    <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                      Privacy & Security Settings Coming Soon! 🔒
+                    </Typography>
+                    <Typography variant="body1">
+                      We're preparing advanced privacy controls for your coaching practice!
+                    </Typography>
+                  </Box>
                 )}
-                
-                <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-                  <Stack direction="row" spacing={2}>
-                    <Button type="submit" variant="contained" size="large">
-                      {t('Save Changes')}
-                    </Button>
-                    <Button variant="outlined" size="large" onClick={handleReset}>
-                      {t('Reset to Defaults')}
-                    </Button>
-                  </Stack>
-                </Box>
-              </form>
-              
-              {error && (
-                <Alert severity="error" onClose={() => setError(null)} sx={{ mt: 3 }}>
-                  {error}
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </Box>
+              </Box>
+            </Fade>
+            
+            {/* Save Button */}
+            <Box sx={{ mt: 6, pt: 4, borderTop: `1px solid ${theme.palette.divider}` }}>
+              <Stack direction="row" spacing={2} justifyContent="center">
+                <Button 
+                  variant="contained" 
+                  size="large"
+                  disabled={isLoading}
+                  onClick={handleSaveSettings}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 3,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                    '&:hover': {
+                      background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                      transform: 'translateY(-1px)',
+                      boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.3)}`
+                    }
+                  }}
+                >
+                  {isLoading ? <CircularProgress size={24} color="inherit" /> : t.actions.save}
+                </Button>
+              </Stack>
+            </Box>
+            
+            {error && (
+              <Alert 
+                severity="error" 
+                onClose={() => setError(null)} 
+                sx={{ 
+                  mt: 3,
+                  borderRadius: 2,
+                  '& .MuiAlert-message': {
+                    fontSize: '1rem'
+                  }
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
         
-        <Snackbar
-          open={!!snack}
-          autoHideDuration={4000}
-          onClose={() => setSnack(null)}
-          message={snack}
-        />
-      </WellnessLayout>
+      <Snackbar
+        open={!!snack}
+        autoHideDuration={4000}
+        onClose={() => setSnack(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setSnack(null)} 
+          severity="success"
+          sx={{ 
+            borderRadius: 3,
+            minWidth: 300,
+            '& .MuiAlert-message': {
+              fontSize: '1rem',
+              fontWeight: 500
+            }
+          }}
+        >
+          {snack}
+        </Alert>
+      </Snackbar>
+    </WellnessLayout>
   );
 };
 
