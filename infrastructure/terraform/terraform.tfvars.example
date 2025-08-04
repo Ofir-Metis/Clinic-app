@@ -1,0 +1,35 @@
+# Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your actual values
+# NEVER commit terraform.tfvars to version control
+
+# Environment
+environment = "staging"
+aws_region  = "us-east-1"
+
+# Database Configuration
+postgres_password = "your-secure-password-here"
+
+# Security
+jwt_secret = "your-jwt-secret-key-here"
+
+# External API Keys
+openai_api_key    = "sk-your-openai-key-here"
+twilio_auth_token = "your-twilio-auth-token-here"
+
+# Storage
+s3_secret_key = "your-s3-secret-key-here"
+
+# Payment Processing
+stripe_secret_key   = "sk_your_stripe_secret_key_here"
+tranzilla_api_key  = "your-tranzilla-api-key-here"
+
+# Google Integration
+google_client_secret = "your-google-client-secret-here"
+
+# Infrastructure
+vpc_cidr = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+
+# Application
+app_name = "clinic-app"
+domain_name = "your-domain.com"

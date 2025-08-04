@@ -3,7 +3,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService } from '@clinic/common/auth/jwt.service';
+import { JwtService } from '@clinic/common';
 import * as bcrypt from 'bcrypt';
 
 export interface CreateAdminUserData {

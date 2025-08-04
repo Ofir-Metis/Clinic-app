@@ -22,6 +22,8 @@ import {
   ErrorAnalytics 
 } from './custom-exceptions';
 import { StructuredLoggerService } from '../logging/structured-logger.service';
+import { CentralizedLoggerService } from '../logging/centralized-logger.service';
+import { ErrorHandlerService } from './error-handler.service';
 
 export interface ErrorResponse {
   statusCode: number;
@@ -72,7 +74,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     statusPageUrl: string;
   };
 
-  constructor(structuredLogger?: StructuredLoggerService) {
+  constructor(
+    structuredLogger?: StructuredLoggerService,
+    private readonly centralizedLogger?: CentralizedLoggerService,
+    private readonly errorHandler?: ErrorHandlerService
+  ) {
     this.structuredLogger = structuredLogger || new StructuredLoggerService();
     this.environment = process.env.NODE_ENV || 'development';
     this.initializeMetrics();
@@ -93,43 +99,61 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const correlationId = request.headers['x-correlation-id'] as string;
 
     try {
-      // Process the exception
-      const errorInfo = this.processException(exception, request);
-      
-      // Log the error
-      this.logError(exception, errorInfo, request, requestId);
-      
-      // Update metrics
-      this.updateErrorMetrics(errorInfo);
-      
-      // Check for automated recovery
-      if (shouldAutoRecover(exception)) {
-        this.attemptAutomatedRecovery(exception, request);
+      // Use new error handler if available, otherwise fall back to legacy processing
+      if (this.errorHandler && this.centralizedLogger) {
+        const errorContext = this.extractErrorContext(request, requestId, correlationId);
+        const errorResponse = this.errorHandler.handleError(exception, errorContext);
+        
+        // Set retry headers for retryable errors
+        if (errorResponse.code?.includes('RETRYABLE')) {
+          const retryAfter = this.calculateRetryDelay(0);
+          response.setHeader('Retry-After', Math.ceil(retryAfter / 1000));
+          response.setHeader('X-RateLimit-Reset', Date.now() + retryAfter);
+        }
+        
+        // Set security headers
+        this.setSecurityHeaders(response, { analytics: { category: 'unknown' } });
+        
+        response.status(errorResponse.statusCode).json(errorResponse);
+      } else {
+        // Legacy error processing
+        const errorInfo = this.processException(exception, request);
+        
+        // Log the error
+        this.logError(exception, errorInfo, request, requestId);
+        
+        // Update metrics
+        this.updateErrorMetrics(errorInfo);
+        
+        // Check for automated recovery
+        if (shouldAutoRecover(exception)) {
+          this.attemptAutomatedRecovery(exception, request);
+        }
+        
+        // Send monitoring alerts if needed
+        this.sendMonitoringAlerts(errorInfo, request);
+        
+        // Generate error response
+        const errorResponse = this.createErrorResponse(
+          errorInfo,
+          request,
+          requestId,
+          correlationId,
+          startTime
+        );
+        
+        // Set retry headers for retryable errors
+        if (errorInfo.retryable) {
+          const retryAfter = this.calculateRetryDelay(errorInfo.retryCount || 0);
+          response.setHeader('Retry-After', Math.ceil(retryAfter / 1000));
+          response.setHeader('X-RateLimit-Reset', Date.now() + retryAfter);
+        }
+        
+        // Set security headers
+        this.setSecurityHeaders(response, errorInfo);
+        
+        response.status(errorInfo.statusCode).json(errorResponse);
       }
-      
-      // Send monitoring alerts if needed
-      this.sendMonitoringAlerts(errorInfo, request);
-      
-      // Generate error response
-      const errorResponse = this.createErrorResponse(
-        errorInfo,
-        request,
-        requestId,
-        correlationId,
-        startTime
-      );
-      
-      // Set retry headers for retryable errors
-      if (errorInfo.retryable) {
-        const retryAfter = this.calculateRetryDelay(errorInfo.retryCount || 0);
-        response.setHeader('Retry-After', Math.ceil(retryAfter / 1000));
-        response.setHeader('X-RateLimit-Reset', Date.now() + retryAfter);
-      }
-      
-      // Set security headers
-      this.setSecurityHeaders(response, errorInfo);
-      
-      response.status(errorInfo.statusCode).json(errorResponse);
       
     } catch (filterError) {
       // Fallback error handling if the filter itself fails
@@ -462,6 +486,108 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Last resort - write directly to response
       response.end(JSON.stringify(fallbackResponse));
     }
+  }
+
+  private extractErrorContext(request: Request, requestId: string, correlationId?: string): any {
+    return {
+      requestId,
+      correlationId,
+      method: request.method,
+      url: request.url,
+      userAgent: request.get('User-Agent'),
+      ipAddress: this.getClientIp(request),
+      userId: (request as any).user?.id || (request as any).user?.sub,
+      sessionId: (request as any).sessionID || request.headers['x-session-id'] as string,
+      service: process.env.SERVICE_NAME || 'clinic-app',
+      metadata: {
+        headers: this.sanitizeHeaders(request.headers),
+        params: request.params,
+        query: this.sanitizeQuery(request.query),
+        body: this.sanitizeBody(request.body)
+      }
+    };
+  }
+
+  private getClientIp(request: Request): string {
+    return (
+      request.headers['x-forwarded-for'] as string ||
+      request.headers['x-real-ip'] as string ||
+      request.connection.remoteAddress ||
+      request.socket.remoteAddress ||
+      'unknown'
+    );
+  }
+
+  private sanitizeHeaders(headers: any): any {
+    const sanitized = { ...headers };
+    const sensitiveHeaders = [
+      'authorization',
+      'cookie',
+      'x-api-key',
+      'x-auth-token',
+      'x-session-token'
+    ];
+
+    sensitiveHeaders.forEach(header => {
+      if (sanitized[header]) {
+        sanitized[header] = '[REDACTED]';
+      }
+    });
+
+    return sanitized;
+  }
+
+  private sanitizeQuery(query: any): any {
+    if (!query || typeof query !== 'object') return query;
+
+    const sanitized = { ...query };
+    const sensitiveKeys = ['password', 'token', 'secret', 'key', 'auth'];
+
+    sensitiveKeys.forEach(key => {
+      if (sanitized[key]) {
+        sanitized[key] = '[REDACTED]';
+      }
+    });
+
+    return sanitized;
+  }
+
+  private sanitizeBody(body: any): any {
+    if (!body || typeof body !== 'object') return body;
+
+    const sanitized = { ...body };
+    const sensitiveKeys = [
+      'password',
+      'token',
+      'secret',
+      'key',
+      'auth',
+      'creditCard',
+      'ssn',
+      'socialSecurityNumber'
+    ];
+
+    const sanitizeObject = (obj: any): any => {
+      if (!obj || typeof obj !== 'object') return obj;
+
+      const result = Array.isArray(obj) ? [] : {};
+
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
+            result[key] = '[REDACTED]';
+          } else if (typeof obj[key] === 'object') {
+            result[key] = sanitizeObject(obj[key]);
+          } else {
+            result[key] = obj[key];
+          }
+        }
+      }
+
+      return result;
+    };
+
+    return sanitizeObject(sanitized);
   }
 
   // Utility methods

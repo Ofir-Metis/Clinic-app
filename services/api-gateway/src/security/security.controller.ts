@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { SecurityService } from './security.service';
 
 export interface MFASetupRequest {
@@ -266,7 +266,7 @@ export class SecurityController {
     @Query('offset') offset: number = 0,
     @Query('severity') severity?: string,
     @Query('type') type?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const events = await this.securityService.getSecurityEvents({
@@ -473,7 +473,7 @@ export class SecurityController {
     @Query('type') type: 'hipaa' | 'gdpr' | 'soc2' = 'hipaa',
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const report = await this.securityService.generateComplianceReport(

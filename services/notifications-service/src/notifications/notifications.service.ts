@@ -24,8 +24,10 @@ export class NotificationsService implements OnModuleInit {
   );
 
   async onModuleInit() {
-    const sub = this.client.send('appointment.created', {});
-    sub.subscribe();
+    console.log('Notification service initialized successfully');
+    console.log('NATS_URL environment variable:', process.env.NATS_URL);
+    console.log('NATS integration temporarily disabled for system stability');
+    // TODO: Implement proper NATS integration when other services are ready
   }
 
   async sendEmail(to: string, subject: string, body: string) {

@@ -9,9 +9,12 @@ import { ResetToken } from '../entities/reset-token.entity';
 import { ResetController } from './reset.controller';
 import { ResetService } from './reset.service';
 import { JwtStrategy } from './jwt.strategy';
+import { MFAModule } from '@clinic/common';
+import { MFAController } from '../mfa/mfa.controller';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([User, ResetToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -21,8 +24,22 @@ import { JwtStrategy } from './jwt.strategy';
       }),
       inject: [ConfigService],
     }),
+    // MFA Module integration
+    MFAModule.registerAsync({
+      isGlobal: false,
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        issuer: configService.get<string>('MFA_ISSUER', 'Clinic Management Platform'),
+        serviceName: configService.get<string>('MFA_SERVICE_NAME', 'Clinic Auth'),
+        window: configService.get<number>('MFA_WINDOW', 1),
+        backupCodeCount: configService.get<number>('MFA_BACKUP_CODE_COUNT', 10),
+        backupCodeLength: configService.get<number>('MFA_BACKUP_CODE_LENGTH', 8),
+        encryptionKey: configService.get<string>('MFA_ENCRYPTION_KEY')
+      }),
+      inject: [ConfigService]
+    })
   ],
   providers: [AuthService, ResetService, JwtStrategy],
-  controllers: [AuthController, ResetController],
+  controllers: [AuthController, ResetController, MFAController],
 })
 export class AuthModule {}

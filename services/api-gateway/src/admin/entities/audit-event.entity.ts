@@ -10,7 +10,6 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 
 @Index(['resourceType'])
 @Index(['timestamp'])
 @Index(['riskLevel'])
-@Index(['complianceFlags'])
 export class AuditEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;

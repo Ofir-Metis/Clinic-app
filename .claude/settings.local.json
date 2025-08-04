@@ -40,7 +40,18 @@
       "Bash(./scripts/start-monitoring.sh:*)",
       "Bash(./scripts/test-alerts.sh:*)",
       "Bash(npx tsc:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(./scripts/dev.sh:*)",
+      "Bash(sed:*)",
+      "Bash(npx @nestjs/cli build:*)",
+      "Bash(npm start)",
+      "Bash(timeout 15s npm start)",
+      "Bash(timeout:*)",
+      "Bash(cat:*)",
+      "Bash(true)",
+      "Bash(mv:*)",
+      "Bash(npx nest start:*)",
+      "Bash(helm dependency:*)"
     ],
     "deny": []
   }

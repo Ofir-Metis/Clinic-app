@@ -260,8 +260,8 @@ export class SessionAnalysisController {
   @ApiQuery({ name: 'coach-id', required: false, description: 'Filter by coach ID' })
   @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
   async getProcessingStats(
-    @Query('coach-id') coachId?: string,
-    @CurrentUser() user: UserContext
+    @CurrentUser() user: UserContext,
+    @Query('coach-id') coachId?: string
   ) {
     // If user is not admin, they can only see their own stats
     const targetCoachId = user.role === 'admin' ? coachId : user.userId;

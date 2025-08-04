@@ -1,5 +1,6 @@
 import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Throttle } from '@nestjs/throttler';
 import { firstValueFrom } from 'rxjs';
 
 @Controller('auth')
@@ -7,6 +8,7 @@ export class AuthController {
   constructor(private readonly httpService: HttpService) {}
 
   @Post('register')
+  @Throttle({ strict: { ttl: 900000, limit: 3 } }) // 3 registrations per 15 minutes
   async register(@Body() body: any) {
     try {
       const response = await firstValueFrom(
@@ -19,6 +21,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ strict: { ttl: 900000, limit: 5 } }) // 5 login attempts per 15 minutes
   async login(@Body() body: any) {
     try {
       const response = await firstValueFrom(

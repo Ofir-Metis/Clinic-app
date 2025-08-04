@@ -14,8 +14,8 @@ import {
   Logger,
   Param,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@clinic/common/auth/jwt-auth.guard';
-import { ViewSwitchingGuard, ViewSwitching } from '@clinic/common/auth/view-switching.guard';
+import { JwtAuthGuard } from '@clinic/common';
+import { ViewSwitchingGuard, ViewSwitching } from '@clinic/common';
 import { ViewSwitchingService } from './view-switching.service';
 
 export interface SwitchToClientRequest {

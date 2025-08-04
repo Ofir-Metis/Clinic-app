@@ -230,6 +230,7 @@ export const developmentStorageConfig: Partial<StorageConfig> = {
   },
   security: {
     forceSSL: false,
+    signedUrlExpiry: 3600, // 1 hour
     corsEnabled: true,
     allowedOrigins: ['http://localhost:5173', 'http://localhost:3000'],
     preventPublicAccess: false,
@@ -250,11 +251,18 @@ export const productionStorageConfig: Partial<StorageConfig> = {
   },
   security: {
     forceSSL: true,
+    signedUrlExpiry: 1800, // 30 minutes for production
     corsEnabled: true,
+    allowedOrigins: ['https://yourdomain.com'],
     preventPublicAccess: true,
   },
   lifecycle: {
     enabled: true,
+    transitionToIA: 30,
+    transitionToGlacier: 90,
+    deleteAfter: 2555, // 7 years
+    versioningEnabled: true,
+    maxVersions: 10,
   },
   monitoring: {
     metricsEnabled: true,

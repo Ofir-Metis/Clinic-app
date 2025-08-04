@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clinic-app-config
+  namespace: clinic-app
+data:
+  # Database (non-sensitive)
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "postgres"
+  POSTGRES_DB: "clinic"
+  
+  # Services URLs
+  NATS_URL: "nats://nats-service:4222"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Storage (non-sensitive)
+  S3_ENDPOINT: "http://minio-service:9000"
+  S3_BUCKET: "clinic-app-files"
+  
+  # Application
+  NODE_ENV: "production"
+  PORT: "3000"
+  
+  # Frontend
+  FRONTEND_ORIGIN: "https://app.clinic-platform.com"
+  API_URL: "https://api.clinic-platform.com"
+  
+  # Features
+  ENABLE_WEBSOCKETS: "true"
+  ENABLE_AI_SUMMARIES: "true"
+  ENABLE_RECORDINGS: "true"
+  MAX_FILE_SIZE: "500"
+  SUPPORTED_FORMATS: "mp4,mov,avi,mp3,wav,m4a,webm"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clinic-app-config-staging
+  namespace: clinic-app-staging
+data:
+  # Database (non-sensitive)
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "postgres"
+  POSTGRES_DB: "clinic_staging"
+  
+  # Services URLs
+  NATS_URL: "nats://nats-service:4222"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Storage (non-sensitive)
+  S3_ENDPOINT: "http://minio-service:9000"
+  S3_BUCKET: "clinic-app-files-staging"
+  
+  # Application
+  NODE_ENV: "staging"
+  PORT: "3000"
+  
+  # Frontend
+  FRONTEND_ORIGIN: "https://staging.clinic-platform.com"
+  API_URL: "https://api-staging.clinic-platform.com"
+  
+  # Features
+  ENABLE_WEBSOCKETS: "true"
+  ENABLE_AI_SUMMARIES: "true"
+  ENABLE_RECORDINGS: "true"
+  MAX_FILE_SIZE: "500"
+  SUPPORTED_FORMATS: "mp4,mov,avi,mp3,wav,m4a,webm"

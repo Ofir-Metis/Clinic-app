@@ -421,7 +421,7 @@ export class CreateSessionAnalysisTables1698000000001 implements MigrationInterf
       new Index({
         name: 'IDX_session_summaries_client_id',
         columnNames: ['client_id'],
-      })
+      } as any)
     );
 
     await queryRunner.createIndex(

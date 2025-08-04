@@ -1,0 +1,71 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" .Values "Chart" .Chart "Release" .Release "component" "api-gateway") | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api-gateway
+
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" $.Values "serviceName" $serviceConfig.name) }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" $.Values "Chart" $.Chart "Release" $.Release "component" $serviceConfig.name) | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" $ | nindent 4 }}
+spec:
+  {{- if $.Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ $.Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if $.Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ $.Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $serviceConfig.name }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.frontend.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "frontend") }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" .Values "Chart" .Chart "Release" .Release "component" "frontend") | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- end }}
+  {{- if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+{{- end }}
+
+{{- end }}

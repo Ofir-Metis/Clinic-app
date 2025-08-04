@@ -1,0 +1,214 @@
+{{- if .Values.tests.enabled }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "clinic-app.fullname" . }}-test"
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: {{ .Values.tests.image.repository }}:{{ .Values.tests.image.tag }}
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: API_GATEWAY_URL
+          value: "http://{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}:{{ .Values.apiGateway.service.port }}"
+        - name: FRONTEND_URL
+          value: "http://{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "frontend") }}:{{ .Values.frontend.service.port }}"
+        {{- range $serviceName, $serviceConfig := .Values.services }}
+        {{- if $serviceConfig.enabled }}
+        - name: {{ upper $serviceConfig.name | replace "-" "_" }}_URL
+          value: "http://{{ include "clinic-app.serviceName" (dict "Values" $.Values "serviceName" $serviceConfig.name) }}:{{ $serviceConfig.service.port }}"
+        {{- end }}
+        {{- end }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Starting health checks for Clinic App..."
+          
+          # Test API Gateway health
+          echo "Testing API Gateway health..."
+          curl -f $API_GATEWAY_URL/health || exit 1
+          echo "✓ API Gateway is healthy"
+          
+          # Test Frontend availability
+          echo "Testing Frontend availability..."
+          curl -f $FRONTEND_URL/health || exit 1
+          echo "✓ Frontend is available"
+          
+          # Test microservices health
+          {{- range $serviceName, $serviceConfig := .Values.services }}
+          {{- if $serviceConfig.enabled }}
+          echo "Testing {{ $serviceConfig.name }} health..."
+          SERVICE_URL=$(echo "{{ upper $serviceConfig.name | replace "-" "_" }}_URL" | xargs printenv)
+          curl -f $SERVICE_URL/health || exit 1
+          echo "✓ {{ $serviceConfig.name }} is healthy"
+          {{- end }}
+          {{- end }}
+          
+          # Test API Gateway endpoints
+          echo "Testing API Gateway endpoints..."
+          
+          # Test public health endpoint
+          curl -f $API_GATEWAY_URL/examples/session-protected/public/health || exit 1
+          echo "✓ Public health endpoint works"
+          
+          # Test API documentation
+          curl -f $API_GATEWAY_URL/api-docs || exit 1
+          echo "✓ API documentation is available"
+          
+          # Test CORS headers
+          CORS_RESPONSE=$(curl -H "Origin: https://app.clinic-platform.com" \
+                               -H "Access-Control-Request-Method: GET" \
+                               -H "Access-Control-Request-Headers: X-Requested-With" \
+                               -X OPTIONS \
+                               -s -o /dev/null -w "%{http_code}" \
+                               $API_GATEWAY_URL/health)
+          
+          if [ "$CORS_RESPONSE" = "200" ] || [ "$CORS_RESPONSE" = "204" ]; then
+            echo "✓ CORS is properly configured"
+          else
+            echo "✗ CORS configuration issue (HTTP $CORS_RESPONSE)"
+            exit 1
+          fi
+          
+          # Test security headers
+          echo "Testing security headers..."
+          HEADERS=$(curl -s -I $API_GATEWAY_URL/health)
+          
+          if echo "$HEADERS" | grep -i "x-frame-options"; then
+            echo "✓ X-Frame-Options header present"
+          else
+            echo "✗ X-Frame-Options header missing"
+            exit 1
+          fi
+          
+          if echo "$HEADERS" | grep -i "x-content-type-options"; then
+            echo "✓ X-Content-Type-Options header present"
+          else
+            echo "✗ X-Content-Type-Options header missing"
+            exit 1
+          fi
+          
+          # Test rate limiting (if enabled)
+          echo "Testing rate limiting..."
+          RATE_LIMIT_STATUS=0
+          for i in $(seq 1 10); do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" $API_GATEWAY_URL/health)
+            if [ "$RESPONSE" = "429" ]; then
+              RATE_LIMIT_STATUS=1
+              break
+            fi
+            sleep 0.1
+          done
+          
+          if [ "$RATE_LIMIT_STATUS" = "1" ]; then
+            echo "✓ Rate limiting is working"
+          else
+            echo "! Rate limiting may not be configured (no 429 responses)"
+          fi
+          
+          echo "All tests passed! Clinic App is ready for production."
+      resources:
+        {{- toYaml .Values.tests.resources | nindent 8 }}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "clinic-app.fullname" . }}-database-test"
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database-test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: database-test
+      image: postgres:15-alpine
+      env:
+        {{- include "clinic-app.envVars" . | nindent 8 }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Testing database connectivity..."
+          
+          # Test PostgreSQL connection
+          {{- if .Values.postgresql.enabled }}
+          echo "Testing PostgreSQL connection..."
+          PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT version();" || exit 1
+          echo "✓ PostgreSQL connection successful"
+          
+          # Test database extensions
+          echo "Testing required extensions..."
+          PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT * FROM pg_extension WHERE extname IN ('uuid-ossp', 'pg_stat_statements');" || exit 1
+          echo "✓ Required extensions are installed"
+          {{- end }}
+          
+          echo "Database tests completed successfully!"
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "clinic-app.fullname" . }}-redis-test"
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: redis-test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: redis-test
+      image: redis:7-alpine
+      env:
+        {{- include "clinic-app.envVars" . | nindent 8 }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "Testing Redis connectivity..."
+          
+          {{- if .Values.redis.enabled }}
+          # Test Redis connection
+          {{- if .Values.redis.auth.enabled }}
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD ping || exit 1
+          {{- else }}
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT ping || exit 1
+          {{- end }}
+          echo "✓ Redis connection successful"
+          
+          # Test basic operations
+          {{- if .Values.redis.auth.enabled }}
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD set test-key "test-value" || exit 1
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD get test-key || exit 1
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT -a $REDIS_PASSWORD del test-key || exit 1
+          {{- else }}
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT set test-key "test-value" || exit 1
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT get test-key || exit 1
+          redis-cli -h $REDIS_HOST -p $REDIS_PORT del test-key || exit 1
+          {{- end }}
+          echo "✓ Redis operations successful"
+          {{- end }}
+          
+          echo "Redis tests completed successfully!"
+
+{{- end }}

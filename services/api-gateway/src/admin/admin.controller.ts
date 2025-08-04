@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { AdminService } from './admin.service';
 
 export interface SystemHealthResponse {

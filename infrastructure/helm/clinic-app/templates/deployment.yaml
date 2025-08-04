@@ -1,0 +1,203 @@
+{{/* API Gateway Deployment */}}
+{{- if .Values.apiGateway.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" .Values "Chart" .Chart "Release" .Release "component" "api-gateway") | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.apiGateway.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api-gateway
+  template:
+    metadata:
+      labels:
+        {{- include "clinic-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api-gateway
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- include "clinic-app.annotations" . | nindent 8 }}
+    spec:
+      {{- include "clinic-app.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "clinic-app.serviceAccountName" . }}
+      securityContext:
+        {{- include "clinic-app.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: api-gateway
+          securityContext:
+            {{- include "clinic-app.securityContext" . | nindent 12 }}
+          image: {{ include "clinic-app.image" (dict "Values" .Values "service" .Values.apiGateway) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.apiGateway.service.targetPort }}
+              protocol: TCP
+          env:
+            {{- include "clinic-app.envVars" . | nindent 12 }}
+            {{- range $key, $value := .Values.apiGateway.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- include "clinic-app.livenessProbe" . | nindent 10 }}
+          {{- include "clinic-app.readinessProbe" . | nindent 10 }}
+          {{- include "clinic-app.startupProbe" . | nindent 10 }}
+          resources:
+            {{- include "clinic-app.resources" .Values.apiGateway | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      {{- include "clinic-app.nodeSelector" . | nindent 6 }}
+      {{- include "clinic-app.affinity" . | nindent 6 }}
+      {{- include "clinic-app.tolerations" . | nindent 6 }}
+{{- end }}
+
+{{/* Microservices Deployments */}}
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" $.Values "serviceName" $serviceConfig.name) }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" $.Values "Chart" $.Chart "Release" $.Release "component" $serviceConfig.name) | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" $ | nindent 4 }}
+spec:
+  {{- if not $.Values.autoscaling.enabled }}
+  replicas: {{ $serviceConfig.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $serviceConfig.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "clinic-app.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $serviceConfig.name }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- include "clinic-app.annotations" $ | nindent 8 }}
+    spec:
+      {{- include "clinic-app.imagePullSecrets" $ | nindent 6 }}
+      serviceAccountName: {{ include "clinic-app.serviceAccountName" $ }}
+      securityContext:
+        {{- include "clinic-app.podSecurityContext" $ | nindent 8 }}
+      containers:
+        - name: {{ $serviceConfig.name }}
+          securityContext:
+            {{- include "clinic-app.securityContext" $ | nindent 12 }}
+          image: {{ include "clinic-app.image" (dict "Values" $.Values "service" $serviceConfig) }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $serviceConfig.service.targetPort }}
+              protocol: TCP
+          env:
+            {{- include "clinic-app.envVars" $ | nindent 12 }}
+            {{- range $key, $value := $serviceConfig.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- include "clinic-app.livenessProbe" $ | nindent 10 }}
+          {{- include "clinic-app.readinessProbe" $ | nindent 10 }}
+          {{- include "clinic-app.startupProbe" $ | nindent 10 }}
+          resources:
+            {{- include "clinic-app.resources" $serviceConfig | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      {{- include "clinic-app.nodeSelector" $ | nindent 6 }}
+      {{- include "clinic-app.affinity" $ | nindent 6 }}
+      {{- include "clinic-app.tolerations" $ | nindent 6 }}
+{{- end }}
+{{- end }}
+
+{{/* Frontend Deployment */}}
+{{- if .Values.frontend.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "frontend") }}
+  labels:
+    {{- include "clinic-app.serviceLabels" (dict "Values" .Values "Chart" .Chart "Release" .Release "component" "frontend") | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "clinic-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- include "clinic-app.annotations" . | nindent 8 }}
+    spec:
+      {{- include "clinic-app.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "clinic-app.serviceAccountName" . }}
+      securityContext:
+        {{- include "clinic-app.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: frontend
+          securityContext:
+            {{- include "clinic-app.securityContext" . | nindent 12 }}
+          image: {{ include "clinic-app.image" (dict "Values" .Values "service" .Values.frontend) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.frontend.service.targetPort }}
+              protocol: TCP
+          {{- include "clinic-app.livenessProbe" . | nindent 10 }}
+          {{- include "clinic-app.readinessProbe" . | nindent 10 }}
+          {{- include "clinic-app.startupProbe" . | nindent 10 }}
+          resources:
+            {{- include "clinic-app.resources" .Values.frontend | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+      {{- include "clinic-app.nodeSelector" . | nindent 6 }}
+      {{- include "clinic-app.affinity" . | nindent 6 }}
+      {{- include "clinic-app.tolerations" . | nindent 6 }}
+{{- end }}

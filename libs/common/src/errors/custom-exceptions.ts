@@ -393,7 +393,7 @@ export class StorageQuotaExceededError extends StorageException {
         ],
         retryable: false,
       },
-      507 // HttpStatus.INSUFFICIENT_STORAGE
+      HttpStatus.INTERNAL_SERVER_ERROR // Use 500 instead of 507
     );
     this.analytics.severity = 'high';
     this.analytics.impact = 'business';

@@ -5,7 +5,7 @@
 
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { sign, verify, decode } from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 
 export interface JwtPayload {
@@ -36,7 +36,7 @@ export interface DecodedToken {
 }
 
 @Injectable()
-class JwtService {
+export class JwtService {
   private readonly logger = new Logger(JwtService.name);
   private readonly jwtSecret: string;
   private readonly jwtExpiresIn: string;
@@ -57,24 +57,24 @@ class JwtService {
    */
   generateTokens(payload: Omit<JwtPayload, 'iat' | 'exp'>): TokenPair {
     try {
-      const accessToken = sign(payload, this.jwtSecret as string, {
+      const accessToken = jwt.sign(payload, this.jwtSecret, {
         expiresIn: this.jwtExpiresIn,
         issuer: 'clinic-app',
         audience: 'clinic-users',
-      });
+      } as jwt.SignOptions);
 
-      const refreshToken = sign(
+      const refreshToken = jwt.sign(
         { sub: payload.sub, type: 'refresh' },
-        this.jwtSecret as string,
+        this.jwtSecret,
         {
           expiresIn: this.refreshExpiresIn,
           issuer: 'clinic-app',
           audience: 'clinic-users',
-        }
+        } as jwt.SignOptions
       );
 
       // Calculate expiration time in seconds
-      const decoded = decode(accessToken) as any;
+      const decoded = jwt.decode(accessToken) as any;
       const expiresIn = decoded.exp - decoded.iat;
 
       this.logger.log(`🔑 Generated tokens for user ${payload.sub} (${payload.role})`);
@@ -95,7 +95,7 @@ class JwtService {
    */
   validateToken(token: string): DecodedToken {
     try {
-      const payload = verify(token, this.jwtSecret, {
+      const payload = jwt.verify(token, this.jwtSecret, {
         issuer: 'clinic-app',
         audience: 'clinic-users',
       }) as JwtPayload;
@@ -119,7 +119,7 @@ class JwtService {
    */
   refreshAccessToken(refreshToken: string): string {
     try {
-      const decoded = verify(refreshToken, this.jwtSecret) as any;
+      const decoded = jwt.verify(refreshToken, this.jwtSecret) as any;
       
       if (decoded.type !== 'refresh') {
         throw new UnauthorizedException('Invalid refresh token type');
@@ -134,11 +134,11 @@ class JwtService {
         permissions: ['recordings:read', 'recordings:write'], // Should be fetched from DB
       };
 
-      const newAccessToken = sign(payload, this.jwtSecret as string, {
+      const newAccessToken = jwt.sign(payload, this.jwtSecret, {
         expiresIn: this.jwtExpiresIn,
         issuer: 'clinic-app',
         audience: 'clinic-users',
-      });
+      } as jwt.SignOptions);
 
       this.logger.log(`🔄 Refreshed access token for user ${decoded.sub}`);
       return newAccessToken;
@@ -177,11 +177,11 @@ class JwtService {
         appointmentId,
       };
 
-      return sign(payload, this.jwtSecret, {
+      return jwt.sign(payload, this.jwtSecret, {
         expiresIn: '4h', // Session tokens last 4 hours
         issuer: 'clinic-app',
         audience: 'clinic-sessions',
-      });
+      } as jwt.SignOptions);
     } catch (error) {
       this.logger.error('Failed to generate session token:', error);
       throw new Error('Session token generation failed');
@@ -193,7 +193,7 @@ class JwtService {
    */
   validateSessionToken(token: string): DecodedToken {
     try {
-      const payload = verify(token, this.jwtSecret, {
+      const payload = jwt.verify(token, this.jwtSecret, {
         issuer: 'clinic-app',
         audience: 'clinic-sessions',
       }) as JwtPayload;
@@ -268,11 +268,11 @@ class JwtService {
       permissions: ['service:*'],
     };
 
-    return sign(payload, this.jwtSecret, {
+    return jwt.sign(payload, this.jwtSecret, {
       issuer: 'clinic-app',
       audience: 'clinic-services',
       // API keys don't expire unless revoked
-    });
+    } as jwt.SignOptions);
   }
 
   /**
@@ -280,7 +280,7 @@ class JwtService {
    */
   validateApiKey(token: string): DecodedToken {
     try {
-      const payload = verify(token, this.jwtSecret, {
+      const payload = jwt.verify(token, this.jwtSecret, {
         issuer: 'clinic-app',
         audience: 'clinic-services',
       }) as any;
@@ -313,7 +313,7 @@ class JwtService {
    */
   extractUserId(token: string): string | null {
     try {
-      const decoded = decode(token) as any;
+      const decoded = jwt.decode(token) as any;
       return decoded?.sub || null;
     } catch {
       return null;
@@ -460,4 +460,3 @@ class JwtService {
   }
 }
 
-export { JwtService };

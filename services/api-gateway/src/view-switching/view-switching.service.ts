@@ -3,7 +3,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { JwtService, JwtPayload, TokenPair } from '@clinic/common/auth/jwt.service';
+import { JwtService, JwtPayload, TokenPair } from '@clinic/common';
 
 export interface ClientInfo {
   id: string;

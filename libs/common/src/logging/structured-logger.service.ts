@@ -102,7 +102,7 @@ export class StructuredLoggerService extends ConsoleLogger {
           }
         }
         
-        if (error) {
+        if (error && error instanceof Error) {
           logLine += `\n${error.stack}`;
         }
         
@@ -155,7 +155,7 @@ export class StructuredLoggerService extends ConsoleLogger {
             winston.format.json(),
             winston.format((info) => {
               // Only log entries with audit context
-              return info.context?.audit ? info : false;
+              return (info.context as any)?.audit ? info : false;
             })()
           ),
           maxsize: 50 * 1024 * 1024,

@@ -238,17 +238,11 @@ export class EnhancedStorageService implements OnModuleInit {
         {
           ID: 'recording-lifecycle',
           Status: 'Enabled',
-          Filter: { Prefix: 'recordings/' },
-          Transitions: [
-            ...(this.config.lifecycle.transitionToIA > 0 ? [{
-              Days: this.config.lifecycle.transitionToIA,
-              StorageClass: 'STANDARD_IA',
-            }] : []),
-            ...(this.config.lifecycle.transitionToGlacier > 0 ? [{
-              Days: this.config.lifecycle.transitionToGlacier,
-              StorageClass: 'GLACIER',
-            }] : []),
-          ],
+          Prefix: 'recordings/',
+          Transition: this.config.lifecycle.transitionToIA > 0 ? {
+            Days: this.config.lifecycle.transitionToIA,
+            StorageClass: 'STANDARD_IA',
+          } : undefined,
           ...(this.config.lifecycle.deleteAfter > 0 ? {
             Expiration: { Days: this.config.lifecycle.deleteAfter },
           } : {}),
@@ -256,7 +250,7 @@ export class EnhancedStorageService implements OnModuleInit {
         {
           ID: 'cleanup-multipart-uploads',
           Status: 'Enabled',
-          Filter: {},
+          Prefix: '',
           AbortIncompleteMultipartUpload: { DaysAfterInitiation: 7 },
         },
       ],
@@ -514,7 +508,10 @@ export class EnhancedStorageService implements OnModuleInit {
         queueSize: 4,
       };
 
-      return this.s3.upload(uploadParams).promise();
+      return this.s3.upload(params, {
+        partSize: this.config.performance.multipartPartSize,
+        queueSize: 4,
+      }).promise();
     } else {
       return this.s3.putObject(params).promise() as any;
     }

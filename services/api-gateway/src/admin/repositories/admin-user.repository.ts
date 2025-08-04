@@ -42,9 +42,9 @@ export class AdminUserRepository extends Repository<AdminUser> {
     const activeUsers = await this.count({ where: { isActive: true } });
     const verifiedUsers = await this.count({ where: { isVerified: true } });
     const mfaEnabledUsers = await this.count({ where: { mfaEnabled: true } });
-    const lockedUsers = await this.count({ 
-      where: { lockedUntil: this.dataSource.createQueryBuilder().createQueryBuilder().where('lockedUntil > NOW()').getQuery() } 
-    });
+    const lockedUsers = await this.createQueryBuilder('user')
+      .where('user.lockedUntil > :now', { now: new Date() })
+      .getCount();
 
     // Get user count by role
     const roleStats = await this.createQueryBuilder('user')

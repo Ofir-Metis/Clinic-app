@@ -1,0 +1,174 @@
+1. Get the application URLs by running these commands:
+
+{{- if .Values.apiGateway.ingress.enabled }}
+  API Gateway:
+  {{- range $host := .Values.apiGateway.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.apiGateway.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+  {{- end }}
+{{- else if contains "NodePort" .Values.apiGateway.service.type }}
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.apiGateway.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}'
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+  echo http://$SERVICE_IP:{{ .Values.apiGateway.service.port }}
+{{- else if contains "ClusterIP" .Values.apiGateway.service.type }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }} 4000:{{ .Values.apiGateway.service.port }}
+  echo "Visit http://127.0.0.1:4000 to use your application"
+{{- end }}
+
+{{- if .Values.frontend.ingress.enabled }}
+  Frontend Application:
+  {{- range $host := .Values.frontend.ingress.hosts }}
+  {{- range .paths }}
+  http{{ if $.Values.frontend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+  {{- end }}
+  {{- end }}
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "frontend") }} 8080:{{ .Values.frontend.service.port }}
+  echo "Visit http://127.0.0.1:8080 to access the frontend"
+{{- end }}
+
+2. Verify the deployment:
+
+  kubectl get pods --namespace {{ .Release.Namespace }}
+  kubectl get services --namespace {{ .Release.Namespace }}
+
+3. Check application health:
+
+  # API Gateway health
+  kubectl --namespace {{ .Release.Namespace }} exec -it deployment/{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }} -- curl -f http://localhost:{{ .Values.apiGateway.service.targetPort }}/health
+
+  # Run Helm tests
+  helm test {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+4. Monitor your deployment:
+
+{{- if .Values.monitoring.grafana.enabled }}
+  # Access Grafana dashboard
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.fullname" . }}-grafana 3000:80
+  echo "Visit http://127.0.0.1:3000 for monitoring dashboards"
+  echo "Default credentials: admin / {{ .Values.monitoring.grafana.adminPassword | default "admin" }}"
+{{- end }}
+
+{{- if .Values.monitoring.prometheus.enabled }}
+  # Access Prometheus
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.fullname" . }}-prometheus-server 9090:80
+  echo "Visit http://127.0.0.1:9090 for Prometheus"
+{{- end }}
+
+5. View logs:
+
+  # API Gateway logs
+  kubectl --namespace {{ .Release.Namespace }} logs -f deployment/{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}
+
+  # All services logs
+  kubectl --namespace {{ .Release.Namespace }} logs -f -l app.kubernetes.io/instance={{ .Release.Name }}
+
+6. Database access:
+
+{{- if .Values.postgresql.enabled }}
+  # Connect to PostgreSQL
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.fullname" . }}-postgresql 5432:5432
+  
+  # Get database password
+  export POSTGRES_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "clinic-app.fullname" . }}-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+  
+  # Connect using psql
+  PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 -U {{ .Values.postgresql.auth.username }} -d {{ .Values.postgresql.auth.database }} -p 5432
+{{- end }}
+
+{{- if .Values.redis.enabled }}
+  # Connect to Redis
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "clinic-app.fullname" . }}-redis-master 6379:6379
+  
+  {{- if .Values.redis.auth.enabled }}
+  # Get Redis password
+  export REDIS_PASSWORD=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "clinic-app.fullname" . }}-redis -o jsonpath="{.data.redis-password}" | base64 -d)
+  
+  # Connect using redis-cli
+  redis-cli -h 127.0.0.1 -p 6379 -a $REDIS_PASSWORD
+  {{- else }}
+  # Connect using redis-cli
+  redis-cli -h 127.0.0.1 -p 6379
+  {{- end }}
+{{- end }}
+
+7. Scaling your deployment:
+
+  # Scale API Gateway
+  kubectl --namespace {{ .Release.Namespace }} scale deployment {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }} --replicas=5
+
+  # Check HPA status
+  kubectl --namespace {{ .Release.Namespace }} get hpa
+
+8. Backup and restore:
+
+{{- if .Values.backup.enabled }}
+  # Check backup status
+  kubectl --namespace {{ .Release.Namespace }} get cronjobs
+  kubectl --namespace {{ .Release.Namespace }} get jobs -l app.kubernetes.io/component=backup
+
+  # Manual backup trigger
+  kubectl --namespace {{ .Release.Namespace }} create job --from=cronjob/{{ include "clinic-app.fullname" . }}-backup manual-backup-$(date +%Y%m%d-%H%M%S)
+{{- end }}
+
+9. Security checks:
+
+  # Check network policies
+  kubectl --namespace {{ .Release.Namespace }} get networkpolicies
+
+  # Check pod security context
+  kubectl --namespace {{ .Release.Namespace }} get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.securityContext}{"\n"}{end}'
+
+  # Check RBAC
+  kubectl --namespace {{ .Release.Namespace }} get rolebindings
+  kubectl --namespace {{ .Release.Namespace }} describe role {{ include "clinic-app.fullname" . }}-role
+
+10. Troubleshooting:
+
+  # Check pod status and events
+  kubectl --namespace {{ .Release.Namespace }} describe pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+  # Check service endpoints
+  kubectl --namespace {{ .Release.Namespace }} get endpoints
+
+  # Check ingress status
+  kubectl --namespace {{ .Release.Namespace }} describe ingress
+
+  # Debug networking
+  kubectl --namespace {{ .Release.Namespace }} run debug --image=nicolaka/netshoot -it --rm -- /bin/bash
+
+{{- if .Values.environment }}
+Environment: {{ .Values.environment }}
+{{- end }}
+{{- if .Values.region }}
+Region: {{ .Values.region }}
+{{- end }}
+
+🏥 Welcome to the Clinic Management Platform!
+
+Your healthcare-grade, HIPAA-compliant clinic management system is now deployed.
+
+Key Features Enabled:
+✅ Microservices Architecture (API Gateway + 9 Services)
+✅ React Frontend with Material-UI
+✅ Healthcare-Grade Security & Compliance
+{{- if .Values.autoscaling.enabled }}
+✅ Auto-scaling ({{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas)
+{{- end }}
+{{- if .Values.monitoring.enabled }}
+✅ Monitoring & Alerting
+{{- end }}
+{{- if .Values.backup.enabled }}
+✅ Automated Backups
+{{- end }}
+{{- if .Values.networkPolicies.enabled }}
+✅ Network Security Policies
+{{- end }}
+
+For documentation and support, visit: https://github.com/clinic-platform/clinic-app

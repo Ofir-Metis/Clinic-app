@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { PerformanceService } from './performance.service';
 
 export interface PerformanceDashboard {
@@ -243,7 +243,7 @@ export class PerformanceController {
       optimizationType: 'index' | 'rewrite' | 'cache' | 'partition';
       parameters?: Record<string, any>;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.performanceService.optimizeQuery(
@@ -368,7 +368,7 @@ export class PerformanceController {
       selective: boolean;
       reason: string;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.performanceService.flushCache(
@@ -461,7 +461,7 @@ export class PerformanceController {
       algorithm: 'round_robin' | 'least_connections' | 'ip_hash' | 'weighted';
       parameters?: Record<string, any>;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.performanceService.updateLoadBalancingAlgorithm(
@@ -498,7 +498,7 @@ export class PerformanceController {
       maxConnections?: number;
       healthCheckPath?: string;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.performanceService.addUpstream(
@@ -564,7 +564,7 @@ export class PerformanceController {
   async getCpuProfiling(
     @Query('duration') duration: number = 60,
     @Query('service') service?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const profiling = await this.performanceService.getCpuProfiling(duration, service);
@@ -586,7 +586,7 @@ export class PerformanceController {
   @RequireRoles('admin', 'performance_engineer')
   async getMemoryProfiling(
     @Query('service') service?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const profiling = await this.performanceService.getMemoryProfiling(service);
@@ -613,7 +613,7 @@ export class PerformanceController {
       service?: string;
       samplingRate?: number;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const session = await this.performanceService.startProfiling(
@@ -774,7 +774,7 @@ export class PerformanceController {
   async getPerformanceSummary(
     @Query('period') period: string = '24h',
     @Query('service') service?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const summary = await this.performanceService.getPerformanceSummary(period, service);

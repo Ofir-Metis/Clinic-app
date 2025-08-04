@@ -1,0 +1,34 @@
+{{- if .Values.rbac.create }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-role
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+rules:
+{{- with .Values.rbac.rules }}
+{{- toYaml . | nindent 2 }}
+{{- end }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-rolebinding
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "clinic-app.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "clinic-app.fullname" . }}-role
+  apiGroup: rbac.authorization.k8s.io
+
+{{- end }}

@@ -1,0 +1,147 @@
+# Elasticsearch configuration for Clinic App logging
+
+# Cluster settings
+cluster.name: clinic-logs
+node.name: elasticsearch-node-1
+node.roles: [ master, data, ingest ]
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# Discovery settings (single node for development)
+discovery.type: single-node
+discovery.seed_hosts: []
+cluster.initial_master_nodes: []
+
+# Path settings
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs
+path.repo: ["/usr/share/elasticsearch/backup", "/usr/share/elasticsearch/snapshots"]
+
+# Memory settings
+bootstrap.memory_lock: true
+
+# Security settings (disabled for development)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Monitoring settings
+xpack.monitoring.enabled: true
+xpack.monitoring.collection.enabled: true
+
+# Index settings
+action.auto_create_index: "+clinic-*,+docker-*,+system-*,+misc-*,-*"
+action.destructive_requires_name: true
+
+# Healthcare compliance settings
+cluster.routing.allocation.disk.threshold_enabled: true
+cluster.routing.allocation.disk.watermark.low: 85%
+cluster.routing.allocation.disk.watermark.high: 90%
+cluster.routing.allocation.disk.watermark.flood_stage: 95%
+
+# Performance settings
+indices.memory.index_buffer_size: 30%
+indices.memory.min_index_buffer_size: 96mb
+indices.fielddata.cache.size: 20%
+indices.requests.cache.size: 2%
+indices.queries.cache.size: 10%
+
+# Thread pool settings
+thread_pool.write.queue_size: 1000
+thread_pool.search.queue_size: 1000
+thread_pool.get.queue_size: 1000
+
+# Circuit breaker settings
+indices.breaker.total.limit: 70%
+indices.breaker.fielddata.limit: 40%
+indices.breaker.request.limit: 40%
+
+# Index lifecycle management
+xpack.ilm.enabled: true
+
+# Healthcare-specific index templates and policies
+index.number_of_shards: 2
+index.number_of_replicas: 1
+index.refresh_interval: 30s
+index.translog.flush_threshold_size: 512mb
+
+# Audit logging (for compliance)
+xpack.security.audit.enabled: false
+xpack.security.audit.logfile.events.include: [
+  "access_granted", "access_denied", "tampered_request",
+  "connection_granted", "connection_denied",
+  "authentication_success", "authentication_failed",
+  "run_as_granted", "run_as_denied"
+]
+
+# HTTP settings
+http.max_content_length: 100mb
+http.max_header_size: 8kb
+http.max_initial_line_length: 4kb
+http.compression: true
+http.compression_level: 6
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+http.cors.allow-methods: "OPTIONS, HEAD, GET, POST, PUT, DELETE"
+http.cors.allow-headers: "X-Requested-With, Content-Type, Content-Length, Authorization"
+
+# Search settings
+search.max_buckets: 65536
+search.default_search_timeout: 30s
+search.max_open_scroll_context: 500
+
+# Mapping settings
+index.mapping.total_fields.limit: 2000
+index.mapping.depth.limit: 20
+index.mapping.nested_fields.limit: 100
+
+# Clinic-specific settings for HIPAA compliance
+cluster.metadata.unsafe_bootstrap: false
+gateway.expected_nodes: 1
+gateway.recover_after_nodes: 1
+gateway.recover_after_time: 5m
+
+# Index template settings for healthcare logs
+index.lifecycle.name: "clinic-logs-policy"
+index.lifecycle.rollover_alias: "clinic-logs"
+
+# Snapshot settings for backup
+cluster.routing.allocation.snapshot_relocation_enabled: true
+
+# Log settings
+logger.level: INFO
+logger.org.elasticsearch.discovery: WARN
+logger.org.elasticsearch.cluster.service: WARN
+logger.org.elasticsearch.http: WARN
+logger.org.elasticsearch.transport: WARN
+
+# JVM heap dump settings
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/usr/share/elasticsearch/logs/
+-XX:ErrorFile=/usr/share/elasticsearch/logs/hs_err_pid%p.log
+
+# Custom settings for healthcare data
+healthcare.data.retention.phi: "7y"
+healthcare.data.retention.pii: "3y"
+healthcare.data.retention.general: "1y"
+healthcare.data.retention.system: "90d"
+
+# Alerting settings (if X-Pack is enabled)
+xpack.notification.email.enabled: false
+xpack.notification.slack.enabled: false
+xpack.watcher.enabled: false
+
+# Machine learning (disabled for resource conservation)
+xpack.ml.enabled: false
+
+# Graph exploration (disabled)
+xpack.graph.enabled: false
+
+# Development settings
+action.auto_create_index: true
+cluster.routing.rebalance.enable: all
+cluster.routing.allocation.allow_rebalance: indices_all_active

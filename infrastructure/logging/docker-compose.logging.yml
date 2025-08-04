@@ -1,0 +1,240 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: clinic-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=clinic-logs
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - action.destructive_requires_name=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./elasticsearch/config/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - clinic-logging
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=10s || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: clinic-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      - SERVER_BASEPATH=""
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=a7a6311933d3503b89bc2dbc36572c33a7a6311933d3503b89bc2dbc36572c33
+      - LOGGING_ROOT_LEVEL=warn
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - clinic-logging
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  fluentd:
+    image: fluent/fluentd:v1.16.2-debian-1.0
+    container_name: clinic-fluentd
+    volumes:
+      - ./fluentd/config:/fluentd/etc
+      - ./fluentd/plugins:/fluentd/plugins
+      - fluentd_logs:/var/log/fluentd
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+      - "9880:9880"
+    networks:
+      - clinic-logging
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - FLUENTD_CONF=fluent.conf
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9880/api/plugins.json || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: clinic-filebeat
+    user: root
+    volumes:
+      - ./filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - filebeat_data:/usr/share/filebeat/data
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+      - KIBANA_HOST=kibana:5601
+    networks:
+      - clinic-logging
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    command: ["--strict.perms=false"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: clinic-logstash
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - logstash_data:/usr/share/logstash/data
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "9600:9600"
+    environment:
+      - "LS_JAVA_OPTS=-Xmx1g -Xms1g"
+      - ELASTICSEARCH_HOST=elasticsearch:9200
+    networks:
+      - clinic-logging
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9600/_node/stats || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Log rotation and cleanup service
+  logrotate:
+    image: alpine:latest
+    container_name: clinic-logrotate
+    volumes:
+      - /var/log:/var/log
+      - ./logrotate/config:/etc/logrotate.d:ro
+    command: >
+      sh -c "
+        apk add --no-cache logrotate dcron &&
+        echo '0 2 * * * /usr/sbin/logrotate /etc/logrotate.d/clinic-logs' | crontab - &&
+        crond -f
+      "
+    networks:
+      - clinic-logging
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+        reservations:
+          memory: 32M
+
+  # Log monitoring and alerting
+  elastalert:
+    image: jertel/elastalert2:latest
+    container_name: clinic-elastalert
+    volumes:
+      - ./elastalert/config:/opt/elastalert/config:ro
+      - ./elastalert/rules:/opt/elastalert/rules:ro
+      - elastalert_data:/opt/elastalert/data
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+    networks:
+      - clinic-logging
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+volumes:
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local
+  fluentd_logs:
+    driver: local
+  filebeat_data:
+    driver: local
+  logstash_data:
+    driver: local
+  elastalert_data:
+    driver: local
+
+networks:
+  clinic-logging:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

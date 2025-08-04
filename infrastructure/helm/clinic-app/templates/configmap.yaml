@@ -1,0 +1,204 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-config
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+data:
+  # Application configuration
+  NODE_ENV: {{ .Values.environment | quote }}
+  REGION: {{ .Values.region | quote }}
+  
+  # Database configuration
+  {{- if .Values.postgresql.enabled }}
+  POSTGRES_HOST: {{ include "clinic-app.fullname" . }}-postgresql
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: {{ .Values.postgresql.auth.database | quote }}
+  {{- end }}
+  
+  # Redis configuration
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "clinic-app.fullname" . }}-redis-master
+  REDIS_PORT: "6379"
+  {{- end }}
+  
+  # NATS configuration
+  {{- if .Values.nats.enabled }}
+  NATS_URL: nats://{{ include "clinic-app.fullname" . }}-nats:4222
+  {{- if .Values.nats.auth.enabled }}
+  NATS_USER: {{ .Values.nats.auth.user | quote }}
+  {{- end }}
+  {{- end }}
+  
+  # MinIO configuration
+  {{- if .Values.minio.enabled }}
+  S3_ENDPOINT: http://{{ include "clinic-app.fullname" . }}-minio:9000
+  S3_ACCESS_KEY: {{ .Values.minio.auth.rootUser | quote }}
+  S3_BUCKET: clinic-files
+  {{- end }}
+  
+  # Monitoring configuration
+  {{- if .Values.monitoring.enabled }}
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  {{- end }}
+  
+  # Health check configuration
+  HEALTH_CHECK_TIMEOUT: "5000"
+  HEALTH_CHECK_INTERVAL: "30000"
+  
+  # Security configuration
+  SECURE_TRANSPORT_REQUIRED: "true"
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE_HTTPONLY: "true"
+  SESSION_COOKIE_SAMESITE: "strict"
+  
+  # Logging configuration
+  LOG_LEVEL: {{ .Values.environment | eq "production" | ternary "info" "debug" | quote }}
+  LOG_FORMAT: "json"
+  
+  # API Gateway specific configuration
+  {{- if .Values.apiGateway.enabled }}
+  API_GATEWAY_PORT: {{ .Values.apiGateway.service.port | quote }}
+  CORS_ENABLED: "true"
+  CORS_ORIGIN: {{ .Values.apiGateway.ingress.hosts | first | get "host" | default "*" | quote }}
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_WINDOW: "60000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  {{- end }}
+  
+  # Service discovery
+  {{- range $serviceName, $serviceConfig := .Values.services }}
+  {{- if $serviceConfig.enabled }}
+  {{ upper $serviceConfig.name | replace "-" "_" }}_URL: http://{{ include "clinic-app.serviceName" (dict "Values" $.Values "serviceName" $serviceConfig.name) }}:{{ $serviceConfig.service.port }}
+  {{- end }}
+  {{- end }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-nginx-config
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        # Logging
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                       '$status $body_bytes_sent "$http_referer" '
+                       '"$http_user_agent" "$http_x_forwarded_for"';
+        access_log /var/log/nginx/access.log main;
+        
+        # Performance
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 500m;
+        
+        # Security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;" always;
+        
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            application/atom+xml
+            application/javascript
+            application/json
+            application/ld+json
+            application/manifest+json
+            application/rss+xml
+            application/vnd.geo+json
+            application/vnd.ms-fontobject
+            application/x-font-ttf
+            application/x-web-app-manifest+json
+            application/xhtml+xml
+            application/xml
+            font/opentype
+            image/bmp
+            image/svg+xml
+            image/x-icon
+            text/cache-manifest
+            text/css
+            text/plain
+            text/vcard
+            text/vnd.rim.location.xloc
+            text/vtt
+            text/x-component
+            text/x-cross-domain-policy;
+        
+        server {
+            listen 80;
+            server_name _;
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            # Static files with caching
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+                try_files $uri =404;
+            }
+            
+            # API proxy to backend
+            location /api/ {
+                proxy_pass http://{{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}:{{ .Values.apiGateway.service.port }}/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+                proxy_connect_timeout 60s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 60s;
+            }
+            
+            # SPA routing - serve index.html for all routes
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+            
+            # Security - deny access to hidden files
+            location ~ /\. {
+                deny all;
+                access_log off;
+                log_not_found off;
+            }
+        }
+    }

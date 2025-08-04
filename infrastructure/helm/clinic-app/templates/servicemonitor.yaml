@@ -1,0 +1,64 @@
+{{- if and .Values.monitoring.enabled .Values.monitoring.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" .Values "serviceName" "api-gateway") }}
+  labels:
+    {{- include "clinic-app.serviceMonitorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api-gateway
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api-gateway
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.monitoring.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.monitoring.serviceMonitor.scrapeTimeout }}
+      honorLabels: true
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'go_.*'
+          action: drop
+        - sourceLabels: [__name__]
+          regex: 'nodejs_.*'
+          action: keep
+
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "clinic-app.serviceName" (dict "Values" $.Values "serviceName" $serviceConfig.name) }}
+  labels:
+    {{- include "clinic-app.serviceMonitorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceConfig.name }}
+  annotations:
+    {{- include "clinic-app.annotations" $ | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $serviceConfig.name }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ $.Values.monitoring.serviceMonitor.interval }}
+      scrapeTimeout: {{ $.Values.monitoring.serviceMonitor.scrapeTimeout }}
+      honorLabels: true
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'go_.*'
+          action: drop
+        - sourceLabels: [__name__]
+          regex: 'nodejs_.*'
+          action: keep
+{{- end }}
+{{- end }}
+
+{{- end }}

@@ -59,7 +59,10 @@ export interface SessionInfo {
 export interface SecurityEvent {
   id: string;
   timestamp: Date;
-  type: 'login_attempt' | 'mfa_failure' | 'session_hijack' | 'suspicious_activity' | 'policy_violation';
+  type: 'login_attempt' | 'mfa_failure' | 'mfa_success' | 'session_hijack' | 'suspicious_activity' | 
+        'policy_violation' | 'mfa_disabled' | 'backup_codes_generated' | 'session_terminated' | 
+        'all_sessions_terminated' | 'event_acknowledged' | 'policies_updated' | 'ip_access_changed' | 
+        'password_reset_forced';
   severity: 'low' | 'medium' | 'high' | 'critical';
   userId?: string;
   email?: string;
@@ -182,7 +185,7 @@ export class SecurityService {
 
   private async setupTOTP(userId: string): Promise<MFASetupResult> {
     // Generate a random secret for TOTP (in production, use proper TOTP library)
-    const secret = crypto.randomBytes(20).toString('base32');
+    const secret = crypto.randomBytes(20).toString('hex');
     const issuer = 'Clinic Management System';
     const accountName = `Clinic App (${userId})`;
     
@@ -190,7 +193,7 @@ export class SecurityService {
     const qrCodeUrl = `otpauth://totp/${encodeURIComponent(accountName)}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
 
     // In production, save the secret to database encrypted
-    const backupCodes = this.generateBackupCodes(8);
+    const backupCodes = this.generateBackupCodesPrivate(8);
 
     return {
       method: 'totp',
@@ -207,7 +210,7 @@ export class SecurityService {
     }
 
     // In production, validate phone number and send test SMS
-    const backupCodes = this.generateBackupCodes(8);
+    const backupCodes = this.generateBackupCodesPrivate(8);
 
     return {
       method: 'sms',
@@ -222,7 +225,7 @@ export class SecurityService {
     }
 
     // In production, send test email with verification code
-    const backupCodes = this.generateBackupCodes(8);
+    const backupCodes = this.generateBackupCodesPrivate(8);
 
     return {
       method: 'email',
@@ -326,7 +329,7 @@ export class SecurityService {
    */
   async generateBackupCodes(userId: string): Promise<string[]> {
     try {
-      const codes = this.generateBackupCodes(10);
+      const codes = this.generateBackupCodesPrivate(10);
       
       // In production, encrypt and store codes in database
       await this.logSecurityEvent({
@@ -346,7 +349,7 @@ export class SecurityService {
     }
   }
 
-  private generateBackupCodes(count: number): string[] {
+  private generateBackupCodesPrivate(count: number): string[] {
     const codes: string[] = [];
     for (let i = 0; i < count; i++) {
       codes.push(crypto.randomBytes(4).toString('hex').toUpperCase());

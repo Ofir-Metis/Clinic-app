@@ -1,0 +1,216 @@
+{{- if .Values.networkPolicies.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-ingress-policy
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow ingress traffic to API Gateway and Frontend
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              name: istio-system
+      ports:
+        - protocol: TCP
+          port: {{ .Values.apiGateway.service.targetPort }}
+        - protocol: TCP
+          port: {{ .Values.frontend.service.targetPort }}
+    
+    # Allow internal service communication
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.apiGateway.service.targetPort }}
+        {{- range $serviceName, $serviceConfig := .Values.services }}
+        {{- if $serviceConfig.enabled }}
+        - protocol: TCP
+          port: {{ $serviceConfig.service.targetPort }}
+        {{- end }}
+        {{- end }}
+    
+    # Allow database connections
+    {{- if .Values.postgresql.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 5432
+    {{- end }}
+    
+    # Allow Redis connections
+    {{- if .Values.redis.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 6379
+    {{- end }}
+    
+    # Allow NATS connections
+    {{- if .Values.nats.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 4222
+    {{- end }}
+    
+    # Allow MinIO connections
+    {{- if .Values.minio.enabled }}
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 9000
+    {{- end }}
+    
+    # Allow monitoring connections
+    {{- if .Values.monitoring.enabled }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+        - namespaceSelector:
+            matchLabels:
+              name: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+        - protocol: TCP
+          port: 3000
+    {{- end }}
+
+{{- if .Values.networkPolicies.egress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "clinic-app.fullname" . }}-egress-policy
+  labels:
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "clinic-app.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow HTTPS traffic to external services
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow HTTP traffic to external services (for development)
+    {{- if eq .Values.environment "development" }}
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 80
+    {{- end }}
+    
+    # Allow internal service communication
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "clinic-app.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.apiGateway.service.targetPort }}
+        {{- range $serviceName, $serviceConfig := .Values.services }}
+        {{- if $serviceConfig.enabled }}
+        - protocol: TCP
+          port: {{ $serviceConfig.service.targetPort }}
+        {{- end }}
+        {{- end }}
+    
+    # Allow database connections
+    {{- if .Values.postgresql.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    {{- end }}
+    
+    # Allow Redis connections
+    {{- if .Values.redis.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    {{- end }}
+    
+    # Allow NATS connections
+    {{- if .Values.nats.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+    {{- end }}
+    
+    # Allow MinIO connections
+    {{- if .Values.minio.enabled }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+      ports:
+        - protocol: TCP
+          port: 9000
+    {{- end }}
+    
+    # Allow specific external hosts
+    {{- range .Values.networkPolicies.egress.allowedHosts }}
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 443
+      # Note: Kubernetes NetworkPolicy doesn't support hostname-based rules
+      # This would require a service mesh like Istio for hostname-based egress control
+    {{- end }}
+
+{{- end }}
+{{- end }}

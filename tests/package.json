@@ -1,0 +1,24 @@
+{
+  "name": "@clinic/comprehensive-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive test suite for the clinic management system",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:comprehensive": "node run-comprehensive-tests.js",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:report": "npx playwright show-report",
+    "install:browsers": "npx playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@faker-js/faker": "^8.3.1",
+    "axios": "^1.6.2",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Clinic Management Team",
+  "license": "MIT"
+}

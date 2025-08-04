@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { BackupService } from './backup.service';
 
 export interface BackupCreateRequest {
@@ -122,7 +122,7 @@ export class BackupController {
     @Query('offset') offset: number = 0,
     @Query('type') type?: string,
     @Query('status') status?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const backups = await this.backupService.getBackups({
@@ -533,7 +533,7 @@ export class BackupController {
   @RequireRoles('admin')
   async getIntegrityReport(
     @Query('days') days: number = 30,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const report = await this.backupService.getIntegrityReport(days);

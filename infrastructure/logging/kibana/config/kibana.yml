@@ -1,0 +1,136 @@
+# Kibana configuration for Clinic App logging
+
+# Server configuration
+server.name: "clinic-kibana"
+server.host: "0.0.0.0"
+server.port: 5601
+server.basePath: ""
+server.rewriteBasePath: false
+server.publicBaseUrl: "http://localhost:5601"
+
+# Elasticsearch configuration
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: ""
+elasticsearch.password: ""
+elasticsearch.ssl.verificationMode: none
+
+# Logging configuration
+logging.appenders.file.type: file
+logging.appenders.file.fileName: /usr/share/kibana/data/kibana.log
+logging.appenders.file.layout.type: pattern
+logging.appenders.file.layout.pattern: "[%date][%level][%logger] %message %meta"
+
+logging.loggers:
+  - name: root
+    appenders: [default, file]
+    level: warn
+  - name: elasticsearch
+    appenders: [default, file]
+    level: warn
+  - name: elasticsearch.query
+    appenders: [default, file]
+    level: warn
+
+# Security settings (disabled for development)
+xpack.security.enabled: false
+xpack.encryptedSavedObjects.encryptionKey: "a7a6311933d3503b89bc2dbc36572c33a7a6311933d3503b89bc2dbc36572c33"
+
+# Monitoring
+xpack.monitoring.enabled: true
+xpack.monitoring.kibana.collection.enabled: true
+xpack.monitoring.ui.container.elasticsearch.enabled: true
+
+# Dashboard and visualization settings
+xpack.canvas.enabled: true
+xpack.graph.enabled: true
+xpack.ml.enabled: false
+xpack.watcher.enabled: false
+
+# Index patterns and data views
+kibana.index: ".kibana"
+kibana.defaultAppId: "discover"
+
+# Session and cookie settings
+server.maxPayload: 1048576
+server.keepAliveTimeout: 120000
+server.socketTimeout: 120000
+
+# Healthcare-specific configurations
+map.regionmap: []
+map.manifestServiceUrl: ""
+
+# Custom branding (optional)
+server.customResponseHeaders:
+  "X-Frame-Options": "SAMEORIGIN"
+  "X-Content-Type-Options": "nosniff"
+  "X-XSS-Protection": "1; mode=block"
+
+# Telemetry (disabled for privacy)
+telemetry.enabled: false
+telemetry.optIn: false
+
+# Performance settings
+elasticsearch.requestTimeout: 30000
+elasticsearch.shardTimeout: 30000
+elasticsearch.pingTimeout: 3000
+
+# Index management
+data.search.aggs.shardDelay.enabled: false
+
+# Development settings
+environment: "development"
+ops.interval: 30000
+
+# Clinic-specific configurations
+newsfeed.enabled: false
+xpack.spaces.enabled: false
+xpack.fleet.enabled: false
+xpack.infra.enabled: false
+xpack.apm.enabled: false
+xpack.uptime.enabled: false
+
+# Dashboard auto-import settings
+kibana.autocompleteTimeout: 5000
+kibana.autocompleteTerminateAfter: 100000
+
+# Custom index patterns for clinic logs
+data.defaultIndex: "clinic-logs-*"
+
+# Visualization limits
+visualization.regionmap.showWarnings: true
+visualization.tileMap.maxPrecision: 12
+
+# Advanced settings
+advanced_settings:
+  # Search settings
+  search:defaultIndex: "clinic-logs-*"
+  search:timeout: 600000
+  courier:batchSearches: true
+  courier:maxConcurrentShardRequests: 256
+  
+  # Visualization settings
+  visualization:regionmap:showWarnings: true
+  visualization:tileMap:maxPrecision: 12
+  
+  # Discover settings
+  discover:sampleSize: 500
+  discover:aggs:terms:size: 20
+  
+  # General settings
+  dateFormat: "MMM D, YYYY @ HH:mm:ss.SSS"
+  dateFormat:tz: "UTC"
+  defaultRoute: "/app/discover"
+  
+  # Performance settings
+  histogram:barTarget: 50
+  histogram:maxBars: 100
+  
+  # CSV export settings
+  csv:separator: ","
+  csv:quoteValues: true
+  
+  # Notification settings
+  notifications:lifetime:banner: 300000
+  notifications:lifetime:info: 300000
+  notifications:lifetime:warning: 300000
+  notifications:lifetime:error: 300000

@@ -1,0 +1,15 @@
+{{- if .Values.podSecurityStandards }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    pod-security.kubernetes.io/enforce: {{ .Values.podSecurityStandards.enforced }}
+    pod-security.kubernetes.io/audit: {{ .Values.podSecurityStandards.audit }}
+    pod-security.kubernetes.io/warn: {{ .Values.podSecurityStandards.warn }}
+    {{- include "clinic-app.labels" . | nindent 4 }}
+  annotations:
+    {{- include "clinic-app.annotations" . | nindent 4 }}
+
+{{- end }}

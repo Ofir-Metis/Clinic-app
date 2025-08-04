@@ -5,8 +5,8 @@
 import { Module } from '@nestjs/common';
 import { ViewSwitchingController } from './view-switching.controller';
 import { ViewSwitchingService } from './view-switching.service';
-import { JwtService } from '@clinic/common/auth/jwt.service';
-import { ViewSwitchingGuard } from '@clinic/common/auth/view-switching.guard';
+import { JwtService } from '@clinic/common';
+import { ViewSwitchingGuard } from '@clinic/common';
 
 @Module({
   controllers: [ViewSwitchingController],

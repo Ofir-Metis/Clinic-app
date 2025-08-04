@@ -18,7 +18,7 @@ import {
   Logger,
   Headers,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { ApiManagementService } from './api-management.service';
 
 export interface ApiKey {
@@ -150,7 +150,7 @@ export class ApiManagementController {
    */
   @Get('overview')
   @RequireRoles('admin', 'api_manager')
-  async getApiOverview(@Request() req: any) {
+  async getApiOverview(@Request() req: any): Promise<any> {
     try {
       const overview = await this.apiManagementService.getApiOverview();
       
@@ -175,11 +175,11 @@ export class ApiManagementController {
   @Get('keys')
   @RequireRoles('admin', 'api_manager')
   async getApiKeys(
+    @Request() req: any,
     @Query('clientId') clientId?: string,
     @Query('status') status?: string,
     @Query('limit') limit: number = 50,
     @Query('offset') offset: number = 0,
-    @Request() req: any,
   ) {
     try {
       const keys = await this.apiManagementService.getApiKeys({
@@ -218,7 +218,7 @@ export class ApiManagementController {
       expiresAt?: Date;
       metadata?: Record<string, any>;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const apiKey = await this.apiManagementService.createApiKey(
@@ -438,7 +438,7 @@ export class ApiManagementController {
   async getClientApplications(
     @Query('status') status?: string,
     @Query('type') type?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const clients = await this.apiManagementService.getClientApplications({
@@ -555,7 +555,7 @@ export class ApiManagementController {
   async getApiAnalytics(
     @Query('period') period: string = '24h',
     @Query('clientId') clientId?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const analytics = await this.apiManagementService.getApiAnalytics(period, clientId);
@@ -579,7 +579,7 @@ export class ApiManagementController {
     @Query('metric') metric: string,
     @Query('period') period: string = '7d',
     @Query('granularity') granularity: string = 'hour',
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const trends = await this.apiManagementService.getUsageTrends(
@@ -606,7 +606,7 @@ export class ApiManagementController {
   async getEndpointPerformance(
     @Query('period') period: string = '24h',
     @Query('limit') limit: number = 20,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const performance = await this.apiManagementService.getEndpointPerformance(
@@ -657,7 +657,7 @@ export class ApiManagementController {
       reason: string;
       duration?: number; // minutes, 0 for permanent
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       await this.apiManagementService.blockIpAddress(

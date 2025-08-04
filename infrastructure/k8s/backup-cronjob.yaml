@@ -1,0 +1,232 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: clinic-app
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: postgres-backup
+            image: postgres:15-alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              # Generate backup filename with timestamp
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="clinic-db-backup-${TIMESTAMP}.sql.gz"
+              
+              echo "Starting database backup: ${BACKUP_FILE}"
+              
+              # Create backup directory
+              mkdir -p /backups
+              
+              # Create compressed backup
+              PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+                -h "${POSTGRES_HOST}" \
+                -p "${POSTGRES_PORT}" \
+                -U "${POSTGRES_USER}" \
+                -d "${POSTGRES_DB}" \
+                --no-password \
+                --verbose \
+                --clean \
+                --create \
+                --if-exists | gzip -6 > "/backups/${BACKUP_FILE}"
+              
+              # Verify backup
+              echo "Verifying backup integrity..."
+              gunzip -t "/backups/${BACKUP_FILE}"
+              
+              # Get backup size
+              BACKUP_SIZE=$(du -h "/backups/${BACKUP_FILE}" | cut -f1)
+              echo "Backup completed successfully: ${BACKUP_FILE} (${BACKUP_SIZE})"
+              
+              # Upload to S3 if configured
+              if [ -n "${AWS_S3_BUCKET}" ]; then
+                echo "Uploading backup to S3..."
+                aws s3 cp "/backups/${BACKUP_FILE}" "s3://${AWS_S3_BUCKET}/backups/${BACKUP_FILE}" \
+                  --storage-class STANDARD_IA \
+                  --server-side-encryption AES256
+                echo "S3 upload completed"
+              fi
+              
+              # Clean up local file if S3 upload was successful
+              if [ -n "${AWS_S3_BUCKET}" ]; then
+                rm "/backups/${BACKUP_FILE}"
+                echo "Local backup file cleaned up"
+              fi
+              
+              echo "Backup job completed successfully"
+            env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: POSTGRES_USER
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clinic-app-secrets
+                  key: POSTGRES_PASSWORD
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: BACKUP_S3_BUCKET
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: clinic-app-secrets
+                  key: S3_ACCESS_KEY
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clinic-app-secrets
+                  key: S3_SECRET_KEY
+                  optional: true
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "200m"
+              limits:
+                memory: "512Mi"
+                cpu: "500m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: clinic-app
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Optional: Backup cleanup job (runs weekly)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-cleanup
+  namespace: clinic-app
+spec:
+  schedule: "0 3 * * 0" # Weekly on Sunday at 3 AM
+  timeZone: "UTC"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup-cleanup
+            image: amazon/aws-cli:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              
+              echo "Starting backup cleanup..."
+              
+              # Clean up local backups older than 7 days
+              if [ -d "/backups" ]; then
+                echo "Cleaning up local backups older than 7 days..."
+                find /backups -name "*.sql.gz" -type f -mtime +7 -delete
+                echo "Local cleanup completed"
+              fi
+              
+              # Clean up S3 backups older than 30 days
+              if [ -n "${AWS_S3_BUCKET}" ]; then
+                echo "Cleaning up S3 backups older than 30 days..."
+                CUTOFF_DATE=$(date -d "30 days ago" +%Y-%m-%d)
+                aws s3api list-objects-v2 \
+                  --bucket "${AWS_S3_BUCKET}" \
+                  --prefix "backups/" \
+                  --query "Contents[?LastModified<='${CUTOFF_DATE}'].Key" \
+                  --output text | \
+                while read -r key; do
+                  if [ -n "$key" ] && [ "$key" != "None" ]; then
+                    echo "Deleting old backup: $key"
+                    aws s3 rm "s3://${AWS_S3_BUCKET}/$key"
+                  fi
+                done
+                echo "S3 cleanup completed"
+              fi
+              
+              echo "Backup cleanup job completed"
+            env:
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: clinic-app-config
+                  key: BACKUP_S3_BUCKET
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: clinic-app-secrets
+                  key: S3_ACCESS_KEY
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clinic-app-secrets
+                  key: S3_SECRET_KEY
+                  optional: true
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: backup-pvc
+          restartPolicy: OnFailure

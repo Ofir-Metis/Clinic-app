@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { ConfigService } from './config.service';
 
 export interface ConfigItem {
@@ -153,7 +153,7 @@ export class ConfigController {
     @Query('service') service?: string,
     @Query('category') category?: string,
     @Query('search') search?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const items = await this.configService.getConfigItems({
@@ -381,7 +381,7 @@ export class ConfigController {
     @Query('environment') environment?: string,
     @Query('status') status?: string,
     @Query('limit') limit: number = 50,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const deployments = await this.configService.getDeployments({
@@ -442,7 +442,7 @@ export class ConfigController {
   @RequireRoles('admin')
   async getFeatureFlags(
     @Query('environment') environment?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const featureFlags = await this.configService.getFeatureFlags(environment);
@@ -495,7 +495,7 @@ export class ConfigController {
   async toggleFeatureFlag(
     @Param('flagId') flagId: string,
     @Body() toggleData: { enabled: boolean; environment?: string },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.configService.toggleFeatureFlag(
@@ -583,7 +583,7 @@ export class ConfigController {
       variables: Record<string, any>;
       services?: string[];
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const result = await this.configService.applyConfigTemplate(
@@ -620,7 +620,7 @@ export class ConfigController {
       environment: string;
       services?: string[];
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const validation = await this.configService.validateConfiguration(
@@ -649,7 +649,7 @@ export class ConfigController {
   @RequireRoles('admin')
   async detectConfigurationDrift(
     @Query('environment') environment?: string,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const drift = await this.configService.detectConfigurationDrift(environment);
@@ -676,7 +676,7 @@ export class ConfigController {
     @Query('key') key?: string,
     @Query('environment') environment?: string,
     @Query('limit') limit: number = 100,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const history = await this.configService.getConfigurationHistory({

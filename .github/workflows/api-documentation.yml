@@ -1,0 +1,373 @@
+name: API Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'services/api-gateway/**'
+      - 'libs/common/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'services/api-gateway/**'
+      - 'libs/common/**'
+  schedule:
+    # Weekly documentation regeneration
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      deploy_to_pages:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  lint-docs:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn workspace @clinic/common build
+
+      - name: Lint API documentation
+        run: |
+          cd services/api-gateway
+          npm run build
+          
+      - name: Validate OpenAPI schemas
+        run: |
+          cd services/api-gateway
+          # Generate OpenAPI spec
+          npm run docs:generate
+          
+          # Validate with swagger-parser
+          npx swagger-parser validate docs/generated/openapi.json
+          
+      - name: Check documentation completeness
+        run: |
+          cd services/api-gateway
+          # Check that all controllers have proper documentation
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const glob = require('glob');
+            
+            const controllers = glob.sync('src/**/*.controller.ts');
+            const undocumented = [];
+            
+            controllers.forEach(file => {
+              const content = fs.readFileSync(file, 'utf8');
+              if (!content.includes('@ApiTags') || !content.includes('@ApiOperation')) {
+                undocumented.push(file);
+              }
+            });
+            
+            if (undocumented.length > 0) {
+              console.error('❌ Controllers missing proper documentation:');
+              undocumented.forEach(file => console.error('  -', file));
+              process.exit(1);
+            } else {
+              console.log('✅ All controllers have proper documentation');
+            }
+          "
+
+  generate-docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    needs: lint-docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn workspace @clinic/common build
+
+      - name: Generate API documentation
+        run: |
+          cd services/api-gateway
+          npm run docs:build
+          
+      - name: Generate API changelog
+        run: |
+          cd services/api-gateway
+          # Compare with previous version if available
+          if [ -f "docs/previous-openapi.json" ]; then
+            npx swagger-diff docs/previous-openapi.json docs/generated/openapi.json > docs/generated/changelog.md || true
+          fi
+          
+          # Save current spec for next comparison
+          cp docs/generated/openapi.json docs/previous-openapi.json
+          
+      - name: Generate API metrics
+        run: |
+          cd services/api-gateway
+          node -e "
+            const fs = require('fs');
+            const spec = JSON.parse(fs.readFileSync('docs/generated/openapi.json', 'utf8'));
+            
+            const metrics = {
+              generatedAt: new Date().toISOString(),
+              version: spec.info.version,
+              totalPaths: Object.keys(spec.paths || {}).length,
+              totalOperations: Object.values(spec.paths || {}).reduce((sum, path) => 
+                sum + Object.keys(path).filter(k => ['get', 'post', 'put', 'delete', 'patch'].includes(k)).length, 0),
+              totalSchemas: Object.keys(spec.components?.schemas || {}).length,
+              securitySchemes: Object.keys(spec.components?.securitySchemes || {}),
+              tags: (spec.tags || []).map(tag => tag.name),
+              servers: (spec.servers || []).map(server => server.url)
+            };
+            
+            fs.writeFileSync('docs/generated/metrics.json', JSON.stringify(metrics, null, 2));
+            
+            console.log('📊 API Documentation Metrics:');
+            console.log(\`  Paths: \${metrics.totalPaths}\`);
+            console.log(\`  Operations: \${metrics.totalOperations}\`);
+            console.log(\`  Schemas: \${metrics.totalSchemas}\`);
+            console.log(\`  Tags: \${metrics.tags.length}\`);
+          "
+
+      - name: Validate healthcare compliance
+        run: |
+          cd services/api-gateway
+          node -e "
+            const fs = require('fs');
+            const spec = JSON.parse(fs.readFileSync('docs/generated/openapi.json', 'utf8'));
+            
+            const healthcareKeywords = ['hipaa', 'phi', 'patient', 'medical', 'health'];
+            const securityKeywords = ['jwt', 'auth', 'security', 'bearer'];
+            
+            let healthcareEndpoints = 0;
+            let securedEndpoints = 0;
+            let totalEndpoints = 0;
+            
+            Object.entries(spec.paths || {}).forEach(([path, methods]) => {
+              Object.entries(methods).forEach(([method, operation]) => {
+                if (typeof operation === 'object' && operation.operationId) {
+                  totalEndpoints++;
+                  
+                  const description = (operation.description || '').toLowerCase();
+                  const summary = (operation.summary || '').toLowerCase();
+                  
+                  if (healthcareKeywords.some(keyword => 
+                    description.includes(keyword) || summary.includes(keyword) || path.includes(keyword))) {
+                    healthcareEndpoints++;
+                  }
+                  
+                  if (operation.security && operation.security.length > 0) {
+                    securedEndpoints++;
+                  }
+                }
+              });
+            });
+            
+            const securityCoverage = (securedEndpoints / totalEndpoints * 100).toFixed(1);
+            const healthcareCoverage = (healthcareEndpoints / totalEndpoints * 100).toFixed(1);
+            
+            console.log('🏥 Healthcare Compliance Check:');
+            console.log(\`  Total endpoints: \${totalEndpoints}\`);
+            console.log(\`  Healthcare-related: \${healthcareEndpoints} (\${healthcareCoverage}%)\`);
+            console.log(\`  Security coverage: \${securedEndpoints} (\${securityCoverage}%)\`);
+            
+            const compliance = {
+              totalEndpoints,
+              healthcareEndpoints,
+              securedEndpoints,
+              securityCoverage: parseFloat(securityCoverage),
+              healthcareCoverage: parseFloat(healthcareCoverage),
+              checkedAt: new Date().toISOString()
+            };
+            
+            fs.writeFileSync('docs/generated/compliance-report.json', JSON.stringify(compliance, null, 2));
+            
+            // Fail if security coverage is too low
+            if (securityCoverage < 80) {
+              console.error('❌ Security coverage below 80%');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-documentation
+          path: services/api-gateway/docs/generated/
+          retention-days: 30
+
+      - name: Setup Pages (if deploying)
+        if: github.ref == 'refs/heads/main' || github.event.inputs.deploy_to_pages == 'true'
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.event.inputs.deploy_to_pages == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: services/api-gateway/docs/generated/
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: generate-docs
+    if: github.ref == 'refs/heads/main' || github.event.inputs.deploy_to_pages == 'true'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify-teams:
+    name: Notify Teams
+    runs-on: ubuntu-latest
+    needs: [generate-docs, deploy-pages]
+    if: always() && (github.ref == 'refs/heads/main')
+    steps:
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: api-documentation
+          path: ./docs
+
+      - name: Prepare notification
+        id: notification
+        run: |
+          # Read metrics
+          if [ -f "./docs/metrics.json" ]; then
+            TOTAL_ENDPOINTS=$(jq -r '.totalOperations' ./docs/metrics.json)
+            TOTAL_SCHEMAS=$(jq -r '.totalSchemas' ./docs/schemas.json)
+            API_VERSION=$(jq -r '.version' ./docs/metrics.json)
+          else
+            TOTAL_ENDPOINTS="Unknown"
+            TOTAL_SCHEMAS="Unknown"
+            API_VERSION="Unknown"
+          fi
+          
+          # Read compliance report
+          if [ -f "./docs/compliance-report.json" ]; then
+            SECURITY_COVERAGE=$(jq -r '.securityCoverage' ./docs/compliance-report.json)
+            HEALTHCARE_COVERAGE=$(jq -r '.healthcareCoverage' ./docs/compliance-report.json)
+          else
+            SECURITY_COVERAGE="Unknown"
+            HEALTHCARE_COVERAGE="Unknown"
+          fi
+          
+          echo "endpoints=$TOTAL_ENDPOINTS" >> $GITHUB_OUTPUT
+          echo "schemas=$TOTAL_SCHEMAS" >> $GITHUB_OUTPUT
+          echo "version=$API_VERSION" >> $GITHUB_OUTPUT
+          echo "security=$SECURITY_COVERAGE" >> $GITHUB_OUTPUT
+          echo "healthcare=$HEALTHCARE_COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Notify Slack (Success)
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#api-team'
+          text: |
+            🚀 API Documentation Updated Successfully!
+            
+            📊 Statistics:
+            • Version: ${{ steps.notification.outputs.version }}
+            • Endpoints: ${{ steps.notification.outputs.endpoints }}
+            • Schemas: ${{ steps.notification.outputs.schemas }}
+            • Security Coverage: ${{ steps.notification.outputs.security }}%
+            • Healthcare Coverage: ${{ steps.notification.outputs.healthcare }}%
+            
+            📚 View Documentation: ${{ steps.deployment.outputs.page_url || 'Check artifacts' }}
+            🔗 Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack (Failure)
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#api-team'
+          text: |
+            ❌ API Documentation Generation Failed
+            
+            🔍 Please check the workflow logs for details
+            🔗 Commit: ${{ github.sha }}
+            📝 Branch: ${{ github.ref_name }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  security-scan:
+    name: Security Scan Documentation
+    runs-on: ubuntu-latest
+    needs: generate-docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: api-documentation
+          path: ./docs
+
+      - name: Scan for secrets in documentation
+        run: |
+          # Check for potential secrets in generated docs
+          grep -ri "password\|secret\|key\|token" ./docs/ && {
+            echo "❌ Potential secrets found in documentation"
+            exit 1
+          } || echo "✅ No secrets detected in documentation"
+
+      - name: Validate security documentation
+        run: |
+          # Ensure security.md exists and contains required sections
+          if [ ! -f "./docs/security.md" ]; then
+            echo "❌ Security documentation missing"
+            exit 1
+          fi
+          
+          required_sections=("Authentication" "Rate Limiting" "HIPAA Compliance" "Security Headers")
+          
+          for section in "${required_sections[@]}"; do
+            if ! grep -q "$section" ./docs/security.md; then
+              echo "❌ Missing required section: $section"
+              exit 1
+            fi
+          done
+          
+          echo "✅ Security documentation complete"
+
+      - name: Check HIPAA compliance documentation
+        run: |
+          # Verify HIPAA-related documentation is comprehensive
+          hipaa_keywords=("PHI" "Protected Health Information" "HIPAA" "audit" "encryption")
+          
+          for keyword in "${hipaa_keywords[@]}"; do
+            if ! grep -qi "$keyword" ./docs/security.md; then
+              echo "⚠️  HIPAA keyword '$keyword' not found in documentation"
+            fi
+          done
+          
+          echo "✅ HIPAA compliance check completed"

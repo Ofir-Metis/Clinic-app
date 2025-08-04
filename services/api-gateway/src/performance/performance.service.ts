@@ -674,7 +674,7 @@ export class PerformanceService {
 
   async startProfiling(profilingRequest: any, userId: string): Promise<any> {
     const sessionId = `profile_${Date.now()}`;
-    const session = {
+    const session: any = {
       sessionId,
       type: profilingRequest.type,
       duration: profilingRequest.duration,
@@ -699,7 +699,7 @@ export class PerformanceService {
 
   async runLoadTest(loadTestRequest: any, userId: string): Promise<any> {
     const testId = `loadtest_${Date.now()}`;
-    const testSession = {
+    const testSession: any = {
       testId,
       name: loadTestRequest.name,
       target: loadTestRequest.target,
@@ -765,17 +765,17 @@ export class PerformanceService {
         ],
         thresholdResults: {
           responseTime: {
-            threshold: loadTestRequest?.thresholds?.responseTime || 200,
+            threshold: session?.thresholds?.responseTime || 200,
             actual: 145.5,
             passed: true,
           },
           errorRate: {
-            threshold: loadTestRequest?.thresholds?.errorRate || 1,
+            threshold: session?.thresholds?.errorRate || 1,
             actual: 0.195,
             passed: true,
           },
           throughput: {
-            threshold: loadTestRequest?.thresholds?.throughput || 2000,
+            threshold: session?.thresholds?.throughput || 2000,
             actual: 2083.33,
             passed: true,
           },
@@ -863,7 +863,7 @@ export class PerformanceService {
 
   async generatePerformanceReport(reportRequest: any, userId: string): Promise<any> {
     const reportId = `report_${Date.now()}`;
-    const report = {
+    const report: any = {
       reportId,
       type: reportRequest.type,
       startDate: reportRequest.startDate,

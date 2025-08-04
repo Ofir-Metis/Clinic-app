@@ -25,7 +25,7 @@ import { ApiManagementService } from '../api-management/api-management.service';
 import { PerformanceController } from '../performance/performance.controller';
 import { PerformanceService } from '../performance/performance.service';
 import { AdminDatabaseService } from './admin-database.service';
-import { JwtService } from '@clinic/common/auth/jwt.service';
+import { JwtService } from '@clinic/common';
 
 @Module({
   imports: [HttpModule, DatabaseModule],

@@ -1,0 +1,628 @@
+# Default values for clinic-app
+# This is a YAML-formatted file.
+
+global:
+  # Global image registry
+  imageRegistry: ""
+  # Global image pull secrets
+  imagePullSecrets: []
+  # Global storage class
+  storageClass: ""
+  # Global security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 1001
+
+# Environment configuration
+environment: production
+region: us-east-1
+
+# Image configuration
+image:
+  registry: ghcr.io
+  repository: clinic-platform/clinic-app
+  pullPolicy: IfNotPresent
+  tag: ""
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod Security Context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+# Container Security Context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# API Gateway Configuration
+apiGateway:
+  enabled: true
+  name: api-gateway
+  replicaCount: 2
+  image:
+    repository: api-gateway
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 4000
+    targetPort: 4000
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+      nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    hosts:
+      - host: api.clinic-platform.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: api-clinic-platform-tls
+        hosts:
+          - api.clinic-platform.com
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    NODE_ENV: production
+    PORT: "4000"
+    LOG_LEVEL: info
+
+# Microservices Configuration
+services:
+  authService:
+    enabled: true
+    name: auth-service
+    replicaCount: 2
+    image:
+      repository: auth-service
+      tag: ""
+    service:
+      port: 3001
+      targetPort: 3001
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      NODE_ENV: production
+      PORT: "3001"
+
+  appointmentsService:
+    enabled: true
+    name: appointments-service
+    replicaCount: 2
+    image:
+      repository: appointments-service
+      tag: ""
+    service:
+      port: 3002
+      targetPort: 3002
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      NODE_ENV: production
+      PORT: "3002"
+
+  filesService:
+    enabled: true
+    name: files-service
+    replicaCount: 2
+    image:
+      repository: files-service
+      tag: ""
+    service:
+      port: 3003
+      targetPort: 3003
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      NODE_ENV: production
+      PORT: "3003"
+
+  notificationsService:
+    enabled: true
+    name: notifications-service
+    replicaCount: 2
+    image:
+      repository: notifications-service
+      tag: ""
+    service:
+      port: 3004
+      targetPort: 3004
+    resources:
+      limits:
+        cpu: 300m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env:
+      NODE_ENV: production
+      PORT: "3004"
+
+  aiService:
+    enabled: true
+    name: ai-service
+    replicaCount: 2
+    image:
+      repository: ai-service
+      tag: ""
+    service:
+      port: 3005
+      targetPort: 3005
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    env:
+      NODE_ENV: production
+      PORT: "3005"
+
+  notesService:
+    enabled: true
+    name: notes-service
+    replicaCount: 2
+    image:
+      repository: notes-service
+      tag: ""
+    service:
+      port: 3006
+      targetPort: 3006
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      NODE_ENV: production
+      PORT: "3006"
+
+  analyticsService:
+    enabled: true
+    name: analytics-service
+    replicaCount: 2
+    image:
+      repository: analytics-service
+      tag: ""
+    service:
+      port: 3007
+      targetPort: 3007
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      NODE_ENV: production
+      PORT: "3007"
+
+  settingsService:
+    enabled: true
+    name: settings-service
+    replicaCount: 2
+    image:
+      repository: settings-service
+      tag: ""
+    service:
+      port: 3008
+      targetPort: 3008
+    resources:
+      limits:
+        cpu: 300m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    env:
+      NODE_ENV: production
+      PORT: "3008"
+
+  billingService:
+    enabled: true
+    name: billing-service
+    replicaCount: 2
+    image:
+      repository: billing-service
+      tag: ""
+    service:
+      port: 3009
+      targetPort: 3009
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      NODE_ENV: production
+      PORT: "3009"
+
+# Frontend Configuration
+frontend:
+  enabled: true
+  name: frontend
+  replicaCount: 2
+  image:
+    repository: frontend
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: app.clinic-platform.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: app-clinic-platform-tls
+        hosts:
+          - app.clinic-platform.com
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Database Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: ""
+    username: clinic
+    password: ""
+    database: clinic
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    initdb:
+      scripts:
+        init.sql: |
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          CREATE EXTENSION IF NOT EXISTS "pg_stat_statements";
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: ""
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# NATS Configuration
+nats:
+  enabled: true
+  auth:
+    enabled: true
+    user: clinic
+    password: ""
+  cluster:
+    enabled: false
+  jetstream:
+    enabled: true
+    memStorage:
+      enabled: true
+      size: 1Gi
+    fileStorage:
+      enabled: true
+      size: 10Gi
+      storageClassName: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# MinIO Configuration
+minio:
+  enabled: true
+  auth:
+    rootUser: admin
+    rootPassword: ""
+  mode: standalone
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 100Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  metrics:
+    serviceMonitor:
+      enabled: true
+
+# Secrets Management
+secrets:
+  # External secrets operator
+  externalSecrets:
+    enabled: false
+    secretStore:
+      provider: aws
+      region: us-east-1
+      role: arn:aws:iam::ACCOUNT:role/clinic-secrets-role
+  
+  # Manual secrets (for development)
+  manual:
+    enabled: true
+    secrets:
+      database:
+        POSTGRES_PASSWORD: ""
+        POSTGRES_USER: clinic
+        POSTGRES_DB: clinic
+      redis:
+        REDIS_PASSWORD: ""
+      nats:
+        NATS_PASSWORD: ""
+      minio:
+        MINIO_ROOT_PASSWORD: ""
+      application:
+        JWT_SECRET: ""
+        SESSION_SECRET_KEY: ""
+        OPENAI_API_KEY: ""
+        COOKIE_SECRET: ""
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        enabled: true
+        size: 50Gi
+        storageClass: ""
+    alertmanager:
+      enabled: true
+      persistentVolume:
+        enabled: true
+        size: 10Gi
+        storageClass: ""
+    
+  grafana:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    adminPassword: ""
+    dashboards:
+      default:
+        clinic-overview:
+          gnetId: 12900
+          revision: 1
+          datasource: Prometheus
+        nodejs-metrics:
+          gnetId: 11159
+          revision: 1
+          datasource: Prometheus
+        postgresql-metrics:
+          gnetId: 9628
+          revision: 7
+          datasource: Prometheus
+
+  # Service Monitor for application metrics
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    
+  # Pod Monitor for pod-level metrics
+  podMonitor:
+    enabled: true
+    interval: 30s
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: "30d"
+  destination:
+    s3:
+      enabled: true
+      bucket: clinic-backups
+      region: us-east-1
+      path: "backups/"
+  
+  postgresql:
+    enabled: true
+    
+  minio:
+    enabled: true
+    
+  persistent:
+    enabled: true
+    storageClass: ""
+    size: 100Gi
+
+# Network Policies
+networkPolicies:
+  enabled: true
+  # Allow ingress traffic to API gateway and frontend
+  ingress:
+    enabled: true
+  # Restrict egress traffic (allow DNS, external APIs)
+  egress:
+    enabled: true
+    allowedHosts:
+      - "*.amazonaws.com"
+      - "*.google.com"
+      - "*.googleapis.com"
+      - "api.openai.com"
+
+# Pod Security Standards
+podSecurityStandards:
+  enforced: restricted
+  audit: restricted
+  warn: restricted
+
+# RBAC Configuration
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["secrets", "configmaps"]
+      verbs: ["get", "list"]
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["get", "list", "watch"]
+
+# Health Checks
+healthChecks:
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+  
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+# Testing
+tests:
+  enabled: true
+  image:
+    repository: clinic-platform/test-runner
+    tag: latest
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

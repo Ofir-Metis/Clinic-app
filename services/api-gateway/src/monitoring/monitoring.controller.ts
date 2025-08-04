@@ -17,7 +17,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { JwtAuthGuard, RequireRoles } from '@clinic/common/auth/jwt-auth.guard';
+import { JwtAuthGuard, RequireRoles } from '@clinic/common';
 import { MonitoringService } from './monitoring.service';
 
 export interface AlertRule {
@@ -258,7 +258,7 @@ export class MonitoringController {
   async getActiveAlerts(
     @Query('severity') severity?: string,
     @Query('limit') limit: number = 100,
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const alerts = await this.monitoringService.getActiveAlerts({
@@ -287,7 +287,7 @@ export class MonitoringController {
   async acknowledgeAlert(
     @Param('alertId') alertId: string,
     @Body() body: { notes?: string },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       await this.monitoringService.acknowledgeAlert(
@@ -422,7 +422,7 @@ export class MonitoringController {
   @RequireRoles('admin')
   async getPerformanceSummary(
     @Query('timeRange') timeRange: string = '24h',
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const summary = await this.monitoringService.getPerformanceSummary(timeRange);
@@ -519,7 +519,7 @@ export class MonitoringController {
       level?: string;
       limit?: number;
     },
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const logs = await this.monitoringService.searchLogs(searchRequest);
@@ -541,7 +541,7 @@ export class MonitoringController {
   @RequireRoles('admin')
   async getLogPatterns(
     @Query('timeRange') timeRange: string = '24h',
-    @Request() req: any,
+    @Request() req?: any,
   ) {
     try {
       const patterns = await this.monitoringService.getLogPatterns(timeRange);
