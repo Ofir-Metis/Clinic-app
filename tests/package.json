@@ -5,6 +5,13 @@
   "scripts": {
     "test": "npx playwright test",
     "test:comprehensive": "node run-comprehensive-tests.js",
+    "test:enhanced": "node run-enhanced-test-suite.js",
+    "test:integration": "npx playwright test test-integration.spec.ts",
+    "test:healthcare": "npx playwright test healthcare-workflow-tests.spec.ts",
+    "test:performance": "npx playwright test enhanced-e2e-suite.spec.ts --grep=\"Performance Testing\"",
+    "test:security": "npx playwright test enhanced-e2e-suite.spec.ts --grep=\"Security Testing\"",
+    "test:accessibility": "npx playwright test enhanced-e2e-suite.spec.ts --grep=\"Accessibility Testing\"",
+    "test:mobile": "npx playwright test enhanced-e2e-suite.spec.ts --grep=\"Mobile Responsiveness\"",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
     "test:report": "npx playwright show-report",

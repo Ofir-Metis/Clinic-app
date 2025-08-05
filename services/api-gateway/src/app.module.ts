@@ -22,6 +22,12 @@ import { AdminModule } from './admin/admin.module';
 import { ComplianceModule } from './compliance/compliance.module';
 import { EncryptionModule } from './encryption/encryption.module';
 import { DisasterRecoveryModule } from './disaster-recovery/disaster-recovery.module';
+import { DatabaseOptimizationModule } from './database-optimization/database-optimization.module';
+import { SecurityMonitoringModule } from './security-monitoring/security-monitoring.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
+import { DataRetentionModule } from './data-retention/data-retention.module';
+import { AuditModule } from './audit/audit.module';
+import { ResilienceModule } from './resilience/resilience.module';
 import { CsrfModule, SecurityHeadersModule } from '@clinic/common';
 import { AppResolver } from './app.resolver';
 import { HealthController } from './health/health.controller';
@@ -86,6 +92,12 @@ import { AuthController } from './auth.controller';
     ComplianceModule,
     EncryptionModule,
     DisasterRecoveryModule,
+    DatabaseOptimizationModule,
+    SecurityMonitoringModule,
+    MonitoringModule,
+    DataRetentionModule,
+    AuditModule,
+    ResilienceModule,
     CsrfModule,
     SecurityHeadersModule,
   ],

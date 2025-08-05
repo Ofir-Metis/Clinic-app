@@ -1,0 +1,784 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to perform'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - dependency-only
+          - code-only
+          - container-only
+      severity_threshold:
+        description: 'Minimum severity to report'
+        required: false
+        default: 'medium'
+        type: choice
+        options:
+          - critical
+          - high
+          - medium
+          - low
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type != 'code-only' && github.event.inputs.scan_type != 'container-only'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn workspace @clinic/common build
+
+      - name: Run npm audit
+        run: |
+          # Run npm audit for all package.json files
+          echo "🔍 Running dependency vulnerability scan..."
+          
+          # Main project
+          npm audit --audit-level=moderate --json > audit-main.json || true
+          
+          # Services
+          for service in services/*/; do
+            if [ -f "$service/package.json" ]; then
+              echo "Scanning $service..."
+              cd "$service"
+              npm audit --audit-level=moderate --json > "../../audit-$(basename "$service").json" || true
+              cd - > /dev/null
+            fi
+          done
+          
+          # Frontend
+          if [ -f "frontend/package.json" ]; then
+            echo "Scanning frontend..."
+            cd frontend
+            npm audit --audit-level=moderate --json > "../audit-frontend.json" || true
+            cd - > /dev/null
+          fi
+          
+          # Common library
+          if [ -f "libs/common/package.json" ]; then
+            echo "Scanning common library..."
+            cd libs/common
+            npm audit --audit-level=moderate --json > "../../audit-common.json" || true
+            cd - > /dev/null
+          fi
+
+      - name: Process audit results
+        run: |
+          echo "📊 Processing dependency scan results..."
+          
+          # Combine all audit results
+          node -e "
+            const fs = require('fs');
+            const glob = require('glob');
+            
+            const auditFiles = glob.sync('audit-*.json');
+            let totalVulnerabilities = 0;
+            let criticalCount = 0;
+            let highCount = 0;
+            let mediumCount = 0;
+            let lowCount = 0;
+            
+            const allVulnerabilities = [];
+            
+            auditFiles.forEach(file => {
+              try {
+                const audit = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (audit.vulnerabilities) {
+                  Object.values(audit.vulnerabilities).forEach(vuln => {
+                    allVulnerabilities.push({
+                      name: vuln.name,
+                      severity: vuln.severity,
+                      via: vuln.via,
+                      effects: vuln.effects,
+                      range: vuln.range,
+                      file: file.replace('audit-', '').replace('.json', '')
+                    });
+                    
+                    totalVulnerabilities++;
+                    switch(vuln.severity) {
+                      case 'critical': criticalCount++; break;
+                      case 'high': highCount++; break;
+                      case 'moderate': mediumCount++; break;
+                      case 'low': lowCount++; break;
+                    }
+                  });
+                }
+              } catch (error) {
+                console.log(\`Warning: Could not parse \${file}\`);
+              }
+            });
+            
+            const summary = {
+              total: totalVulnerabilities,
+              critical: criticalCount,
+              high: highCount,
+              medium: mediumCount,
+              low: lowCount,
+              vulnerabilities: allVulnerabilities
+            };
+            
+            fs.writeFileSync('dependency-scan-results.json', JSON.stringify(summary, null, 2));
+            
+            console.log('📋 Dependency Scan Results:');
+            console.log(\`  🔴 Critical: \${criticalCount}\`);
+            console.log(\`  🟠 High: \${highCount}\`);
+            console.log(\`  🟡 Medium: \${mediumCount}\`);
+            console.log(\`  🟢 Low: \${lowCount}\`);
+            console.log(\`  📊 Total: \${totalVulnerabilities}\`);
+            
+            // Fail if critical vulnerabilities found
+            if (criticalCount > 0) {
+              console.error('❌ Critical vulnerabilities detected!');
+              process.exit(1);
+            }
+            
+            // Warn if high vulnerabilities found
+            if (highCount > 5) {
+              console.warn('⚠️  High number of high-severity vulnerabilities detected');
+            }
+          "
+
+      - name: Upload dependency scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-scan-results
+          path: dependency-scan-results.json
+          retention-days: 30
+
+  code-security-scan:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type != 'dependency-only' && github.event.inputs.scan_type != 'container-only'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn workspace @clinic/common build
+
+      - name: Run ESLint security rules
+        run: |
+          echo "🔍 Running code security analysis..."
+          
+          # Install security-focused ESLint plugins
+          npm install --no-save eslint-plugin-security eslint-plugin-no-secrets
+          
+          # Create security-focused ESLint config
+          cat > .eslintrc.security.js << 'EOF'
+          module.exports = {
+            plugins: ['security', 'no-secrets'],
+            extends: ['plugin:security/recommended'],
+            rules: {
+              'no-secrets/no-secrets': 'error',
+              'security/detect-hardcoded-secrets': 'error',
+              'security/detect-sql-injection': 'error',
+              'security/detect-eval-with-expression': 'error',
+              'security/detect-non-literal-fs-filename': 'warn',
+              'security/detect-unsafe-regex': 'error'
+            }
+          };
+          EOF
+          
+          # Run security-focused linting
+          npx eslint --config .eslintrc.security.js --ext .ts,.js --format json services/ libs/ frontend/src/ > eslint-security-results.json || true
+
+      - name: Search for security patterns
+        run: |
+          echo "🔍 Searching for security anti-patterns..."
+          
+          # Search for potential security issues
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const glob = require('glob');
+            
+            const securityPatterns = [
+              { pattern: /password.*=.*['\\\"][^'\\\"]*['\\\"]/, severity: 'critical', type: 'hardcoded-password' },
+              { pattern: /api[_-]?key.*=.*['\\\"][^'\\\"]*['\\\"]/, severity: 'high', type: 'hardcoded-apikey' },
+              { pattern: /secret.*=.*['\\\"][^'\\\"]*['\\\"]/, severity: 'high', type: 'hardcoded-secret' },
+              { pattern: /eval\\s*\\(/, severity: 'high', type: 'code-injection' },
+              { pattern: /innerHTML\\s*=/, severity: 'medium', type: 'xss-risk' },
+              { pattern: /document\\.write\\s*\\(/, severity: 'medium', type: 'xss-risk' },
+              { pattern: /exec\\s*\\(/, severity: 'high', type: 'command-injection' },
+              { pattern: /spawn\\s*\\(/, severity: 'medium', type: 'command-execution' }
+            ];
+            
+            const files = glob.sync('**/*.{ts,js}', {
+              ignore: ['node_modules/**', 'dist/**', '*.min.js', 'coverage/**']
+            });
+            
+            const findings = [];
+            
+            files.forEach(file => {
+              try {
+                const content = fs.readFileSync(file, 'utf8');
+                const lines = content.split('\\n');
+                
+                lines.forEach((line, lineNum) => {
+                  securityPatterns.forEach(({ pattern, severity, type }) => {
+                    if (pattern.test(line)) {
+                      findings.push({
+                        file,
+                        line: lineNum + 1,
+                        severity,
+                        type,
+                        content: line.trim(),
+                        pattern: pattern.toString()
+                      });
+                    }
+                  });
+                });
+              } catch (error) {
+                // Skip unreadable files
+              }
+            });
+            
+            const summary = {
+              total: findings.length,
+              critical: findings.filter(f => f.severity === 'critical').length,
+              high: findings.filter(f => f.severity === 'high').length,
+              medium: findings.filter(f => f.severity === 'medium').length,
+              findings
+            };
+            
+            fs.writeFileSync('code-security-results.json', JSON.stringify(summary, null, 2));
+            
+            console.log('📋 Code Security Scan Results:');
+            console.log(\`  🔴 Critical: \${summary.critical}\`);
+            console.log(\`  🟠 High: \${summary.high}\`);
+            console.log(\`  🟡 Medium: \${summary.medium}\`);
+            console.log(\`  📊 Total: \${summary.total}\`);
+            
+            // List critical findings
+            if (summary.critical > 0) {
+              console.log('\\n🚨 Critical Security Issues:');
+              findings.filter(f => f.severity === 'critical').forEach(finding => {
+                console.log(\`  ❌ \${finding.file}:\${finding.line} - \${finding.type}\`);
+              });
+              console.error('❌ Critical security issues detected!');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload code security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-security-results
+          path: code-security-results.json
+          retention-days: 30
+
+  container-security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type != 'dependency-only' && github.event.inputs.scan_type != 'code-only'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+      - name: Scan Docker base images
+        run: |
+          echo "🔍 Scanning container base images..."
+          
+          # Define images used in the project
+          images=(
+            "node:20-alpine"
+            "postgres:15-alpine"
+            "redis:7-alpine"
+            "nginx:alpine"
+            "minio/minio:latest"
+          )
+          
+          mkdir -p container-scan-results
+          
+          for image in "${images[@]}"; do
+            echo "Scanning $image..."
+            trivy image --format json --output "container-scan-results/$(echo $image | tr '/:' '-').json" "$image" || true
+          done
+
+      - name: Process container scan results
+        run: |
+          echo "📊 Processing container scan results..."
+          
+          node -e "
+            const fs = require('fs');
+            const glob = require('glob');
+            
+            const scanFiles = glob.sync('container-scan-results/*.json');
+            let totalVulnerabilities = 0;
+            let criticalCount = 0;
+            let highCount = 0;
+            let mediumCount = 0;
+            let lowCount = 0;
+            
+            const allVulnerabilities = [];
+            
+            scanFiles.forEach(file => {
+              try {
+                const scan = JSON.parse(fs.readFileSync(file, 'utf8'));
+                const imageName = file.replace('container-scan-results/', '').replace('.json', '');
+                
+                if (scan.Results) {
+                  scan.Results.forEach(result => {
+                    if (result.Vulnerabilities) {
+                      result.Vulnerabilities.forEach(vuln => {
+                        allVulnerabilities.push({
+                          image: imageName,
+                          vulnerabilityID: vuln.VulnerabilityID,
+                          severity: vuln.Severity,
+                          title: vuln.Title,
+                          description: vuln.Description,
+                          fixedVersion: vuln.FixedVersion,
+                          target: result.Target
+                        });
+                        
+                        totalVulnerabilities++;
+                        switch(vuln.Severity?.toLowerCase()) {
+                          case 'critical': criticalCount++; break;
+                          case 'high': highCount++; break;
+                          case 'medium': mediumCount++; break;
+                          case 'low': lowCount++; break;
+                        }
+                      });
+                    }
+                  });
+                }
+              } catch (error) {
+                console.log(\`Warning: Could not parse \${file}\`);
+              }
+            });
+            
+            const summary = {
+              total: totalVulnerabilities,
+              critical: criticalCount,
+              high: highCount,
+              medium: mediumCount,
+              low: lowCount,
+              vulnerabilities: allVulnerabilities
+            };
+            
+            fs.writeFileSync('container-security-results.json', JSON.stringify(summary, null, 2));
+            
+            console.log('📋 Container Security Scan Results:');
+            console.log(\`  🔴 Critical: \${criticalCount}\`);
+            console.log(\`  🟠 High: \${highCount}\`);
+            console.log(\`  🟡 Medium: \${mediumCount}\`);
+            console.log(\`  🟢 Low: \${lowCount}\`);
+            console.log(\`  📊 Total: \${totalVulnerabilities}\`);
+            
+            // Fail if too many critical vulnerabilities
+            if (criticalCount > 5) {
+              console.error('❌ Too many critical container vulnerabilities detected!');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload container security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-security-results
+          path: container-security-results.json
+          retention-days: 30
+
+  infrastructure-scan:
+    name: Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    if: github.event.inputs.scan_type == 'comprehensive' || github.event.inputs.scan_type == ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install infrastructure scanning tools
+        run: |
+          # Install checkov for infrastructure security scanning
+          pip install checkov
+          
+          # Install kube-score for Kubernetes security
+          wget https://github.com/zegl/kube-score/releases/download/v1.16.1/kube-score_1.16.1_linux_amd64.tar.gz
+          tar -xzf kube-score_1.16.1_linux_amd64.tar.gz
+          sudo mv kube-score /usr/local/bin/
+
+      - name: Scan Docker configurations
+        run: |
+          echo "🔍 Scanning Docker configurations..."
+          
+          if [ -f "docker-compose.yml" ]; then
+            checkov -f docker-compose.yml --framework docker_compose --output json > docker-compose-scan.json || true
+          fi
+          
+          if [ -f "docker-compose.monitoring.yml" ]; then
+            checkov -f docker-compose.monitoring.yml --framework docker_compose --output json > docker-compose-monitoring-scan.json || true
+          fi
+          
+          # Scan Dockerfiles
+          find . -name "Dockerfile*" -not -path "./node_modules/*" | while read dockerfile; do
+            checkov -f "$dockerfile" --framework dockerfile --output json > "$(echo $dockerfile | tr '/' '-')-scan.json" || true
+          done
+
+      - name: Scan Kubernetes configurations
+        run: |
+          echo "🔍 Scanning Kubernetes configurations..."
+          
+          if [ -d "k8s" ]; then
+            checkov -d k8s --framework kubernetes --output json > k8s-security-scan.json || true
+            
+            # Additional Kubernetes security checks with kube-score
+            find k8s -name "*.yaml" -o -name "*.yml" | while read k8sfile; do
+              kube-score score "$k8sfile" --output-format json > "$(basename $k8sfile)-kube-score.json" || true
+            done
+          fi
+
+      - name: Process infrastructure scan results
+        run: |
+          echo "📊 Processing infrastructure scan results..."
+          
+          node -e "
+            const fs = require('fs');
+            const glob = require('glob');
+            
+            const scanFiles = glob.sync('*-scan.json');
+            let totalIssues = 0;
+            let criticalCount = 0;
+            let highCount = 0;
+            let mediumCount = 0;
+            let lowCount = 0;
+            
+            const allIssues = [];
+            
+            scanFiles.forEach(file => {
+              try {
+                const scan = JSON.parse(fs.readFileSync(file, 'utf8'));
+                const scanType = file.replace('-scan.json', '');
+                
+                if (scan.results && scan.results.failed_checks) {
+                  scan.results.failed_checks.forEach(check => {
+                    allIssues.push({
+                      scanType,
+                      checkId: check.check_id,
+                      checkName: check.check_name,
+                      severity: check.severity || 'medium',
+                      file: check.file_path,
+                      resource: check.resource,
+                      description: check.description
+                    });
+                    
+                    totalIssues++;
+                    const severity = (check.severity || 'medium').toLowerCase();
+                    switch(severity) {
+                      case 'critical': criticalCount++; break;
+                      case 'high': highCount++; break;
+                      case 'medium': mediumCount++; break;
+                      case 'low': lowCount++; break;
+                    }
+                  });
+                }
+              } catch (error) {
+                console.log(\`Warning: Could not parse \${file}\`);
+              }
+            });
+            
+            const summary = {
+              total: totalIssues,
+              critical: criticalCount,
+              high: highCount,
+              medium: mediumCount,
+              low: lowCount,
+              issues: allIssues
+            };
+            
+            fs.writeFileSync('infrastructure-security-results.json', JSON.stringify(summary, null, 2));
+            
+            console.log('📋 Infrastructure Security Scan Results:');
+            console.log(\`  🔴 Critical: \${criticalCount}\`);
+            console.log(\`  🟠 High: \${highCount}\`);
+            console.log(\`  🟡 Medium: \${mediumCount}\`);
+            console.log(\`  🟢 Low: \${lowCount}\`);
+            console.log(\`  📊 Total: \${totalIssues}\`);
+          "
+
+      - name: Upload infrastructure security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-security-results
+          path: infrastructure-security-results.json
+          retention-days: 30
+
+  security-report:
+    name: Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-security-scan, container-security-scan, infrastructure-scan]
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all scan artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: security-results
+
+      - name: Generate comprehensive security report
+        run: |
+          echo "📋 Generating comprehensive security report..."
+          
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            
+            const reportData = {
+              scanDate: new Date().toISOString(),
+              scanId: 'gh-' + process.env.GITHUB_RUN_ID,
+              repository: process.env.GITHUB_REPOSITORY,
+              branch: process.env.GITHUB_REF_NAME || 'main',
+              commit: process.env.GITHUB_SHA?.substring(0, 7) || 'unknown',
+              summary: {
+                dependencies: { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+                code: { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+                containers: { total: 0, critical: 0, high: 0, medium: 0, low: 0 },
+                infrastructure: { total: 0, critical: 0, high: 0, medium: 0, low: 0 }
+              },
+              overallScore: 100,
+              threatLevel: 'low',
+              complianceStatus: {
+                hipaa: true,
+                sox: true,
+                pci: true,
+                gdpr: true
+              },
+              recommendations: []
+            };
+            
+            // Process each scan type
+            const scanTypes = ['dependency', 'code-security', 'container-security', 'infrastructure-security'];
+            
+            scanTypes.forEach(scanType => {
+              const resultFile = \`security-results/\${scanType}-results/\${scanType}-results.json\`;
+              if (fs.existsSync(resultFile)) {
+                try {
+                  const results = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+                  const category = scanType.replace('-security', '').replace('dependency', 'dependencies');
+                  
+                  if (category === 'dependencies' || category === 'code') {
+                    reportData.summary[category] = {
+                      total: results.total || 0,
+                      critical: results.critical || 0,
+                      high: results.high || 0,
+                      medium: results.medium || 0,
+                      low: results.low || 0
+                    };
+                  } else {
+                    reportData.summary[category] = {
+                      total: results.total || 0,
+                      critical: results.critical || 0,
+                      high: results.high || 0,
+                      medium: results.medium || 0,
+                      low: results.low || 0
+                    };
+                  }
+                } catch (error) {
+                  console.log(\`Warning: Could not process \${resultFile}\`);
+                }
+              }
+            });
+            
+            // Calculate overall metrics
+            const totalCritical = Object.values(reportData.summary).reduce((sum, cat) => sum + cat.critical, 0);
+            const totalHigh = Object.values(reportData.summary).reduce((sum, cat) => sum + cat.high, 0);
+            const totalMedium = Object.values(reportData.summary).reduce((sum, cat) => sum + cat.medium, 0);
+            const totalLow = Object.values(reportData.summary).reduce((sum, cat) => sum + cat.low, 0);
+            const grandTotal = totalCritical + totalHigh + totalMedium + totalLow;
+            
+            // Calculate security score
+            reportData.overallScore = Math.max(0, 100 - (totalCritical * 20) - (totalHigh * 10) - (totalMedium * 2) - (totalLow * 0.5));
+            reportData.overallScore = Math.round(reportData.overallScore);
+            
+            // Determine threat level
+            if (totalCritical > 0) {
+              reportData.threatLevel = 'critical';
+            } else if (totalHigh > 5) {
+              reportData.threatLevel = 'high';
+            } else if (totalHigh > 0 || totalMedium > 20) {
+              reportData.threatLevel = 'medium';
+            } else {
+              reportData.threatLevel = 'low';
+            }
+            
+            // Update compliance status
+            reportData.complianceStatus.hipaa = totalCritical === 0 && totalHigh < 3;
+            reportData.complianceStatus.sox = totalCritical === 0;
+            reportData.complianceStatus.pci = totalCritical === 0 && totalHigh < 5;
+            reportData.complianceStatus.gdpr = totalCritical === 0;
+            
+            // Generate recommendations
+            if (totalCritical > 0) {
+              reportData.recommendations.push('Immediately patch all critical vulnerabilities');
+            }
+            if (totalHigh > 10) {
+              reportData.recommendations.push('Address high-severity vulnerabilities as priority');
+            }
+            if (!reportData.complianceStatus.hipaa) {
+              reportData.recommendations.push('Review HIPAA compliance requirements');
+            }
+            if (reportData.recommendations.length === 0) {
+              reportData.recommendations.push('Continue regular security monitoring');
+            }
+            
+            // Save comprehensive report
+            fs.writeFileSync('security-report.json', JSON.stringify(reportData, null, 2));
+            
+            // Generate summary markdown
+            const markdown = \`# Security Scan Report
+            
+## 📊 Summary
+- **Scan Date**: \${new Date(reportData.scanDate).toLocaleString()}
+- **Repository**: \${reportData.repository}
+- **Branch**: \${reportData.branch}
+- **Commit**: \${reportData.commit}
+- **Security Score**: \${reportData.overallScore}/100
+- **Threat Level**: \${reportData.threatLevel.toUpperCase()}
+
+## 🔍 Vulnerabilities by Category
+
+| Category | Critical | High | Medium | Low | Total |
+|----------|----------|------|--------|-----|-------|
+| Dependencies | \${reportData.summary.dependencies.critical} | \${reportData.summary.dependencies.high} | \${reportData.summary.dependencies.medium} | \${reportData.summary.dependencies.low} | \${reportData.summary.dependencies.total} |
+| Code | \${reportData.summary.code.critical} | \${reportData.summary.code.high} | \${reportData.summary.code.medium} | \${reportData.summary.code.low} | \${reportData.summary.code.total} |
+| Containers | \${reportData.summary.containers.critical} | \${reportData.summary.containers.high} | \${reportData.summary.containers.medium} | \${reportData.summary.containers.low} | \${reportData.summary.containers.total} |
+| Infrastructure | \${reportData.summary.infrastructure.critical} | \${reportData.summary.infrastructure.high} | \${reportData.summary.infrastructure.medium} | \${reportData.summary.infrastructure.low} | \${reportData.summary.infrastructure.total} |
+| **TOTAL** | **\${totalCritical}** | **\${totalHigh}** | **\${totalMedium}** | **\${totalLow}** | **\${grandTotal}** |
+
+## 🏥 Compliance Status
+- **HIPAA**: \${reportData.complianceStatus.hipaa ? '✅ Compliant' : '❌ Non-compliant'}
+- **SOX**: \${reportData.complianceStatus.sox ? '✅ Compliant' : '❌ Non-compliant'}
+- **PCI DSS**: \${reportData.complianceStatus.pci ? '✅ Compliant' : '❌ Non-compliant'}
+- **GDPR**: \${reportData.complianceStatus.gdpr ? '✅ Compliant' : '❌ Non-compliant'}
+
+## 📋 Recommendations
+\${reportData.recommendations.map(rec => \`- \${rec}\`).join('\\n')}
+
+---
+Generated on \${new Date().toISOString()} by GitHub Actions
+\`;
+            
+            fs.writeFileSync('security-report.md', markdown);
+            
+            console.log('🛡️  COMPREHENSIVE SECURITY REPORT');
+            console.log('==========================================');
+            console.log(\`📅 Scan Date: \${new Date().toLocaleDateString()}\`);
+            console.log(\`🆔 Scan ID: \${reportData.scanId}\`);
+            console.log(\`🌿 Branch: \${reportData.branch}\`);
+            console.log(\`📊 Security Score: \${reportData.overallScore}/100\`);
+            console.log(\`⚠️  Threat Level: \${reportData.threatLevel.toUpperCase()}\`);
+            console.log(\`🏥 HIPAA Compliant: \${reportData.complianceStatus.hipaa ? 'Yes' : 'No'}\`);
+            console.log(\`📈 Total Vulnerabilities: \${grandTotal}\`);
+            console.log('==========================================');
+            
+            // Fail build if critical issues found
+            if (totalCritical > 0) {
+              console.error('❌ Critical security vulnerabilities detected!');
+              process.exit(1);
+            }
+          "
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: comprehensive-security-report
+          path: |
+            security-report.json
+            security-report.md
+          retention-days: 90
+
+      - name: Comment PR with security results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('security-report.md')) {
+              const report = fs.readFileSync('security-report.md', 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🛡️ Security Scan Results\n\n${report}`
+              });
+            }
+
+  notify-security-team:
+    name: Notify Security Team
+    runs-on: ubuntu-latest
+    needs: [security-report]
+    if: failure() || (success() && contains(github.event.inputs.scan_type, 'comprehensive'))
+    steps:
+      - name: Download security report
+        uses: actions/download-artifact@v4
+        with:
+          name: comprehensive-security-report
+          path: ./
+
+      - name: Notify on critical findings
+        if: failure()
+        run: |
+          echo "🚨 CRITICAL SECURITY ALERT"
+          echo "Critical security vulnerabilities detected in scan"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Action: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          # In production, send alerts to Slack, email, etc.
+
+      - name: Success notification
+        if: success()
+        run: |
+          echo "✅ Security scan completed successfully"
+          echo "No critical vulnerabilities detected"
+          echo "Repository: ${{ github.repository }}"
+          echo "Security report generated and stored as artifact"

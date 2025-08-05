@@ -1,0 +1,403 @@
+# Istio Service Mesh Configuration for Healthcare Platform
+# Provides advanced traffic management, security, and observability
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: clinic-gateway
+  namespace: clinic-production
+  labels:
+    app: clinic-platform
+    tier: service-mesh
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - clinic.health.com
+    - admin.clinic.health.com
+    - api.clinic.health.com
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: clinic-tls-secret
+    hosts:
+    - clinic.health.com
+    - admin.clinic.health.com
+    - api.clinic.health.com
+
+---
+# Virtual Service for traffic routing with healthcare-specific rules
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: clinic-virtualservice
+  namespace: clinic-production
+  labels:
+    app: clinic-platform
+spec:
+  hosts:
+  - clinic.health.com
+  - admin.clinic.health.com
+  - api.clinic.health.com
+  gateways:
+  - clinic-gateway
+  http:
+  # Authentication service with circuit breaker
+  - match:
+    - uri:
+        prefix: /api/auth
+    route:
+    - destination:
+        host: auth-service
+        port:
+          number: 3001
+    timeout: 15s
+    retries:
+      attempts: 3
+      perTryTimeout: 5s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 100ms
+        
+  # File upload with extended timeout and retry policy
+  - match:
+    - uri:
+        prefix: /api/files
+    route:
+    - destination:
+        host: files-service
+        port:
+          number: 3003
+    timeout: 300s
+    retries:
+      attempts: 2
+      perTryTimeout: 150s
+      retryOn: 5xx,reset,connect-failure
+      
+  # AI service with specialized handling
+  - match:
+    - uri:
+        prefix: /api/ai
+    route:
+    - destination:
+        host: ai-service
+        port:
+          number: 3005
+    timeout: 120s
+    retries:
+      attempts: 2
+      perTryTimeout: 60s
+      retryOn: 5xx,reset,connect-failure
+      
+  # Healthcare-specific services
+  - match:
+    - uri:
+        prefix: /api/appointments
+    route:
+    - destination:
+        host: appointments-service
+        port:
+          number: 3002
+    timeout: 30s
+    
+  - match:
+    - uri:
+        prefix: /api/notes
+    route:
+    - destination:
+        host: notes-service
+        port:
+          number: 3006
+    timeout: 30s
+    
+  - match:
+    - uri:
+        prefix: /api/notifications
+    route:
+    - destination:
+        host: notifications-service
+        port:
+          number: 3004
+    timeout: 20s
+    
+  - match:
+    - uri:
+        prefix: /api/analytics
+    route:
+    - destination:
+        host: analytics-service
+        port:
+          number: 3007
+    timeout: 45s
+    
+  - match:
+    - uri:
+        prefix: /api/settings
+    route:
+    - destination:
+        host: settings-service
+        port:
+          number: 3008
+    timeout: 15s
+    
+  - match:
+    - uri:
+        prefix: /api/billing
+    route:
+    - destination:
+        host: billing-service
+        port:
+          number: 3009
+    timeout: 30s
+    
+  # API Gateway for other routes
+  - match:
+    - uri:
+        prefix: /api
+    route:
+    - destination:
+        host: api-gateway-service
+        port:
+          number: 4000
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: 5xx,reset,connect-failure
+      
+  # Frontend application
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: frontend-service
+        port:
+          number: 80
+    timeout: 30s
+
+---
+# Destination Rules for circuit breaker and load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: clinic-destination-rules
+  namespace: clinic-production
+spec:
+  host: "*.clinic-production.svc.cluster.local"
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 7200s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        consecutiveGatewayErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+        maxEjectionPercent: 50
+        minHealthPercent: 50
+    outlierDetection:
+      consecutiveGatewayErrors: 5
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+      splitExternalLocalOriginErrors: false
+  portLevelSettings:
+  - port:
+      number: 4000
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 10s
+      http:
+        http1MaxPendingRequests: 25
+        maxRequestsPerConnection: 5
+
+---
+# Service-specific destination rules
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: auth-service-destination-rule
+  namespace: clinic-production
+spec:
+  host: auth-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "X-User-ID"
+    connectionPool:
+      tcp:
+        maxConnections: 50
+      http:
+        http1MaxPendingRequests: 25
+        maxRequestsPerConnection: 5
+    circuitBreaker:
+      consecutiveGatewayErrors: 3
+      consecutive5xxErrors: 3
+      interval: 10s
+      baseEjectionTime: 15s
+      maxEjectionPercent: 50
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: files-service-destination-rule
+  namespace: clinic-production
+spec:
+  host: files-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 20
+        connectTimeout: 10s
+      http:
+        http1MaxPendingRequests: 10
+        maxRequestsPerConnection: 2
+        h2UpgradePolicy: UPGRADE
+    circuitBreaker:
+      consecutiveGatewayErrors: 2
+      consecutive5xxErrors: 2
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 25
+
+---
+# Security Policies
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: clinic-peer-authentication
+  namespace: clinic-production
+spec:
+  mtls:
+    mode: STRICT
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: clinic-authorization-policy
+  namespace: clinic-production
+spec:
+  rules:
+  # Allow frontend to access all backend services
+  - from:
+    - source:
+        principals: ["cluster.local/ns/clinic-production/sa/frontend-service-account"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        
+  # Restrict admin endpoints
+  - from:
+    - source:
+        principals: ["cluster.local/ns/clinic-production/sa/api-gateway-service-account"]
+    to:
+    - operation:
+        paths: ["/admin/*"]
+    when:
+    - key: source.ip
+      values: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+      
+  # Allow health checks
+  - to:
+    - operation:
+        paths: ["/health", "/healthz", "/ready"]
+        methods: ["GET"]
+
+---
+# Request Authentication for JWT validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: clinic-jwt-authentication
+  namespace: clinic-production
+spec:
+  jwtRules:
+  - issuer: "https://clinic.health.com"
+    jwksUri: "https://clinic.health.com/.well-known/jwks.json"
+    audiences:
+    - "clinic-api"
+    forwardOriginalToken: true
+
+---
+# Telemetry configuration for healthcare metrics
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: clinic-telemetry
+  namespace: clinic-production
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  - overrides:
+    - match:
+        metric: ALL_METRICS
+      tagOverrides:
+        request_protocol:
+          value: "http"
+    - match:
+        metric: REQUEST_COUNT
+      tags:
+        patient_id:
+          header:
+            name: "X-Patient-ID"
+        session_id:
+          header:
+            name: "X-Session-ID"
+        user_role:
+          header:
+            name: "X-User-Role"
+  accessLogging:
+  - providers:
+    - name: otel
+  tracing:
+  - providers:
+    - name: jaeger
+
+---
+# Service Monitor for Istio metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: istio-proxy
+  namespace: clinic-production
+  labels:
+    app: istio-proxy
+spec:
+  selector:
+    matchLabels:
+      app: istio-proxy
+  endpoints:
+  - port: http-monitoring
+    interval: 15s
+    path: /stats/prometheus

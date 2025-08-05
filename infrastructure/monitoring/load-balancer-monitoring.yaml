@@ -1,0 +1,466 @@
+# Load Balancer and Infrastructure Monitoring Configuration
+# Comprehensive monitoring for NGINX, HAProxy, and Kubernetes infrastructure
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-exporter-config
+  namespace: clinic-production
+  labels:
+    app: nginx-exporter
+    tier: monitoring
+data:
+  nginx.conf: |
+    # NGINX status configuration for monitoring
+    server {
+        listen 8080;
+        server_name localhost;
+        
+        location /nginx_status {
+            stub_status on;
+            access_log off;
+            allow 127.0.0.1;
+            allow 10.0.0.0/8;
+            allow 172.16.0.0/12;
+            allow 192.168.0.0/16;
+            deny all;
+        }
+        
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-prometheus-exporter
+  namespace: clinic-production
+  labels:
+    app: nginx-prometheus-exporter
+    tier: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-prometheus-exporter
+  template:
+    metadata:
+      labels:
+        app: nginx-prometheus-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: nginx-prometheus-exporter
+        image: nginx/nginx-prometheus-exporter:0.10.0
+        args:
+          - "-nginx.scrape-uri=http://nginx-lb-primary:8080/nginx_status"
+          - "-web.listen-address=:9113"
+          - "-web.telemetry-path=/metrics"
+        ports:
+        - name: metrics
+          containerPort: 9113
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-prometheus-exporter
+  namespace: clinic-production
+  labels:
+    app: nginx-prometheus-exporter
+spec:
+  ports:
+  - name: metrics
+    port: 9113
+    targetPort: metrics
+  selector:
+    app: nginx-prometheus-exporter
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-exporter
+  namespace: clinic-production
+  labels:
+    app: haproxy-exporter
+    tier: monitoring
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: haproxy-exporter
+  template:
+    metadata:
+      labels:
+        app: haproxy-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8404"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: haproxy-exporter
+        image: prom/haproxy-exporter:v0.13.0
+        args:
+          - "--haproxy.scrape-uri=http://haproxy:8404/stats;csv"
+          - "--web.listen-address=:8404"
+          - "--web.telemetry-path=/metrics"
+        ports:
+        - name: metrics
+          containerPort: 8404
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: haproxy-exporter
+  namespace: clinic-production
+  labels:
+    app: haproxy-exporter
+spec:
+  ports:
+  - name: metrics
+    port: 8404
+    targetPort: metrics
+  selector:
+    app: haproxy-exporter
+
+---
+# ServiceMonitor for Prometheus to scrape load balancer metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: load-balancer-metrics
+  namespace: clinic-production
+  labels:
+    app: load-balancer-monitoring
+    tier: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: nginx-prometheus-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: haproxy-metrics
+  namespace: clinic-production
+  labels:
+    app: haproxy-monitoring
+    tier: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: haproxy-exporter
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+# PrometheusRule for load balancer alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: load-balancer-alerts
+  namespace: clinic-production
+  labels:
+    app: load-balancer-monitoring
+    tier: monitoring
+spec:
+  groups:
+  - name: nginx-load-balancer
+    rules:
+    - alert: NGINXLoadBalancerDown
+      expr: up{job="nginx-prometheus-exporter"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: nginx-load-balancer
+        healthcare_priority: high
+      annotations:
+        summary: "NGINX Load Balancer is down"
+        description: "NGINX Load Balancer {{ $labels.instance }} has been down for more than 1 minute"
+        
+    - alert: NGINXHighErrorRate
+      expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: warning
+        service: nginx-load-balancer
+        healthcare_priority: medium
+      annotations:
+        summary: "High error rate on NGINX Load Balancer"
+        description: "NGINX Load Balancer error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+        
+    - alert: NGINXHighLatency
+      expr: histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m])) > 0.5
+      for: 3m
+      labels:
+        severity: warning
+        service: nginx-load-balancer
+        healthcare_priority: medium
+      annotations:
+        summary: "High latency on NGINX Load Balancer"
+        description: "95th percentile latency is {{ $value }}s on {{ $labels.instance }}"
+        
+    - alert: NGINXTooManyConnections
+      expr: nginx_connections_active > 1000
+      for: 2m
+      labels:
+        severity: warning
+        service: nginx-load-balancer
+        healthcare_priority: medium
+      annotations:
+        summary: "Too many active connections on NGINX Load Balancer"
+        description: "NGINX Load Balancer has {{ $value }} active connections on {{ $labels.instance }}"
+
+  - name: haproxy-load-balancer
+    rules:
+    - alert: HAProxyLoadBalancerDown
+      expr: up{job="haproxy-exporter"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: haproxy-load-balancer
+        healthcare_priority: high
+      annotations:
+        summary: "HAProxy Load Balancer is down"
+        description: "HAProxy Load Balancer {{ $labels.instance }} has been down for more than 1 minute"
+        
+    - alert: HAProxyBackendDown
+      expr: haproxy_backend_up == 0
+      for: 30s
+      labels:
+        severity: critical
+        service: haproxy-backend
+        healthcare_priority: high
+      annotations:
+        summary: "HAProxy backend is down"
+        description: "HAProxy backend {{ $labels.backend }} is down"
+        
+    - alert: HAProxyHighResponseTime
+      expr: haproxy_backend_response_time_average_seconds > 1
+      for: 2m
+      labels:
+        severity: warning
+        service: haproxy-backend
+        healthcare_priority: medium
+      annotations:
+        summary: "High response time on HAProxy backend"
+        description: "HAProxy backend {{ $labels.backend }} response time is {{ $value }}s"
+        
+    - alert: HAProxyQueueTime
+      expr: haproxy_backend_current_queue > 10
+      for: 1m
+      labels:
+        severity: warning
+        service: haproxy-backend
+        healthcare_priority: medium
+      annotations:
+        summary: "HAProxy backend queue is growing"
+        description: "HAProxy backend {{ $labels.backend }} has {{ $value }} requests in queue"
+
+  - name: kubernetes-infrastructure
+    rules:
+    - alert: KubernetesNodeDown
+      expr: up{job="kubernetes-nodes"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        service: kubernetes-node
+        healthcare_priority: high
+      annotations:
+        summary: "Kubernetes node is down"
+        description: "Kubernetes node {{ $labels.instance }} has been down for more than 1 minute"
+        
+    - alert: KubernetesPodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+        service: kubernetes-pod
+        healthcare_priority: medium
+      annotations:
+        summary: "Pod is crash looping"
+        description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+        
+    - alert: KubernetesHighCPUUsage
+      expr: (sum by (instance) (rate(container_cpu_usage_seconds_total[5m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: warning
+        service: kubernetes-node
+        healthcare_priority: medium
+      annotations:
+        summary: "High CPU usage on Kubernetes node"
+        description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+        
+    - alert: KubernetesHighMemoryUsage
+      expr: (sum by (instance) (container_memory_working_set_bytes) / sum by (instance) (machine_memory_bytes)) * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+        service: kubernetes-node
+        healthcare_priority: medium
+      annotations:
+        summary: "High memory usage on Kubernetes node"
+        description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+
+---
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: load-balancer-dashboard
+  namespace: clinic-production
+  labels:
+    app: grafana-dashboard
+    tier: monitoring
+data:
+  load-balancer-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Healthcare Platform - Load Balancer Monitoring",
+        "tags": ["healthcare", "load-balancer", "infrastructure"],
+        "style": "dark",
+        "timezone": "browser",
+        "refresh": "30s",
+        "schemaVersion": 27,
+        "version": 1,
+        "panels": [
+          {
+            "id": 1,
+            "title": "NGINX Request Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(nginx_http_requests_total[5m])",
+                "refId": "A"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "thresholds"
+                },
+                "thresholds": {
+                  "steps": [
+                    {"color": "green", "value": null},
+                    {"color": "yellow", "value": 100},
+                    {"color": "red", "value": 500}
+                  ]
+                },
+                "unit": "reqps"
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "NGINX Active Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "nginx_connections_active",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {"label": "Connections", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "HAProxy Backend Status",
+            "type": "table",
+            "targets": [
+              {
+                "expr": "haproxy_backend_up",
+                "refId": "A"
+              }
+            ],
+            "transformations": [
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {},
+                  "indexByName": {},
+                  "renameByName": {
+                    "backend": "Backend",
+                    "Value": "Status"
+                  }
+                }
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Response Time Distribution",
+            "type": "heatmap",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(nginx_http_request_duration_seconds_bucket[5m]))",
+                "refId": "A"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        }
+      }
+    }

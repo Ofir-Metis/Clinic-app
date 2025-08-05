@@ -1,0 +1,32 @@
+apiVersion: 1
+
+providers:
+  - name: 'Healthcare Clinic Dashboards'
+    orgId: 1
+    folder: 'Healthcare Clinic'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+
+  - name: 'Healthcare Operational'
+    orgId: 1
+    folder: 'Healthcare Clinic'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/healthcare-operational-dashboard.json
+
+  - name: 'Healthcare Business'
+    orgId: 1
+    folder: 'Healthcare Clinic'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/healthcare-business-dashboard.json
