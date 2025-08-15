@@ -4,7 +4,25 @@ import axios from 'axios';
 
 @Injectable()
 export class NotificationsService {
-  private mailer = createTransport(process.env.SMTP_URL || '');
+  private mailer: any;
+
+  constructor() {
+    // Initialize mailer with proper configuration or fallback
+    if (process.env.SMTP_URL && process.env.SMTP_URL.trim() !== '') {
+      this.mailer = createTransport(process.env.SMTP_URL);
+    } else {
+      // Fallback configuration for development
+      this.mailer = createTransport({
+        host: process.env.SMTP_HOST || 'localhost',
+        port: parseInt(process.env.SMTP_PORT || '1025'),
+        secure: false,
+        auth: process.env.EMAIL_USER ? {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        } : undefined,
+      });
+    }
+  }
 
   async sendAppointmentInvite(contact: string, details: any) {
     if (contact.includes('@')) {

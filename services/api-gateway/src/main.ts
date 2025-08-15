@@ -1,13 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter, SanitizationPipe, RequestSizeLimitMiddleware, CsrfSetupMiddleware, SecurityHeadersMiddleware } from '@clinic/common';
-import { LoggingMiddleware } from '@clinic/common';
-import { LoggingInterceptor } from '@clinic/common';
+import { AllExceptionsFilter, SanitizationPipe, RequestSizeLimitMiddleware, CsrfSetupMiddleware, SecurityHeadersMiddleware, LoggingMiddleware, LoggingInterceptor, CentralizedLoggerService } from '@clinic/common';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SwaggerConfig } from './docs/swagger-config';
+import { ProductionConfigService } from './config/production.config';
+import { MetricsInterceptor } from './common/metrics.interceptor';
+import { MetricsService } from './monitoring/metrics.service';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -17,6 +19,11 @@ async function bootstrap() {
       ? ['error', 'warn'] 
       : ['log', 'error', 'warn', 'debug', 'verbose'],
   });
+
+  // Get production configuration service
+  const productionConfig = app.get(ProductionConfigService);
+  const monitoringConfig = productionConfig.getMonitoringConfig();
+  const securityConfig = productionConfig.getSecurityConfig();
 
   // Security Configuration - Disable helmet CSP since we use custom headers
   app.use(helmet({
@@ -35,12 +42,40 @@ async function bootstrap() {
   // Performance optimizations
   app.use(compression());
 
+  // Get essential services
+  const configService = app.get(ConfigService);
+  
+  // Create logger service instance with error handling
+  let loggerService: CentralizedLoggerService | null = null;
+  try {
+    loggerService = app.get(CentralizedLoggerService);
+    logger.log('✅ CentralizedLoggerService initialized successfully');
+  } catch (error) {
+    logger.warn('⚠️ CentralizedLoggerService not available, using fallback logging');
+    logger.warn(`Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+  
+  // Production-ready metrics collection
+  if (monitoringConfig.enableMetrics) {
+    try {
+      const metricsService = app.get(MetricsService);
+      app.useGlobalInterceptors(new MetricsInterceptor(metricsService));
+      logger.log('✅ Metrics collection enabled');
+    } catch (error) {
+      logger.warn('⚠️ MetricsService not available, skipping metrics');
+    }
+  }
+  
   // Global middleware and filters
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  if (loggerService) {
+    app.useGlobalInterceptors(new LoggingInterceptor(loggerService));
+    app.use(new LoggingMiddleware(loggerService).use);
+  }
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.use(new SecurityHeadersMiddleware(app.get('ConfigService')).use);
-  app.use(new LoggingMiddleware().use);
-  app.use(new RequestSizeLimitMiddleware(app.get('ConfigService')).use.bind(new RequestSizeLimitMiddleware(app.get('ConfigService'))));
+  app.use(new SecurityHeadersMiddleware(configService).use);
+  
+  const requestSizeLimitMiddleware = new RequestSizeLimitMiddleware(configService);
+  app.use(requestSizeLimitMiddleware.use.bind(requestSizeLimitMiddleware));
   app.use(new CsrfSetupMiddleware().use);
 
   // Input validation and sanitization
@@ -54,22 +89,16 @@ async function bootstrap() {
     })
   );
 
-  // CORS configuration
-  const corsOrigins = process.env.CORS_ORIGINS 
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:5173', 'http://localhost:3000'];
-
+  // CORS configuration using production config
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' ? corsOrigins : true,
+    origin: productionConfig.isProduction() ? securityConfig.corsOrigins : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
 
-  // API Documentation
-  const enableDocs = process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS === 'true';
-  
-  if (enableDocs) {
+  // API Documentation using production config
+  if (monitoringConfig.enableApiDocs) {
     const config = SwaggerConfig.createConfig();
     const options = SwaggerConfig.createOptions();
     const customOptions = SwaggerConfig.getCustomOptions();
@@ -93,12 +122,21 @@ async function bootstrap() {
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
 
-  const port = process.env.PORT || 4000;
+  const port = productionConfig.getPort();
   await app.listen(port, '0.0.0.0');
   
   logger.log(`🚀 API Gateway running on port ${port}`);
-  logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`Environment: ${productionConfig.getNodeEnv()}`);
   logger.log(`Health check: http://localhost:${port}/health`);
+  
+  if (monitoringConfig.enableMetrics) {
+    logger.log(`📊 Metrics available at: http://localhost:${port}/metrics`);
+    logger.log(`📈 Prometheus metrics: http://localhost:${port}/metrics/prometheus`);
+  }
+  
+  if (monitoringConfig.enableApiDocs) {
+    logger.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
+  }
 }
 
 bootstrap().catch((error) => {

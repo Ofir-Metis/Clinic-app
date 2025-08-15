@@ -17,10 +17,26 @@ export class NotifierService {
       : undefined,
   });
 
-  private twilio = new Twilio(
-    process.env.TWILIO_ACCOUNT_SID || '',
-    process.env.TWILIO_AUTH_TOKEN || '',
-  );
+  private twilio: Twilio | null;
+
+  constructor() {
+    // Initialize Twilio client only if credentials are properly configured
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    
+    if (accountSid && authToken && accountSid.startsWith('AC') && accountSid.length === 34) {
+      try {
+        this.twilio = new Twilio(accountSid, authToken);
+        this.logger.log('✅ Twilio client initialized successfully');
+      } catch (error) {
+        this.logger.warn('⚠️ Failed to initialize Twilio client:', error.message);
+        this.twilio = null;
+      }
+    } else {
+      this.logger.warn('⚠️ Twilio credentials not configured or invalid format. SMS functionality disabled.');
+      this.twilio = null;
+    }
+  }
 
   async sendInvitation(patient: Patient, therapistId: number) {
     const inviteLink = `${process.env.APP_URL}/register?email=${encodeURIComponent(
@@ -34,12 +50,20 @@ export class NotifierService {
       html: `<a href="${inviteLink}">Register</a>`,
     });
     if (patient.whatsappOptIn) {
-      this.logger.log(`Sending WhatsApp invitation to ${patient.phone}`);
-      await this.twilio.messages.create({
-        to: patient.phone,
-        from: process.env.WHATSAPP_FROM || '',
-        body: `You've been invited: ${inviteLink}`,
-      });
+      if (this.twilio) {
+        this.logger.log(`Sending WhatsApp invitation to ${patient.phone}`);
+        try {
+          await this.twilio.messages.create({
+            to: patient.phone,
+            from: process.env.WHATSAPP_FROM || '',
+            body: `You've been invited: ${inviteLink}`,
+          });
+        } catch (error) {
+          this.logger.error(`Failed to send WhatsApp message: ${error.message}`);
+        }
+      } else {
+        this.logger.warn('WhatsApp/SMS functionality disabled - Twilio not configured');
+      }
     }
   }
 

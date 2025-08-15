@@ -18,10 +18,26 @@ export class NotificationsService implements OnModuleInit {
     },
   });
 
-  private twilio = new Twilio(
-    process.env.TWILIO_ACCOUNT_SID || '',
-    process.env.TWILIO_AUTH_TOKEN || '',
-  );
+  private twilio: Twilio | null;
+
+  constructor() {
+    // Initialize Twilio client only if credentials are properly configured
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    
+    if (accountSid && authToken && accountSid.startsWith('AC') && accountSid.length === 34) {
+      try {
+        this.twilio = new Twilio(accountSid, authToken);
+        console.log('✅ Twilio client initialized successfully');
+      } catch (error) {
+        console.warn('⚠️ Failed to initialize Twilio client:', error instanceof Error ? error.message : 'Unknown error');
+        this.twilio = null;
+      }
+    } else {
+      console.warn('⚠️ Twilio credentials not configured or invalid format. SMS functionality disabled.');
+      this.twilio = null;
+    }
+  }
 
   async onModuleInit() {
     console.log('Notification service initialized successfully');
@@ -35,10 +51,20 @@ export class NotificationsService implements OnModuleInit {
   }
 
   async sendSms(to: string, body: string) {
-    return this.twilio.messages.create({
-      to,
-      from: process.env.TWILIO_FROM || '',
-      body,
-    });
+    if (!this.twilio) {
+      console.warn('SMS functionality disabled - Twilio not configured');
+      throw new Error('SMS functionality is not available - Twilio client not configured');
+    }
+    
+    try {
+      return await this.twilio.messages.create({
+        to,
+        from: process.env.TWILIO_FROM || '',
+        body,
+      });
+    } catch (error) {
+      console.error(`Failed to send SMS: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
   }
 }
