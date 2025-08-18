@@ -381,6 +381,128 @@ Key required variables (copy from `.env.example`):
 - **therapists-service** - Added to main docker-compose.yml with proper dependencies
 - **client-relationships-service** (port 3014) - Built successfully, added to compose file
 
+### 🐳 Complete Container Status Overview (~30 Containers)
+
+#### **Core Application Services (12 services)**
+| Service Name | Status | Port Mapping | Health | Notes |
+|-------------|---------|-------------|---------|-------|
+| `clinic-app-api-gateway-1` | ✅ Up 11+ hours | `4000:3000` | Healthy | Main entry point, fixed ConfigService |
+| `clinic-app-auth-service-1` | ✅ Up 11+ hours | `3001:3000` | Healthy | JWT authentication stable |
+| `clinic-app-appointments-service-1` | 🔧 Ready for test | `3002:3000` | **Fixed** | Patient entity @PrimaryColumn added |
+| `clinic-app-files-service-1` | ✅ Up 11+ hours | `3003:3000` | Healthy | MinIO integration stable |
+| `clinic-app-notifications-service-1` | ✅ Up 11+ hours | `3004:3000` | Healthy | Twilio resilience patterns |
+| `clinic-app-ai-service-1` | ⏸️ Not in main compose | `3005:3000` | Available | OpenAI GPT-4 & Whisper integration |
+| `clinic-app-notes-service-1` | ✅ Up 11+ hours | `3006:3000` | Healthy | Rich text editor stable |
+| `clinic-app-analytics-service-1` | ✅ Up 11+ hours | `3007:3000` | Healthy | Reporting & AI insights |
+| `clinic-app-settings-service-1` | ✅ Up 11+ hours | `3008:3000` | Healthy | User preferences stable |
+| `clinic-app-billing-service-1` | 🔧 Ready for test | `3009:3009` | **Verified** | @clinic/common imports correct |
+| `clinic-app-search-service-1` | ⏸️ Enhanced compose | `3010:3000` | Available | Elasticsearch global search |
+| `clinic-app-cdn-service-1` | ⏸️ Enhanced compose | `3011:3000` | Available | Content delivery & optimization |
+
+#### **Extended Application Services (4 services)**
+| Service Name | Status | Port Mapping | Health | Notes |
+|-------------|---------|-------------|---------|-------|
+| `clinic-app-google-integration-service-1` | 🔧 Ready for test | `3012:3009` | **Enhanced** | DB timeout increased 2s→10s |
+| `clinic-app-therapists-service-1` | 🔧 Ready for test | `3013:3013` | **Fixed** | Registry changed npmirror→npmjs |
+| `clinic-app-client-relationships-service-1` | 🔧 Ready for test | `3014:3014` | **Built** | Successfully built, needs startup test |
+| `clinic-app-progress-service-1` | ⏸️ Enhanced compose | `3015:3000` | Available | Goal tracking & achievements |
+
+#### **Infrastructure Services (5 services)**
+| Service Name | Status | Port Mapping | Health | Purpose |
+|-------------|---------|-------------|---------|---------|
+| `clinic-app-postgres-1` | ✅ Up 11+ hours | `5432:5432` | Healthy | Main database PostgreSQL 15 |
+| `clinic-app-redis-1` | ✅ Up 11+ hours | `6379:6379` | Healthy | Caching & session storage |
+| `clinic-app-nats-1` | ✅ Up 11+ hours | `4222:4222` | Healthy | Message broker for microservices |
+| `clinic-app-minio-1` | ✅ Up 11+ hours | `9000-9001:9000-9001` | Healthy | Object storage (S3 compatible) |
+| `clinic-app-maildev-1` | ✅ Up 11+ hours | `1025:1025, 1080:1080` | Healthy | Email testing & development |
+
+#### **Database Management & Tools (2 services)**
+| Service Name | Status | Port Mapping | Health | Purpose |
+|-------------|---------|-------------|---------|---------|
+| `clinic-app-pgadmin-1` | ⏸️ Enhanced compose | `8080:80` | Available | PostgreSQL web administration |
+| `clinic-app-redis-commander-1` | ⏸️ Enhanced compose | `8081:8081` | Available | Redis web administration |
+
+#### **Load Balancer & Frontend (2 services)**
+| Service Name | Status | Port Mapping | Health | Notes |
+|-------------|---------|-------------|---------|-------|
+| `clinic-app-nginx-1` | ✅ Up 52+ minutes | `80:80, 443:443` | Healthy | Fixed upstream hostnames & SSL |
+| `clinic-app-frontend-1` | ✅ Up 11+ hours | `5173:80` | Healthy | React + Vite production build |
+
+#### **Search & Analytics Backend (1 service)**
+| Service Name | Status | Port Mapping | Health | Purpose |
+|-------------|---------|-------------|---------|---------|
+| `clinic-app-elasticsearch-1` | ✅ Up 37+ hours | `9200:9200` | Healthy | Search & analytics backend |
+
+#### **Monitoring & Observability Stack (6 services)**
+| Service Name | Status | Port Mapping | Health | Purpose |
+|-------------|---------|-------------|---------|---------|
+| `clinic-app-prometheus-1` | ✅ Up 43+ hours | `9090:9090` | Healthy | Metrics collection |
+| `clinic-app-grafana-1` | ✅ Up 43+ hours | `3000:3000` | Healthy | Metrics visualization |
+| `clinic-app-promtail-1` | ✅ Up 43+ hours | - | Healthy | Log aggregation |
+| `clinic-app-loki-1` | ⏸️ Monitoring compose | `3100:3100` | Available | Log storage backend |
+| `clinic-app-jaeger-1` | ⏸️ Monitoring compose | `16686:16686` | Available | Distributed tracing |
+| `clinic-app-uptime-kuma-1` | ⏸️ Monitoring compose | `3001:3001` | Available | Uptime monitoring |
+
+#### **Security & Compliance (2 services)**
+| Service Name | Status | Port Mapping | Health | Purpose |
+|-------------|---------|-------------|---------|---------|
+| `clinic-app-falco-1` | ⏸️ Monitoring compose | - | Available | Runtime security monitoring |
+| `clinic-app-fluentd-1` | ⏸️ Monitoring compose | `24224:24224` | Available | Log collection & compliance |
+
+#### **Container Status Legend**
+- ✅ **Up & Stable**: Service running without issues for extended period
+- 🔧 **Ready for Test**: Production-ready fixes applied, needs verification
+- ❌ **Needs Attention**: Service crashed or requires fixes
+- 🔄 **Building**: Container being built or starting up
+- ⏸️ **Paused**: Docker Desktop paused (system-wide issue)
+
+#### **Key Metrics Summary**
+- **Total Available Containers**: ~30 across all compose files
+- **Currently Running**: 22 containers (main + monitoring stack)
+- **Core Application Services**: 12 microservices (8 stable + 4 ready for test)
+- **Extended Services**: 4 additional microservices (in enhanced compose)
+- **Infrastructure Services**: 5/5 essential (postgres, redis, nats, minio, maildev)
+- **Management Tools**: 2 database admin interfaces (pgadmin, redis-commander)
+- **Monitoring Stack**: 6 observability services (4 running + 2 available)
+- **Security & Compliance**: 2 specialized security services
+- **Load Balancer & Frontend**: 2/2 nginx + React frontend stable
+- **Overall Health**: 18/22 confirmed stable + 4 ready for testing + 8 available in other compose files
+
+#### **Container Distribution by Compose File**
+- **docker-compose.yml** (Main): 18 core services + infrastructure
+- **docker-compose.enhanced.yml**: +8 advanced services (AI, search, CDN, etc.)
+- **docker-compose.monitoring.yml**: +6 observability & security services
+- **Total Unique Services**: ~32 distinct containers across all environments
+
+#### **Multi-Environment Container Commands**
+```bash
+# Main environment (18 containers)
+docker compose up -d
+
+# Enhanced environment with AI/Search/CDN (26 containers)
+docker compose -f docker-compose.yml -f docker-compose.enhanced.yml up -d
+
+# Full monitoring stack (32 containers)
+docker compose -f docker-compose.yml -f docker-compose.enhanced.yml -f docker-compose.monitoring.yml up -d
+
+# Check all running containers
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Get complete container status
+docker ps -a | wc -l  # Total containers including stopped
+```
+
+#### **Network Architecture**
+```
+[Internet] → [nginx:80/443] → [api-gateway:4000] → [Microservices:3001-3014]
+                                    ↓
+[Frontend:5173] ← [Static Assets] ← [CDN/MinIO:9000]
+                                    ↓
+[PostgreSQL:5432] ← [All Services] → [NATS:4222] → [Inter-service messaging]
+                                    ↓
+[Redis:6379] ← [Caching & Sessions] → [Monitoring:9090,3000]
+```
+
 ### 🔑 Key Technical Fixes Implemented
 
 #### 1. **Entity Validation Fix** (`services/appointments-service/src/patients/patient.entity.ts`)
