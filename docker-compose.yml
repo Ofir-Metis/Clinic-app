@@ -201,6 +201,44 @@ services:
     ports:
       - '6379:6379'
     command: redis-server --appendonly yes
+  therapists-service:
+    build:
+      context: .
+      dockerfile: services/therapists-service/Dockerfile
+    depends_on:
+      - postgres
+      - nats
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3013
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - '3013:3013'
+  client-relationships-service:
+    build:
+      context: .
+      dockerfile: services/client-relationships-service/Dockerfile
+    depends_on:
+      - postgres
+      - nats
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3014
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - '3014:3014'
   api-gateway:
     build:
       context: .
@@ -212,6 +250,8 @@ services:
       - analytics-service
       - settings-service
       - billing-service
+      - therapists-service
+      - client-relationships-service
       - nats
       - postgres
       - redis
@@ -237,6 +277,28 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - '4000:3000'
+  google-integration-service:
+    build:
+      context: .
+      dockerfile: services/google-integration-service/Dockerfile.simple
+    depends_on:
+      - postgres
+      - nats
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      NATS_URL: ${NATS_URL}
+      NODE_ENV: ${NODE_ENV}
+      # Google OAuth Configuration
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+    ports:
+      - '3012:3009'
   frontend:
     build:
       context: .
