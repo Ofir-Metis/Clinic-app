@@ -69,20 +69,43 @@ export class OpenaiService {
   async generateSessionSummary(request: SessionSummaryRequest): Promise<SessionSummary> {
     try {
       this.logger.debug(`Generating summary for appointment ${request.appointmentId}`);
-      
+
       const systemPrompt = this.buildCoachingSystemPrompt(request.sessionType);
       const userPrompt = this.buildSessionAnalysisPrompt(request);
 
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-        response_format: { type: 'json_object' }
-      });
+      // Intelligent model selection based on content complexity
+      const modelToUse = this.selectOptimalModel('session_summary', userPrompt.length);
+
+      this.logger.debug(`Using optimal model: ${modelToUse} for content length: ${userPrompt.length}`);
+
+      let completion;
+      try {
+        completion = await this.openai.chat.completions.create({
+          model: modelToUse,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.3,
+          max_completion_tokens: this.getMaxTokensForModel(modelToUse),
+          response_format: { type: 'json_object' },
+          // GPT-5 specific enhancements
+          ...(modelToUse.includes('gpt-5') && {
+            verbosity: process.env.AI_VERBOSITY_LEVEL || 'medium',
+            reasoning_effort: process.env.AI_REASONING_EFFORT || 'standard'
+          })
+        });
+      } catch (modelError: any) {
+        // Enhanced fallback chain for maximum reliability
+        completion = await this.handleModelFallback(modelError, modelToUse, {
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.3,
+          response_format: { type: 'json_object' }
+        });
+      }
 
       const response = completion.choices[0]?.message?.content;
       if (!response) {
@@ -156,7 +179,7 @@ export class OpenaiService {
   }
 
   /**
-   * Generate coaching insights from client progress data
+   * Generate coaching insights from client progress data with GPT-5 healthcare optimization
    */
   async generateProgressInsights(clientData: {
     goals: string[];
@@ -171,10 +194,7 @@ export class OpenaiService {
     nextSteps: string[];
   }> {
     try {
-      const systemPrompt = `You are an expert life coach and personal development specialist. 
-      Analyze client progress data and provide actionable insights that are encouraging, 
-      specific, and focused on sustainable growth. Use positive psychology principles 
-      and growth mindset language.`;
+      const systemPrompt = this.buildHealthcareOptimizedSystemPrompt('progress_analysis');
 
       const userPrompt = `
       Client Progress Analysis:
@@ -183,7 +203,7 @@ export class OpenaiService {
       Challenges: ${clientData.challenges.join(', ')}
       Recent Sessions: ${clientData.sessionHistory.join(', ')}
       Timeframe: ${clientData.timeframe}
-      
+
       Please provide insights in JSON format with:
       - progressAssessment: Overall progress evaluation
       - recommendations: 3-5 specific actionable recommendations
@@ -191,15 +211,23 @@ export class OpenaiService {
       - nextSteps: 3-4 concrete next steps for continued growth
       `;
 
+      // Intelligent model selection for progress analysis
+      const modelToUse = this.selectOptimalModel('progress_analysis', userPrompt.length);
+
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: modelToUse,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.4,
-        max_tokens: 1000,
-        response_format: { type: 'json_object' }
+        max_completion_tokens: this.getMaxTokensForModel(modelToUse),
+        response_format: { type: 'json_object' },
+        // GPT-5 healthcare optimization
+        ...(modelToUse.includes('gpt-5') && {
+          verbosity: 'medium',
+          reasoning_effort: 'standard'
+        })
       });
 
       const response = completion.choices[0]?.message?.content;
@@ -218,24 +246,125 @@ export class OpenaiService {
   }
 
   /**
-   * Build system prompt for coaching session analysis
+   * Build healthcare-optimized system prompt for GPT-5
    */
   private buildCoachingSystemPrompt(sessionType: string): string {
-    return `You are an expert life coach and session analyst specializing in personal development. 
-    Your role is to analyze coaching session transcripts and generate comprehensive, actionable summaries.
-    
-    Focus on:
-    - Personal growth insights and breakthroughs
-    - Goal progression and achievement patterns
-    - Emotional resilience and mindset shifts
-    - Action-oriented takeaways
-    - Client empowerment and self-awareness
-    
+    return `You are an expert life coach and session analyst specializing in personal development and wellness coaching.
+    You have been healthcare-optimized to provide precise, reliable responses while acting as a proactive thought partner.
+
+    Your role is to analyze coaching session transcripts and generate comprehensive, actionable summaries with:
+    - Exceptional accuracy (<1% hallucination rate) for healthcare contexts
+    - Empathetic, empowerment-focused language for sustainable growth
+    - Proactive insights that go beyond surface-level observations
+    - Evidence-based coaching techniques and positive psychology principles
+
+    Focus Areas:
+    - Personal growth insights and breakthrough moments
+    - Goal progression with measurable achievement patterns
+    - Emotional resilience and transformative mindset shifts
+    - Action-oriented takeaways with clear implementation steps
+    - Client empowerment through self-awareness and confidence building
+    - Risk assessment for emotional well-being and safety protocols
+
     Session Type: ${sessionType}
-    
+
     Provide your analysis in valid JSON format matching the SessionSummary interface.
-    Be specific, encouraging, and focused on the client's growth journey.
-    Use coaching terminology appropriate for personal development work.`;
+    Be specific, encouraging, and laser-focused on the client's holistic growth journey.
+    Use evidence-based coaching terminology appropriate for wellness and personal development work.
+    Prioritize client safety, empowerment, and sustainable transformation.`;
+  }
+
+  /**
+   * Build healthcare-optimized system prompt for different AI tasks
+   */
+  private buildHealthcareOptimizedSystemPrompt(taskType: string): string {
+    const basePrompt = `You are an expert life coach specializing in personal development and wellness.
+    Your responses must be accurate, empathetic, and focused on empowerment.
+    Use your healthcare optimization to provide precise, reliable coaching insights.
+    Act as a proactive thought partner for sustainable growth.`;
+
+    switch (taskType) {
+      case 'progress_analysis':
+        return `${basePrompt}\n\nAnalyze client progress data and provide actionable insights that are encouraging,
+        specific, and focused on sustainable growth. Use positive psychology principles
+        and growth mindset language with healthcare-grade accuracy.`;
+
+      case 'session_summary':
+        return this.buildCoachingSystemPrompt('coaching_session');
+
+      case 'multimodal_analysis':
+        return `${basePrompt}\n\nSpecialize in analyzing multimodal content (text, images, audio) for comprehensive
+        coaching insights. Focus on identifying patterns across different content types, safety considerations,
+        and holistic client assessment for optimal coaching outcomes.`;
+
+      default:
+        return basePrompt;
+    }
+  }
+
+  /**
+   * Intelligent model selection based on task complexity and content length
+   */
+  private selectOptimalModel(taskType: string, contentLength: number): string {
+    const primaryModel = process.env.AI_SUMMARY_MODEL || 'gpt-5';
+    const miniModel = process.env.AI_MINI_MODEL || 'gpt-5-mini';
+
+    // Use mini model for simple, short tasks
+    if (taskType === 'quick_insight' && contentLength < 1000) {
+      return miniModel;
+    }
+
+    // Use mini model for basic classifications and status updates
+    if (taskType === 'classification' || taskType === 'status_update') {
+      return miniModel;
+    }
+
+    // Use primary model for complex analysis and long content
+    if (taskType === 'session_summary' || taskType === 'progress_analysis') {
+      return primaryModel;
+    }
+
+    // Default to primary model for healthcare applications
+    return primaryModel;
+  }
+
+  /**
+   * Get optimal token limits for different models
+   */
+  private getMaxTokensForModel(model: string): number {
+    if (model.includes('gpt-5')) {
+      return parseInt(process.env.AI_MAX_COMPLETION_TOKENS || '20000');
+    }
+    if (model.includes('gpt-4')) {
+      return 4000;
+    }
+    return 3000; // GPT-3.5 and fallback
+  }
+
+  /**
+   * Enhanced fallback chain for maximum reliability
+   */
+  private async handleModelFallback(error: any, primaryModel: string, requestOptions: any) {
+    const fallbackChain = ['gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo-0125'];
+
+    this.logger.warn(`Model ${primaryModel} failed: ${error.message}. Trying fallback chain.`);
+
+    for (const fallbackModel of fallbackChain) {
+      try {
+        this.logger.debug(`Attempting fallback to: ${fallbackModel}`);
+        return await this.openai.chat.completions.create({
+          ...requestOptions,
+          model: fallbackModel,
+          max_completion_tokens: this.getMaxTokensForModel(fallbackModel)
+        });
+      } catch (fallbackError: any) {
+        this.logger.warn(`Fallback model ${fallbackModel} also failed: ${fallbackError.message}`);
+        continue;
+      }
+    }
+
+    // If all fallbacks fail, throw the original error
+    throw error;
   }
 
   /**
@@ -308,15 +437,140 @@ ${request.coachNotes}
   }
 
   /**
+   * Generate quick coaching insights using cost-optimized GPT-5-mini
+   */
+  async generateQuickInsight(prompt: string, category: 'classification' | 'status_update' | 'quick_response' = 'quick_response'): Promise<string> {
+    try {
+      this.logger.debug(`Generating quick insight for category: ${category}`);
+
+      const modelToUse = this.selectOptimalModel('quick_insight', prompt.length);
+
+      const completion = await this.openai.chat.completions.create({
+        model: modelToUse,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful coaching assistant. Provide concise, actionable insights for wellness and personal development.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.4,
+        max_completion_tokens: 500, // Limited for quick responses
+        // Use GPT-5-mini optimizations
+        ...(modelToUse.includes('gpt-5') && {
+          verbosity: 'low', // Concise responses for quick insights
+          reasoning_effort: 'minimal' // Fast processing
+        })
+      });
+
+      return completion.choices[0]?.message?.content || '';
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Quick insight generation failed: ${errorMessage}`);
+      throw new Error(`Quick insight generation failed: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Enhanced multimodal analysis for GPT-5 (supports text, images, audio, PDFs)
+   */
+  async analyzeMultimodalContent(content: {
+    text?: string;
+    imageUrls?: string[];
+    audioTranscript?: string;
+    contentType: 'session_analysis' | 'progress_review' | 'goal_assessment';
+  }): Promise<{
+    insights: string[];
+    recommendations: string[];
+    riskAssessment: string;
+    nextActions: string[];
+  }> {
+    try {
+      this.logger.debug(`Analyzing multimodal content for: ${content.contentType}`);
+
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: this.buildHealthcareOptimizedSystemPrompt('multimodal_analysis')
+        },
+        {
+          role: 'user',
+          content: `
+          Multimodal Content Analysis:
+          Text Content: ${content.text || 'Not provided'}
+          Audio Transcript: ${content.audioTranscript || 'Not provided'}
+          Images: ${content.imageUrls?.length || 0} images provided
+          Analysis Type: ${content.contentType}
+
+          Please provide comprehensive analysis in JSON format with:
+          - insights: Key observations and patterns
+          - recommendations: Actionable coaching recommendations
+          - riskAssessment: Safety and wellness considerations
+          - nextActions: Specific next steps for client growth
+          `
+        }
+      ];
+
+      // Add image content if provided (GPT-5 multimodal support)
+      if (content.imageUrls?.length) {
+        content.imageUrls.forEach((url, index) => {
+          messages.push({
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Image ${index + 1} for analysis:`
+              },
+              {
+                type: 'image_url',
+                image_url: { url }
+              }
+            ]
+          });
+        });
+      }
+
+      const modelToUse = process.env.AI_SUMMARY_MODEL || 'gpt-5';
+
+      const completion = await this.openai.chat.completions.create({
+        model: modelToUse,
+        messages,
+        temperature: 0.3,
+        max_completion_tokens: parseInt(process.env.AI_MAX_COMPLETION_TOKENS || '20000'),
+        response_format: { type: 'json_object' },
+        // GPT-5 multimodal optimizations
+        ...(modelToUse.includes('gpt-5') && {
+          verbosity: 'high', // Detailed analysis for multimodal content
+          reasoning_effort: 'high' // Thorough processing for complex content
+        })
+      });
+
+      const response = completion.choices[0]?.message?.content;
+      if (!response) {
+        throw new Error('No response from multimodal analysis');
+      }
+
+      return JSON.parse(response);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Multimodal analysis failed: ${errorMessage}`);
+      throw new Error(`Multimodal analysis failed: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Legacy method - kept for backward compatibility
-   * @deprecated Use generateSessionSummary instead
+   * @deprecated Use generateQuickInsight instead
    */
   async complete(prompt: string): Promise<string> {
-    this.logger.warn('Using deprecated complete method. Consider using generateSessionSummary instead.');
+    this.logger.warn('Using deprecated complete method. Consider using generateQuickInsight or generateSessionSummary instead.');
     
     try {
+      // Use environment-configurable model, fallback to cost-effective option for legacy method
+      const modelToUse = process.env.AI_LEGACY_MODEL || 'gpt-3.5-turbo-0125';
+
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: modelToUse,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 1000
