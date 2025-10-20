@@ -18,9 +18,11 @@
     "install:browsers": "npx playwright install"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
     "@faker-js/faker": "^8.3.1",
+    "@playwright/test": "^1.40.0",
+    "@types/dockerode": "^3.3.42",
     "axios": "^1.6.2",
+    "dockerode": "^4.0.7",
     "typescript": "^5.3.0"
   },
   "engines": {

@@ -34,10 +34,15 @@ import {
   Psychology as ToolsIcon,
   Menu as MenuIcon,
   Close as CloseIcon,
+  MoreHoriz as MoreIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../AuthContext';
+import CommandPalette from '../components/CommandPalette';
+import useCommandPalette from '../hooks/useCommandPalette';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { logFocusOrder } from '../utils/focusOrder';
 
 const drawerWidth = 240;
 
@@ -58,13 +63,6 @@ const navigationItems: NavigationItem[] = [
     showInBottomNav: true,
   },
   {
-    label: 'Calendar',
-    icon: <CalendarIcon />,
-    path: '/calendar',
-    value: 'calendar',
-    showInBottomNav: true,
-  },
-  {
     label: 'Clients',
     icon: <PeopleIcon />,
     path: '/patients',
@@ -72,18 +70,50 @@ const navigationItems: NavigationItem[] = [
     showInBottomNav: true,
   },
   {
+    label: 'Calendar',
+    icon: <CalendarIcon />,
+    path: '/calendar',
+    value: 'calendar',
+    showInBottomNav: true,
+  },
+  {
     label: 'AI Tools',
     icon: <ToolsIcon />,
     path: '/tools',
     value: 'tools',
-    showInBottomNav: true,
+    showInBottomNav: false, // Moved to More menu
   },
   {
     label: 'Notifications',
     icon: <NotificationsIcon />,
     path: '/notifications',
     value: 'notifications',
-    showInBottomNav: true,
+    showInBottomNav: false, // Moved to More menu
+  },
+  {
+    label: 'Settings',
+    icon: <SettingsIcon />,
+    path: '/settings',
+    value: 'settings',
+    showInBottomNav: false,
+  },
+];
+
+// Additional items for the "More" menu
+const moreMenuItems: NavigationItem[] = [
+  {
+    label: 'AI Tools',
+    icon: <ToolsIcon />,
+    path: '/tools',
+    value: 'tools',
+    showInBottomNav: false,
+  },
+  {
+    label: 'Notifications',
+    icon: <NotificationsIcon />,
+    path: '/notifications',
+    value: 'notifications',
+    showInBottomNav: false,
   },
   {
     label: 'Settings',
@@ -102,6 +132,7 @@ interface WellnessLayoutProps {
   fabAction?: () => void;
   fabAriaLabel?: string;
   showAppBar?: boolean;
+  showBreadcrumbs?: boolean;
   maxWidth?: number | string;
   notificationCount?: number;
 }
@@ -114,6 +145,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
   fabAction,
   fabAriaLabel = 'Add',
   showAppBar = true,
+  showBreadcrumbs = true,
   maxWidth = 1200,
   notificationCount = 0,
 }) => {
@@ -127,6 +159,18 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
   const isDesktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [profileMenuAnchorEl, setProfileMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [moreMenuAnchorEl, setMoreMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const commandPalette = useCommandPalette();
+
+  // Focus order verification in development
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const timer = setTimeout(() => {
+        logFocusOrder();
+      }, 1000); // Wait for components to render
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname]);
 
   // Get current navigation value
   const currentValue = navigationItems.find(item => 
@@ -161,6 +205,19 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
     logout();
     navigate('/login');
     handleProfileMenuClose();
+  };
+
+  const handleMoreMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMoreMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMoreMenuClose = () => {
+    setMoreMenuAnchorEl(null);
+  };
+
+  const handleMoreMenuNavigation = (path: string) => {
+    navigate(path);
+    handleMoreMenuClose();
   };
 
   // Get user's display name and first letter
@@ -213,18 +270,37 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
             key={item.value}
             selected={currentValue === item.value}
             onClick={() => handleNavigation(item.path)}
-            sx={{ 
+            aria-current={currentValue === item.value ? 'page' : undefined}
+            sx={{
               mb: 1,
               borderRadius: 2,
               minHeight: 48, // Better touch target
+              position: 'relative',
               '&.Mui-selected': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
                 '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.15),
+                  backgroundColor: alpha(theme.palette.primary.main, 0.18),
+                },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  left: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: 4,
+                  height: '60%',
+                  backgroundColor: theme.palette.primary.main,
+                  borderRadius: '0 2px 2px 0',
                 },
               },
               '&:hover': {
                 backgroundColor: alpha(theme.palette.primary.main, 0.05),
+              },
+              '&:focus': {
+                outline: `2px solid ${theme.palette.primary.main}`,
+                outlineOffset: '2px',
               },
             }}
           >
@@ -256,7 +332,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
     <Box sx={{ display: 'flex' }}>
       {/* App Bar */}
       {showAppBar && (
-        <AppBar 
+        <AppBar
+          component="header"
+          role="banner" 
           position="fixed" 
           sx={{ 
             zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -287,9 +365,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
               aria-expanded={profileMenuAnchorEl ? 'true' : undefined}
               aria-haspopup="true"
             >
-              <Avatar 
-                sx={{ 
-                  width: 40, 
+              <Avatar
+                sx={{
+                  width: 40,
                   height: 40,
                   background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
                   cursor: 'pointer',
@@ -300,6 +378,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
                   },
                 }}
                 src={user?.avatar}
+                alt={`${getUserDisplayName()} profile picture`}
               >
                 {getUserFirstLetter()}
               </Avatar>
@@ -347,12 +426,13 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem onClick={handleProfileClick} sx={{ py: 1.5 }}>
-          <Avatar 
-            sx={{ 
+          <Avatar
+            sx={{
               background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
               fontSize: '0.875rem'
             }}
             src={user?.avatar}
+            alt={`${getUserDisplayName()} profile picture`}
           >
             {getUserFirstLetter()}
           </Avatar>
@@ -376,6 +456,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
       {/* Desktop Sidebar */}
       {isDesktop && (
         <Drawer
+          component="nav"
+          role="navigation"
+          aria-label="Main navigation"
           variant="permanent"
           sx={{
             width: drawerWidth,
@@ -393,6 +476,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
       {/* Enhanced Mobile Drawer with Swipe */}
       {isMobile && (
         <SwipeableDrawer
+          component="nav"
+          role="navigation"
+          aria-label="Main navigation"
           variant="temporary"
           open={mobileOpen}
           onOpen={() => setMobileOpen(true)}
@@ -418,14 +504,35 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
         </SwipeableDrawer>
       )}
 
+      {/* Breadcrumbs */}
+      {showBreadcrumbs && showAppBar && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 64, // Below AppBar
+            left: isDesktop ? drawerWidth : 0,
+            right: 0,
+            zIndex: (theme) => theme.zIndex.drawer - 1,
+          }}
+        >
+          <Breadcrumbs />
+        </Box>
+      )}
+
       {/* Main Content */}
       <Box
         component="main"
+        role="main"
+        aria-label="Main content"
         sx={{
           flexGrow: 1,
           px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 2, sm: 3 },
-          ...(showAppBar && { pt: { xs: 10, sm: 11, md: 12 } }),
+          ...(showAppBar && {
+            pt: showBreadcrumbs
+              ? { xs: 12, sm: 13, md: 14 } // Extra space for breadcrumbs
+              : { xs: 10, sm: 11, md: 12 }
+          }),
           mb: isMobile ? 10 : 0, // Increased margin for taller bottom nav
           maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth,
           mx: 'auto',
@@ -452,79 +559,227 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
         </Fab>
       )}
 
-      {/* Enhanced Bottom Navigation (Mobile) */}
+      {/* Optimized Bottom Navigation (Mobile) - 3 Main + More */}
       {isMobile && (
-        <BottomNavigation
-          value={currentValue}
-          onChange={(_, newValue) => {
-            const item = navigationItems.find(item => item.value === newValue);
-            if (item) navigate(item.path);
-          }}
-          showLabels
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: (theme) => theme.zIndex.appBar,
-            height: 64, // Increased height for better touch targets
-            backgroundColor: theme.palette.background.paper,
-            borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-            backdropFilter: 'blur(8px)',
-            '& .MuiBottomNavigationAction-root': {
-              minWidth: 60,
-              maxWidth: 120,
-              paddingTop: 8,
-              paddingBottom: 8,
-              '&.Mui-selected': {
-                color: theme.palette.primary.main,
+        <>
+          <BottomNavigation
+            component="nav"
+            role="navigation"
+            aria-label="Bottom navigation"
+            value={currentValue}
+            onChange={(_, newValue) => {
+              if (newValue === 'more') {
+                // Handle More menu differently
+                return;
+              }
+              const item = navigationItems.find(item => item.value === newValue);
+              if (item) navigate(item.path);
+            }}
+            showLabels
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: (theme) => theme.zIndex.appBar,
+              height: 64, // Increased height for better touch targets
+              backgroundColor: theme.palette.background.paper,
+              borderTop: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+              backdropFilter: 'blur(8px)',
+              '& .MuiBottomNavigationAction-root': {
+                minWidth: 72, // Better spacing with 4 items
+                maxWidth: 120,
+                paddingTop: 8,
+                paddingBottom: 8,
+                position: 'relative',
+                '&.Mui-selected': {
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '80%',
+                    height: 3,
+                    backgroundColor: theme.palette.primary.main,
+                    borderRadius: '0 0 2px 2px',
+                  },
+                  '& .MuiBottomNavigationAction-label': {
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                  },
+                  '& .MuiSvgIcon-root': {
+                    transform: 'scale(1.1)',
+                    filter: `drop-shadow(0 2px 4px ${alpha(theme.palette.primary.main, 0.3)})`,
+                  },
+                },
                 '& .MuiBottomNavigationAction-label': {
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  marginTop: 4,
+                  transition: 'all 0.2s ease',
+                },
+                '& .MuiSvgIcon-root': {
+                  transition: 'all 0.2s ease',
+                },
+                // Add subtle animation on tap
+                '&:active': {
+                  transform: 'scale(0.95)',
+                  transition: 'transform 0.1s ease',
+                },
+                '&:focus': {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '2px',
                 },
               },
-              '& .MuiBottomNavigationAction-label': {
-                fontSize: '0.7rem',
-                marginTop: 4,
+            }}
+          >
+            {/* Main navigation items (first 3) */}
+            {navigationItems
+              .filter(item => item.showInBottomNav)
+              .slice(0, 3)
+              .map((item) => (
+                <BottomNavigationAction
+                  key={item.value}
+                  label={t(item.label.toLowerCase(), item.label)}
+                  value={item.value}
+                  icon={item.icon}
+                />
+              ))}
+
+            {/* More menu button */}
+            <BottomNavigationAction
+              label="More"
+              value="more"
+              icon={
+                moreMenuItems.some(item =>
+                  item.value === 'notifications' && notificationCount > 0
+                ) ? (
+                  <Badge
+                    badgeContent={notificationCount}
+                    color="error"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: '0.6rem',
+                        height: 16,
+                        minWidth: 16,
+                      }
+                    }}
+                  >
+                    <MoreIcon />
+                  </Badge>
+                ) : (
+                  <MoreIcon />
+                )
+              }
+              onClick={handleMoreMenuOpen}
+            />
+          </BottomNavigation>
+
+          {/* More Menu */}
+          <Menu
+            id="more-menu"
+            anchorEl={moreMenuAnchorEl}
+            open={Boolean(moreMenuAnchorEl)}
+            onClose={handleMoreMenuClose}
+            onClick={handleMoreMenuClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+            transformOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            PaperProps={{
+              elevation: 0,
+              sx: {
+                overflow: 'visible',
+                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                mb: 1,
+                minWidth: 200,
+                borderRadius: 2,
+                '&:before': {
+                  content: '""',
+                  display: 'block',
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '50%',
+                  width: 10,
+                  height: 10,
+                  bgcolor: 'background.paper',
+                  transform: 'translateX(-50%) translateY(50%) rotate(45deg)',
+                  zIndex: 0,
+                },
               },
-              // Add subtle animation on tap
-              '&:active': {
-                transform: 'scale(0.95)',
-                transition: 'transform 0.1s ease',
-              },
-            },
-          }}
-        >
-          {navigationItems
-            .filter(item => item.showInBottomNav)
-            .map((item) => (
-              <BottomNavigationAction
+            }}
+          >
+            {moreMenuItems.map((item) => (
+              <MenuItem
                 key={item.value}
-                label={t(item.label.toLowerCase(), item.label)}
-                value={item.value}
-                icon={
-                  item.value === 'notifications' && notificationCount > 0 ? (
-                    <Badge 
-                      badgeContent={notificationCount} 
-                      color="error"
-                      sx={{
-                        '& .MuiBadge-badge': {
-                          fontSize: '0.6rem',
-                          height: 16,
-                          minWidth: 16,
-                        }
-                      }}
-                    >
-                      {item.icon}
-                    </Badge>
-                  ) : (
-                    item.icon
-                  )
-                }
-              />
+                onClick={() => handleMoreMenuNavigation(item.path)}
+                selected={currentValue === item.value}
+                aria-current={currentValue === item.value ? 'page' : undefined}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  minHeight: 48, // Better touch target
+                  position: 'relative',
+                  '&.Mui-selected': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                    borderRadius: 1,
+                    boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      left: 0,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 3,
+                      height: '70%',
+                      backgroundColor: theme.palette.primary.main,
+                      borderRadius: '0 2px 2px 0',
+                    },
+                  },
+                  '&:focus': {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: '2px',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                  <Box sx={{ color: currentValue === item.value ? 'primary.main' : 'text.secondary' }}>
+                    {item.value === 'notifications' && notificationCount > 0 ? (
+                      <Badge badgeContent={notificationCount} color="error">
+                        {item.icon}
+                      </Badge>
+                    ) : (
+                      item.icon
+                    )}
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: currentValue === item.value ? 600 : 400,
+                      color: currentValue === item.value ? 'primary.main' : 'text.primary',
+                    }}
+                  >
+                    {t(item.label.toLowerCase(), item.label)}
+                  </Typography>
+                </Box>
+              </MenuItem>
             ))}
-        </BottomNavigation>
+          </Menu>
+        </>
       )}
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPalette.isOpen}
+        onClose={commandPalette.close}
+      />
     </Box>
   );
 };

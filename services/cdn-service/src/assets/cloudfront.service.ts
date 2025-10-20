@@ -24,10 +24,7 @@ export class CloudFrontService {
    */
   async invalidateCache(paths: string[]): Promise<string> {
     if (!this.distributionId) {
-      this.logger.warn('CloudFront distribution ID not configured, skipping cache invalidation', {
-        service: 'cdn-service',
-        component: 'cloudfront',
-      });
+      this.logger.warn('CloudFront distribution ID not configured, skipping cache invalidation', 'CloudFrontService');
       return 'skipped';
     }
 
@@ -46,22 +43,11 @@ export class CloudFrontService {
       const response = await this.cloudFrontClient.send(command);
       const invalidationId = response.Invalidation?.Id || 'unknown';
       
-      this.logger.info('CloudFront cache invalidation created', {
-        service: 'cdn-service',
-        component: 'cloudfront',
-        invalidationId,
-        paths,
-        distributionId: this.distributionId,
-      });
+      this.logger.log(`CloudFront cache invalidation created: ${invalidationId} for paths: ${paths.join(', ')}`, 'CloudFrontService');
 
       return invalidationId;
     } catch (error) {
-      this.logger.error('Failed to create CloudFront invalidation', {
-        service: 'cdn-service',
-        component: 'cloudfront',
-        paths,
-        error: error.message,
-      });
+      this.logger.error(`Failed to create CloudFront invalidation for paths ${paths.join(', ')}: ${error.message}`, undefined, 'CloudFrontService');
       throw error;
     }
   }

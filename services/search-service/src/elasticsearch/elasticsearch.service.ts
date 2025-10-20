@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Client } from '@elasticsearch/elasticsearch';
+import { Client } from '@elastic/elasticsearch';
 import { StructuredLoggerService } from '@clinic/common';
 
 export interface SearchQuery {
@@ -42,19 +42,12 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     try {
       await this.client.ping();
-      this.logger.info('Connected to Elasticsearch', {
-        service: 'search-service',
-        component: 'elasticsearch',
-      });
+      this.logger.log('Connected to Elasticsearch - search-service/elasticsearch', 'ElasticsearchService');
       
       // Initialize indices
       await this.initializeIndices();
     } catch (error) {
-      this.logger.error('Failed to connect to Elasticsearch', {
-        service: 'search-service',
-        component: 'elasticsearch',
-        error: error.message,
-      });
+      this.logger.error(`Failed to connect to Elasticsearch: ${error.message}`, undefined, 'ElasticsearchService');
       throw error;
     }
   }
@@ -171,37 +164,26 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
         if (!exists) {
           await this.client.indices.create({
             index: index.name,
-            body: {
-              mappings: index.mapping,
-              settings: {
-                number_of_shards: 1,
-                number_of_replicas: 0,
-                analysis: {
-                  analyzer: {
-                    healthcare_analyzer: {
-                      type: 'custom',
-                      tokenizer: 'standard',
-                      filter: ['lowercase', 'stop', 'snowball'],
-                    },
+            mappings: index.mapping as any,
+            settings: {
+              number_of_shards: 1,
+              number_of_replicas: 0,
+              analysis: {
+                analyzer: {
+                  healthcare_analyzer: {
+                    type: 'custom',
+                    tokenizer: 'standard',
+                    filter: ['lowercase', 'stop', 'snowball'],
                   },
                 },
               },
             },
           });
           
-          this.logger.info(`Created Elasticsearch index: ${index.name}`, {
-            service: 'search-service',
-            component: 'elasticsearch',
-            index: index.name,
-          });
+          this.logger.log(`Created Elasticsearch index: ${index.name}`, 'ElasticsearchService');
         }
       } catch (error) {
-        this.logger.error(`Failed to create index: ${index.name}`, {
-          service: 'search-service',
-          component: 'elasticsearch',
-          index: index.name,
-          error: error.message,
-        });
+        this.logger.error(`Failed to create index ${index.name}: ${error.message}`, undefined, 'ElasticsearchService');
       }
     }
   }
@@ -214,24 +196,13 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       await this.client.index({
         index,
         id,
-        body: document,
+        document,
         refresh: 'wait_for',
       });
       
-      this.logger.debug(`Indexed document: ${id}`, {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        documentId: id,
-      });
+      this.logger.debug(`Indexed document ${id} in index ${index}`, 'ElasticsearchService');
     } catch (error) {
-      this.logger.error(`Failed to index document: ${id}`, {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        documentId: id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index document ${id} in index ${index}: ${error.message}`, undefined, 'ElasticsearchService');
       throw error;
     }
   }
@@ -247,36 +218,21 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       ]);
 
       const response = await this.client.bulk({
-        body,
+        operations: body,
         refresh: 'wait_for',
       });
 
-      if (response.body.errors) {
-        const errors = response.body.items
+      if (response.errors) {
+        const errors = response.items
           .filter((item: any) => item.index?.error)
           .map((item: any) => item.index.error);
         
-        this.logger.error('Bulk indexing errors', {
-          service: 'search-service',
-          component: 'elasticsearch',
-          index,
-          errors,
-        });
+        this.logger.error(`Bulk indexing errors in index ${index}: ${JSON.stringify(errors)}`, undefined, 'ElasticsearchService');
       }
       
-      this.logger.info(`Bulk indexed ${documents.length} documents`, {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        count: documents.length,
-      });
+      this.logger.log(`Bulk indexed ${documents.length} documents in index ${index}`, 'ElasticsearchService');
     } catch (error) {
-      this.logger.error('Failed to bulk index documents', {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        error: error.message,
-      });
+      this.logger.error(`Failed to bulk index documents in index ${index}: ${error.message}`, undefined, 'ElasticsearchService');
       throw error;
     }
   }
@@ -290,28 +246,22 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       
       const response = await this.client.search({
         index,
-        body: query,
+        ...query,
       });
 
       return {
-        hits: response.body.hits.hits.map((hit: any) => ({
+        hits: response.hits.hits.map((hit: any) => ({
           _id: hit._id,
           _score: hit._score,
           _source: hit._source,
           highlight: hit.highlight,
         })),
-        total: response.body.hits.total.value,
-        took: response.body.took,
-        aggregations: response.body.aggregations,
+        total: typeof response.hits.total === 'number' ? response.hits.total : response.hits.total.value,
+        took: response.took,
+        aggregations: response.aggregations,
       };
     } catch (error) {
-      this.logger.error('Search failed', {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        query: searchQuery.query,
-        error: error.message,
-      });
+      this.logger.error(`Search failed in index ${index} for query "${searchQuery.query}": ${error.message}`, undefined, 'ElasticsearchService');
       throw error;
     }
   }
@@ -325,28 +275,22 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       
       const response = await this.client.search({
         index: indices.join(','),
-        body: query,
+        ...query,
       });
 
       return {
-        hits: response.body.hits.hits.map((hit: any) => ({
+        hits: response.hits.hits.map((hit: any) => ({
           _id: hit._id,
           _score: hit._score,
           _source: hit._source,
           highlight: hit.highlight,
         })),
-        total: response.body.hits.total.value,
-        took: response.body.took,
-        aggregations: response.body.aggregations,
+        total: typeof response.hits.total === 'number' ? response.hits.total : response.hits.total.value,
+        took: response.took,
+        aggregations: response.aggregations,
       };
     } catch (error) {
-      this.logger.error('Multi-search failed', {
-        service: 'search-service',
-        component: 'elasticsearch',
-        indices,
-        query: searchQuery.query,
-        error: error.message,
-      });
+      this.logger.error(`Multi-search failed across indices ${indices.join(', ')} for query "${searchQuery.query}": ${error.message}`, undefined, 'ElasticsearchService');
       throw error;
     }
   }
@@ -362,21 +306,10 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
         refresh: 'wait_for',
       });
       
-      this.logger.debug(`Deleted document: ${id}`, {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        documentId: id,
-      });
+      this.logger.debug(`Deleted document ${id} from index ${index}`, 'ElasticsearchService');
     } catch (error) {
       if (error.statusCode !== 404) {
-        this.logger.error(`Failed to delete document: ${id}`, {
-          service: 'search-service',
-          component: 'elasticsearch',
-          index,
-          documentId: id,
-          error: error.message,
-        });
+        this.logger.error(`Failed to delete document ${id} from index ${index}: ${error.message}`, undefined, 'ElasticsearchService');
         throw error;
       }
     }
@@ -402,16 +335,10 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      return response.body.suggest.suggestions[0].options.map((option: any) => option.text);
+      const suggestions = response.suggest?.suggestions?.[0]?.options;
+      return Array.isArray(suggestions) ? suggestions.map((option: any) => option.text) : [];
     } catch (error) {
-      this.logger.error('Failed to get suggestions', {
-        service: 'search-service',
-        component: 'elasticsearch',
-        index,
-        field,
-        query,
-        error: error.message,
-      });
+      this.logger.error(`Failed to get suggestions for field ${field} in index ${index} with query "${query}": ${error.message}`, undefined, 'ElasticsearchService');
       return [];
     }
   }
@@ -491,7 +418,7 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       const health = await this.client.cluster.health();
       return {
         status: 'healthy',
-        cluster: health.body,
+        cluster: health,
       };
     } catch (error) {
       return {

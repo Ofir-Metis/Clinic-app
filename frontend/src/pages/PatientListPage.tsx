@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ThemeProvider,
   CssBaseline,
@@ -25,6 +25,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { List } from 'react-window';
 import {
   Add as AddIcon,
   Search as SearchIcon,
@@ -39,10 +40,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
 import WellnessLayout from '../layouts/WellnessLayout';
+import useSwipeGestures from '../hooks/useSwipeGestures';
 
 interface Patient {
   id: string;
@@ -55,82 +57,43 @@ interface Patient {
   lastSession?: Date;
   upcomingAppointment?: Date;
   totalSessions: number;
-  diagnosis?: string;
+  focusArea?: string;
   notes?: string;
 }
 
-const mockPatients: Patient[] = [
-  {
-    id: '1',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah.johnson@email.com',
-    phone: '+1 (555) 123-4567',
-    status: 'active',
-    lastSession: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    upcomingAppointment: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    totalSessions: 12,
-    diagnosis: 'Anxiety Disorder',
-    notes: 'Making excellent progress with CBT techniques',
-  },
-  {
-    id: '2',
-    firstName: 'Michael',
-    lastName: 'Chen',
-    email: 'michael.chen@email.com',
-    phone: '+1 (555) 987-6543',
-    status: 'active',
-    lastSession: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    upcomingAppointment: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    totalSessions: 8,
-    diagnosis: 'Depression',
-  },
-  {
-    id: '3',
-    firstName: 'Emma',
-    lastName: 'Davis',
-    email: 'emma.davis@email.com',
-    status: 'on-hold',
-    lastSession: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    totalSessions: 15,
-    diagnosis: 'PTSD',
-  },
-  {
-    id: '4',
-    firstName: 'James',
-    lastName: 'Wilson',
-    email: 'james.wilson@email.com',
-    phone: '+1 (555) 456-7890',
-    status: 'active',
-    lastSession: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    upcomingAppointment: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-    totalSessions: 6,
-    diagnosis: 'Social Anxiety',
-  },
-];
+// Removed mock data - will fetch from API instead
 
 const PatientListPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
-  const [filteredPatients, setFilteredPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(false);
+  const [searchDebounced, setSearchDebounced] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
-  // Filter patients based on search and status
+  // Debounce search input for better performance
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setSearchDebounced(searchQuery);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Filter patients based on search and status with memoization
+  const filteredPatients = useMemo(() => {
     let filtered = patients;
 
-    // Apply search filter
-    if (searchQuery) {
+    // Apply search filter with debouncing
+    if (searchDebounced) {
+      const searchLower = searchDebounced.toLowerCase();
       filtered = filtered.filter(patient =>
-        `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        patient.diagnosis?.toLowerCase().includes(searchQuery.toLowerCase())
+        `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchLower) ||
+        patient.email.toLowerCase().includes(searchLower) ||
+        patient.focusArea?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -139,8 +102,8 @@ const PatientListPage: React.FC = () => {
       filtered = filtered.filter(patient => patient.status === statusFilter);
     }
 
-    setFilteredPatients(filtered);
-  }, [patients, searchQuery, statusFilter]);
+    return filtered;
+  }, [patients, searchDebounced, statusFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -186,9 +149,207 @@ const PatientListPage: React.FC = () => {
     navigate('/patients/new');
   };
 
+  // Virtual list item renderer with swipe gestures
+  const VirtualizedPatientCard = ({ index, style, ariaAttributes }: {
+    index: number;
+    style: React.CSSProperties;
+    ariaAttributes: {
+      "aria-posinset": number;
+      "aria-setsize": number;
+      role: "listitem";
+    };
+  }) => {
+    const patient = filteredPatients[index];
+    if (!patient) return null;
+
+    // Swipe gesture configuration
+    const swipeHandlers = useSwipeGestures({
+      leftAction: {
+        icon: '📞',
+        label: 'Call',
+        color: '#2E7D6B',
+        background: 'rgba(46, 125, 107, 0.1)',
+        action: () => {
+          // Handle call action
+          console.log(`Calling ${patient.firstName} ${patient.lastName}`);
+          // You could open a call dialog or integrate with phone system
+        },
+      },
+      rightAction: {
+        icon: '📅',
+        label: 'Schedule',
+        color: '#4A9B8A',
+        background: 'rgba(74, 155, 138, 0.1)',
+        action: () => {
+          handleScheduleSession(patient.id);
+        },
+      },
+      threshold: 100,
+    });
+
+    return (
+      <div style={style}>
+        <Box sx={{ p: 1 }}>
+          <div {...swipeHandlers}>
+            <Card
+              sx={{
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme => `0 8px 24px ${theme.palette.primary.main}20`,
+                },
+              }}
+              onClick={() => navigate(`/patients/${patient.id}`)}
+              {...ariaAttributes}
+            >
+            <CardContent sx={{ p: 3 }}>
+              {/* Header with Avatar and Menu */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    src={patient.avatarUrl}
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      bgcolor: 'primary.main',
+                      fontSize: '1.25rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      {patient.firstName} {patient.lastName}
+                    </Typography>
+                    <Chip
+                      label={getStatusLabel(patient.status)}
+                      color={getStatusColor(patient.status) as any}
+                      size="small"
+                    />
+                  </Box>
+                </Box>
+
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePatientMenuOpen(e, patient);
+                  }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Patient Details */}
+              <Stack spacing={1.5}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <EmailIcon fontSize="small" color="action" />
+                  <Typography variant="body2" color="text.secondary">
+                    {patient.email}
+                  </Typography>
+                </Box>
+
+                {patient.phone && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PhoneIcon fontSize="small" color="action" />
+                    <Typography variant="body2" color="text.secondary">
+                      {patient.phone}
+                    </Typography>
+                  </Box>
+                )}
+
+                {patient.focusArea && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <NotesIcon fontSize="small" color="action" />
+                    <Typography variant="body2" color="text.secondary">
+                      {patient.focusArea}
+                    </Typography>
+                  </Box>
+                )}
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Total Sessions
+                    </Typography>
+                    <Typography variant="h6" color="primary.main" fontWeight={700}>
+                      {patient.totalSessions}
+                    </Typography>
+                  </Box>
+
+                  {patient.lastSession && (
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Last Session
+                      </Typography>
+                      <Typography variant="body2" fontWeight={500}>
+                        {patient.lastSession.toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {patient.upcomingAppointment && (
+                  <Box sx={{
+                    mt: 2,
+                    p: 1.5,
+                    borderRadius: 1,
+                    background: 'rgba(46, 125, 107, 0.08)',
+                    border: '1px solid rgba(46, 125, 107, 0.12)',
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <EventIcon fontSize="small" color="primary" />
+                      <Typography variant="body2" fontWeight={500}>
+                        Next: {patient.upcomingAppointment.toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+              </Stack>
+
+              {/* Action Buttons */}
+              <Box sx={{ display: 'flex', gap: 1, mt: 3 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<EventIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleScheduleSession(patient.id);
+                  }}
+                  sx={{ flex: 1 }}
+                >
+                  Schedule
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<VideoCallIcon />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Handle video call
+                  }}
+                  sx={{ flex: 1 }}
+                >
+                  Call
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
+          </div>
+        </Box>
+      </div>
+    );
+  };
+
   return (
     <WellnessLayout
-        title="Client Management"
+        title={t.nav.patients}
         showFab={true}
         fabIcon={<AddIcon />}
         fabAction={handleAddPatient}
@@ -196,9 +357,10 @@ const PatientListPage: React.FC = () => {
       >
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{
               fontWeight: 700,
               mb: 1,
               background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
@@ -207,7 +369,7 @@ const PatientListPage: React.FC = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            👥 Your Clients
+            👥 {t.nav.patients}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Manage your client relationships and track their wellness journey
@@ -222,7 +384,7 @@ const PatientListPage: React.FC = () => {
             mb: 3,
           }}>
             <TextField
-              placeholder="Search clients by name, email, or diagnosis..."
+              placeholder="Search clients by name, email, or focus area..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
@@ -295,163 +457,16 @@ const PatientListPage: React.FC = () => {
           </Card>
         )}
 
-        {/* Clients Grid */}
+        {/* Virtualized Clients List */}
         {!loading && filteredPatients.length > 0 && (
-          <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-            {filteredPatients.map((patient) => (
-              <Grid item xs={12} sm={6} lg={4} key={patient.id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: theme => `0 8px 24px ${theme.palette.primary.main}20`,
-                    },
-                  }}
-                  onClick={() => navigate(`/patients/${patient.id}`)}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    {/* Header with Avatar and Menu */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
-                          src={patient.avatarUrl}
-                          sx={{ 
-                            width: 48, 
-                            height: 48,
-                            bgcolor: 'primary.main',
-                            fontSize: '1.25rem',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {patient.firstName.charAt(0)}{patient.lastName.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {patient.firstName} {patient.lastName}
-                          </Typography>
-                          <Chip 
-                            label={getStatusLabel(patient.status)}
-                            color={getStatusColor(patient.status) as any}
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                      
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePatientMenuOpen(e, patient);
-                        }}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    </Box>
-
-                    <Divider sx={{ my: 2 }} />
-
-                    {/* Patient Details */}
-                    <Stack spacing={1.5}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <EmailIcon fontSize="small" color="action" />
-                        <Typography variant="body2" color="text.secondary">
-                          {patient.email}
-                        </Typography>
-                      </Box>
-                      
-                      {patient.phone && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <PhoneIcon fontSize="small" color="action" />
-                          <Typography variant="body2" color="text.secondary">
-                            {patient.phone}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {patient.diagnosis && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <NotesIcon fontSize="small" color="action" />
-                          <Typography variant="body2" color="text.secondary">
-                            {patient.diagnosis}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Total Sessions
-                          </Typography>
-                          <Typography variant="h6" color="primary.main" fontWeight={700}>
-                            {patient.totalSessions}
-                          </Typography>
-                        </Box>
-                        
-                        {patient.lastSession && (
-                          <Box sx={{ textAlign: 'right' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Last Session
-                            </Typography>
-                            <Typography variant="body2" fontWeight={500}>
-                              {patient.lastSession.toLocaleDateString()}
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      {patient.upcomingAppointment && (
-                        <Box sx={{ 
-                          mt: 2,
-                          p: 1.5,
-                          borderRadius: 1,
-                          background: 'rgba(46, 125, 107, 0.08)',
-                          border: '1px solid rgba(46, 125, 107, 0.12)',
-                        }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <EventIcon fontSize="small" color="primary" />
-                            <Typography variant="body2" fontWeight={500}>
-                              Next: {patient.upcomingAppointment.toLocaleDateString()}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
-                    </Stack>
-
-                    {/* Action Buttons */}
-                    <Box sx={{ display: 'flex', gap: 1, mt: 3 }}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<EventIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleScheduleSession(patient.id);
-                        }}
-                        sx={{ flex: 1 }}
-                      >
-                        Schedule
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<VideoCallIcon />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle video call
-                        }}
-                        sx={{ flex: 1 }}
-                      >
-                        Call
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <Box sx={{ height: 'calc(100vh - 400px)', minHeight: 600 }}>
+            <List
+              defaultHeight={Math.min(window.innerHeight - 400, 600)}
+              rowCount={filteredPatients.length}
+              rowHeight={280} // Approximate height of each card
+              rowComponent={VirtualizedPatientCard}
+            />
+          </Box>
         )}
 
         {/* Patient Actions Menu */}

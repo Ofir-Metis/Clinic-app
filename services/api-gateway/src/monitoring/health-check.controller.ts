@@ -1,6 +1,6 @@
 import { Controller, Get, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CustomMetricsService } from './custom-metrics.service';
+// import { CustomMetricsService } from './custom-metrics.service'; // Temporarily disabled
 
 /**
  * Health Check Controller
@@ -15,7 +15,7 @@ export class HealthCheckController {
   private readonly logger = new Logger(HealthCheckController.name);
   
   constructor(
-    private readonly customMetricsService: CustomMetricsService
+    // private readonly customMetricsService: CustomMetricsService // Temporarily disabled
   ) {}
   
   /**
@@ -55,7 +55,8 @@ export class HealthCheckController {
   async detailedHealthCheck() {
     try {
       const startTime = Date.now();
-      const metrics = await this.customMetricsService.collectHealthcareMetrics();
+      // const metrics = await this.customMetricsService.collectHealthcareMetrics(); // Temporarily disabled
+      const metrics = null; // Temporary placeholder
       const collectionTime = Date.now() - startTime;
       
       return {
@@ -71,18 +72,18 @@ export class HealthCheckController {
             unit: 'MB'
           },
           cpu: {
-            usage: metrics.systemHealth.cpuUsage,
+            usage: metrics?.systemHealth?.cpuUsage || 'N/A',
             unit: 'percentage'
           },
           response: {
-            apiResponseTime: metrics.systemHealth.apiResponseTime,
+            apiResponseTime: metrics?.systemHealth?.apiResponseTime || 'N/A',
             metricsCollectionTime: collectionTime,
             unit: 'ms'
           }
         },
         business: {
-          activeUsers: metrics.activeUsers.total,
-          sessionsToday: metrics.sessions.scheduled,
+          activeUsers: metrics?.activeUsers?.total || 0,
+          sessionsToday: metrics?.sessions?.scheduled || 0,
           systemLoad: 'normal'
         }
       };

@@ -49,12 +49,7 @@ export class SearchService {
       size: searchDto.size,
     };
 
-    this.logger.info('Performing global search', {
-      service: 'search-service',
-      query: searchDto.query,
-      indices,
-      filters: searchDto.filters,
-    });
+    this.logger.log(`Performing global search for query '${searchDto.query}' across indices: ${indices.join(', ')}`, 'SearchService');
 
     const result = await this.elasticsearch.multiSearch(indices, searchQuery);
     
@@ -134,30 +129,30 @@ export class SearchService {
     const indices = ['clients', 'appointments', 'session-notes', 'files', 'coaches'];
     const response = await this.elasticsearch['client'].search({
       index: indices.join(','),
-      body: elasticsearchQuery,
+      ...elasticsearchQuery,
     });
 
     const result = {
-      hits: response.body.hits.hits.map((hit: any) => ({
+      hits: response.hits.hits.map((hit: any) => ({
         _id: hit._id,
         _score: hit._score,
         _source: hit._source,
         highlight: hit.highlight,
       })),
-      total: response.body.hits.total.value,
-      took: response.body.took,
-      aggregations: response.body.aggregations,
+      total: typeof response.hits.total === 'number' ? response.hits.total : response.hits.total.value,
+      took: response.took,
+      aggregations: response.aggregations,
       pagination: {
         from: searchDto.from || 0,
         size: searchDto.size || 20,
-        hasNext: (searchDto.from || 0) + (searchDto.size || 20) < response.body.hits.total.value,
+        hasNext: (searchDto.from || 0) + (searchDto.size || 20) < (typeof response.hits.total === 'number' ? response.hits.total : response.hits.total.value),
         hasPrevious: (searchDto.from || 0) > 0,
       },
     };
 
     // Extract facets from aggregations
-    if (response.body.aggregations) {
-      result['facets'] = this.extractFacets(response.body.aggregations);
+    if (response.aggregations) {
+      result['facets'] = this.extractFacets(response.aggregations);
     }
 
     return result;
@@ -189,21 +184,16 @@ export class SearchService {
       });
 
       return {
-        hits: response.body.hits.hits.map((hit: any) => ({
+        hits: response.hits.hits.map((hit: any) => ({
           _id: hit._id,
           _score: hit._score,
           _source: hit._source,
         })),
-        total: response.body.hits.total.value,
-        took: response.body.took,
+        total: typeof response.hits.total === 'number' ? response.hits.total : response.hits.total.value,
+        took: response.took,
       };
     } catch (error) {
-      this.logger.error('Similar search failed', {
-        service: 'search-service',
-        index,
-        documentId,
-        error: error.message,
-      });
+      this.logger.error(`Similar search failed for document ${documentId} in index ${index}: ${error.message}`, undefined, 'SearchService');
       return { hits: [], total: 0, took: 0 };
     }
   }

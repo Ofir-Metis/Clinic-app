@@ -814,7 +814,7 @@ export class AlertingService {
       }
       
       // Check escalation condition
-      if (escalation.condition?.noAcknowledgment && currentAlert.status === 'acknowledged') {
+      if (escalation.condition?.noAcknowledgment && currentAlert.status !== 'open') {
         return;
       }
       

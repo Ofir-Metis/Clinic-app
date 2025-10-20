@@ -214,6 +214,7 @@ const ClientGoals: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(0);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [showGoalDetails, setShowGoalDetails] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [createStep, setCreateStep] = useState(0);
@@ -517,7 +518,7 @@ const ClientGoals: React.FC = () => {
       notes: goal.notes
     });
     setCreateStep(0);
-    setShowCreateDialog(true);
+    setShowEditDialog(true);
   };
 
   const handleSaveGoal = async () => {
@@ -527,6 +528,7 @@ const ClientGoals: React.FC = () => {
       
       // Close dialog and refresh
       setShowCreateDialog(false);
+      setShowEditDialog(false);
       setSelectedGoal(null);
       await loadGoals();
     } catch (error) {
@@ -726,9 +728,10 @@ const ClientGoals: React.FC = () => {
 
   const renderCreateGoalDialog = () => (
     <Dialog
-      open={showCreateDialog}
+      open={showCreateDialog || showEditDialog}
       onClose={() => {
         setShowCreateDialog(false);
+        setShowEditDialog(false);
         setSelectedGoal(null);
       }}
       maxWidth="md"
@@ -1000,6 +1003,7 @@ const ClientGoals: React.FC = () => {
       <DialogActions sx={{ p: 3 }}>
         <Button onClick={() => {
           setShowCreateDialog(false);
+          setShowEditDialog(false);
           setSelectedGoal(null);
         }}>
           {t.actions.cancel}

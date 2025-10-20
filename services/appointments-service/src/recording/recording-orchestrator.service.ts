@@ -304,7 +304,7 @@ export class RecordingOrchestratorService {
   async cleanupCompletedSessions(): Promise<number> {
     let cleanedCount = 0;
 
-    for (const [appointmentId, session] of this.activeSessions.entries()) {
+    for (const [appointmentId, session] of Array.from(this.activeSessions.entries())) {
       if (['completed', 'failed'].includes(session.status)) {
         this.activeSessions.delete(appointmentId);
         cleanedCount++;
@@ -544,10 +544,17 @@ export class RecordingOrchestratorService {
       session.status = 'completed';
       
       // Create mock file entries
-      const recordingFiles = [
+      const recordingFiles: Array<{
+        id: string;
+        type: 'audio' | 'video' | 'screen';
+        url: string;
+        duration: number;
+        size: number;
+        createdAt: Date;
+      }> = [
         {
           id: `file_${session.id}_audio`,
-          type: 'audio' as const,
+          type: 'audio',
           url: `/recordings/${session.id}/audio.mp3`,
           duration: session.duration || 0,
           size: 1024 * 1024 * 5, // 5MB
@@ -558,7 +565,7 @@ export class RecordingOrchestratorService {
       if (session.type === 'video' || session.type === 'full-session') {
         recordingFiles.push({
           id: `file_${session.id}_video`,
-          type: 'video' as const,
+          type: 'video',
           url: `/recordings/${session.id}/video.mp4`,
           duration: session.duration || 0,
           size: 1024 * 1024 * 50, // 50MB

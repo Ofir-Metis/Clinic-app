@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BaseSecureRepository, SafeQueryService } from '@clinic/common';
-import { User } from './user.entity';
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class SecureUserRepository extends BaseSecureRepository<User> {
@@ -38,11 +38,12 @@ export class SecureUserRepository extends BaseSecureRepository<User> {
         'user'
       );
 
-      return await queryBuilder
+      const result = await queryBuilder
         .where('user.email = :email', { email: email.toLowerCase().trim() })
         .getOne();
+      return result || null;
     } catch (error) {
-      this.logger.error(`Find by email failed: ${error.message}`);
+      this.logger.error(`Find by email failed: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -69,7 +70,7 @@ export class SecureUserRepository extends BaseSecureRepository<User> {
         .limit(this.options.maxResults || 100)
         .getMany();
     } catch (error) {
-      this.logger.error(`Find by role failed: ${error.message}`);
+      this.logger.error(`Find by role failed: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -107,7 +108,7 @@ export class SecureUserRepository extends BaseSecureRepository<User> {
         .limit(50) // Limit search results
         .getMany();
     } catch (error) {
-      this.logger.error(`User search failed: ${error.message}`);
+      this.logger.error(`User search failed: ${(error as Error).message}`);
       throw error;
     }
   }
@@ -136,7 +137,7 @@ export class SecureUserRepository extends BaseSecureRepository<User> {
 
       return stats;
     } catch (error) {
-      this.logger.error(`Get user stats failed: ${error.message}`);
+      this.logger.error(`Get user stats failed: ${(error as Error).message}`);
       throw error;
     }
   }

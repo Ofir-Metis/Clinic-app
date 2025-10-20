@@ -9,12 +9,14 @@ export const en = {
     dashboard: "My Growth Hub",
     calendar: "Time Magic ⏰",
     appointments: "Growth Sessions",
-    patients: "Fellow Travelers", 
+    patients: "Fellow Travelers",
     notifications: "Cosmic Updates",
     tools: "Transformation Toolkit",
     settings: "Command Center",
     profile: "My Awesome Self",
-    logout: "See You Space Cowboy 👋"
+    logout: "See You Space Cowboy 👋",
+    admin: "Command Center",
+    clientPortal: "Client Journey"
   },
 
   // Common Actions
@@ -39,6 +41,14 @@ export const en = {
     upload: "Share My Magic ⬆️",
     share: "Spread the Joy 📤",
     copy: "Clone This Goodness 📋"
+  },
+
+  // Common Terms
+  common: {
+    new: "New",
+    edit: "Edit",
+    details: "Details",
+    home: "Home"
   },
 
   // Status Messages
@@ -77,15 +87,26 @@ export const en = {
     register: {
       title: "Join the Growth Revolution! 🌟",
       subtitle: "Every expert was once a beginner. Your time is now!",
+      fullName: "What should we call you? 👋",
       firstName: "What should we call you? 👋",
       lastName: "And your family name? 👨‍👩‍👧‍👦",
       email: "Your digital home address 🏠",
       password: "Create your fortress password 🏰",
       confirmPassword: "Confirm your fortress password 🔒",
       registerButton: "Begin My Epic Journey! 🚀",
+      submitButton: "Begin My Epic Journey! 🚀",
       hasAccount: "Already part of the family?",
       signIn: "Welcome back, champion! 👑",
-      terms: "I agree to become awesome responsibly 📜"
+      terms: "I agree to become awesome responsibly 📜",
+      or: "or",
+      therapist: "Coach/Therapist 🧠",
+      patient: "Client 🌱",
+      errors: {
+        required: "This field is having separation anxiety - please fill it! 😢",
+        emailFormat: "That email format needs some self-development too 📧",
+        passwordRequirements: "Your password needs to be at least 8 characters strong 💪",
+        confirmPassword: "These passwords don't match - they need couples therapy! 💕"
+      }
     },
     resetPassword: {
       title: "Password Reset = Life Reset! 🔄",

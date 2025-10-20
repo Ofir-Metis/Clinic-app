@@ -1,11 +1,31 @@
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsArray } from 'class-validator';
+import { MeetingType } from '../appointment.entity';
 
 export class CreateAppointmentDto {
-  therapistId!: number;
-  clientId!: number;
+  @IsString()
+  therapistId!: string;
+  
+  @IsString()
+  clientId!: string;
+  
+  @IsDateString()
   startTime!: string;
+  
+  @IsDateString()
   endTime!: string;
-  type!: 'in-person' | 'virtual';
+  
+  @IsString()
+  title!: string;
+  
+  @IsOptional()
+  @IsString()
+  description?: string;
+  
+  @IsEnum(['in-person', 'online', 'hybrid'])
+  meetingType!: MeetingType;
+  
+  @IsString()
+  createdBy!: string;
 
   @IsOptional()
   @IsString()
@@ -14,4 +34,19 @@ export class CreateAppointmentDto {
   @IsOptional()
   @IsString()
   meetingUrl?: string;
+  
+  @IsOptional()
+  @IsArray()
+  reminderTimes?: string[];
+  
+  @IsOptional()
+  clientPreferences?: {
+    preferredNotificationMethod: 'email' | 'sms' | 'both';
+    allowRecording: boolean;
+    requireConfirmation: boolean;
+  };
+  
+  @IsOptional()
+  @IsArray()
+  tags?: string[];
 }

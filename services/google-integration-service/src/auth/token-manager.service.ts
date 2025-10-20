@@ -9,7 +9,7 @@ import * as crypto from 'crypto';
 @Injectable()
 export class TokenManagerService {
   private readonly logger = new Logger(TokenManagerService.name);
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly algorithm = 'aes-256-cbc';
   private readonly keyLength = 32; // 256 bits
   private readonly ivLength = 16; // 128 bits
   private readonly tagLength = 16; // 128 bits
@@ -50,18 +50,15 @@ export class TokenManagerService {
       // Generate random IV for each encryption
       const iv = crypto.randomBytes(this.ivLength);
       
-      // Create cipher
-      const cipher = crypto.createCipherGCM(this.algorithm, this.encryptionKey, iv);
+      // Create cipher with IV
+      const cipher = crypto.createCipher('aes-256-cbc', this.encryptionKey);
       
       // Encrypt the token
       let encrypted = cipher.update(plaintext, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       
-      // Get authentication tag
-      const tag = cipher.getAuthTag();
-      
-      // Combine IV + tag + encrypted data
-      const result = iv.toString('hex') + tag.toString('hex') + encrypted;
+      // Combine IV + encrypted data (simplified without GCM)
+      const result = iv.toString('hex') + encrypted;
       
       return result;
     } catch (error) {
@@ -71,22 +68,19 @@ export class TokenManagerService {
   }
 
   /**
-   * Decrypt a token using AES-256-GCM
+   * Decrypt a token using AES-256-CBC
    */
   async decryptToken(encryptedData: string): Promise<string> {
     try {
-      // Extract components
+      // Extract components (simplified without GCM tag)
       const ivHex = encryptedData.slice(0, this.ivLength * 2);
-      const tagHex = encryptedData.slice(this.ivLength * 2, (this.ivLength + this.tagLength) * 2);
-      const encryptedHex = encryptedData.slice((this.ivLength + this.tagLength) * 2);
+      const encryptedHex = encryptedData.slice(this.ivLength * 2);
       
       // Convert from hex
       const iv = Buffer.from(ivHex, 'hex');
-      const tag = Buffer.from(tagHex, 'hex');
       
       // Create decipher
-      const decipher = crypto.createDecipherGCM(this.algorithm, this.encryptionKey, iv);
-      decipher.setAuthTag(tag);
+      const decipher = crypto.createDecipher('aes-256-cbc', this.encryptionKey);
       
       // Decrypt
       let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');

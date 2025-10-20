@@ -9,6 +9,10 @@
 export * from './hipaa-compliance.service';
 export * from './phi-data-handler.service';
 export * from './compliance-audit.service';
+
+// Import types for internal use
+import type { ComplianceAssessment, HIPAAViolation } from './hipaa-compliance.service';
+import type { AuditEvent } from './compliance-audit.service';
 export * from './compliance.module';
 
 // Type definitions
@@ -120,7 +124,7 @@ export const ComplianceUtils = {
    * Get compliance frameworks applicable to data type
    */
   getApplicableFrameworks: (dataType: string): string[] => {
-    const frameworks = [ComplianceFrameworks.SOC2]; // Always applicable
+    const frameworks: string[] = [ComplianceFrameworks.SOC2]; // Always applicable
     
     if (ComplianceUtils.isHIPAAProtected(dataType)) {
       frameworks.push(ComplianceFrameworks.HIPAA, ComplianceFrameworks.HITECH);

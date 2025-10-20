@@ -1,0 +1,31 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY services/notifications-service/package.json ./services/notifications-service/
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --production
+
+# Copy built common library
+COPY libs/common/dist ./libs/common/dist
+COPY libs/common/package.json ./libs/common/
+
+# Copy built service
+COPY services/notifications-service/dist ./services/notifications-service/dist
+
+# Create symlink to common library
+RUN cd services/notifications-service && \
+    mkdir -p node_modules/@clinic && \
+    ln -sf ../../../libs/common node_modules/@clinic/common
+
+WORKDIR /app/services/notifications-service
+
+# Install wget for health checks
+RUN apk add --no-cache wget
+
+EXPOSE 3004
+
+CMD ["node", "dist/main.js"]

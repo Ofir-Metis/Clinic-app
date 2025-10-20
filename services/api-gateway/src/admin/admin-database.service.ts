@@ -24,12 +24,9 @@ export class AdminDatabaseService {
     private apiKeyRepository: ApiKeyRepository,
     private auditEventRepository: AuditEventRepository,
     private performanceMetricRepository: PerformanceMetricRepository,
-    @InjectRepository(SystemConfig)
-    private systemConfigRepository: Repository<SystemConfig>,
-    @InjectRepository(SystemAlert)
-    private systemAlertRepository: Repository<SystemAlert>,
-    @InjectRepository(BackupJob)
-    private backupJobRepository: Repository<BackupJob>,
+    @InjectRepository(SystemConfig) private systemConfigRepository: Repository<SystemConfig>,
+    @InjectRepository(SystemAlert) private systemAlertRepository: Repository<SystemAlert>,
+    @InjectRepository(BackupJob) private backupJobRepository: Repository<BackupJob>,
   ) {}
 
   /**

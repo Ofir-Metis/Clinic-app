@@ -175,7 +175,7 @@ export class ComplianceAuditService {
       eventType,
       resource,
       action,
-      outcome,
+      outcome: outcome as 'success' | 'timeout' | 'failure',
       severity,
       hipaaRelevant,
       ...context,

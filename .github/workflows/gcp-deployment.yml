@@ -1,0 +1,142 @@
+name: 🏥 Healthcare Platform - Google Cloud Run
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GAR_LOCATION: us-central1
+  REPOSITORY: clinic-app
+  REGION: us-central1
+
+jobs:
+  # Build and Push to Artifact Registry
+  build-and-push:
+    name: 🐳 Build & Push to GAR
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🐳 Setup Docker for GAR
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+
+      - name: 🏗️ Build and Push Images
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          IMAGE_PREFIX="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}"
+          
+          services=("api-gateway" "auth-service" "appointments-service" "files-service" "notifications-service" "frontend")
+          
+          for service in "${services[@]}"; do
+            echo "Building $service for Google Cloud..."
+            
+            if [ "$service" = "frontend" ]; then
+              docker build -t ${IMAGE_PREFIX}/clinic-app-${service}:${IMAGE_TAG} \
+                -f frontend/Dockerfile.optimized ./frontend
+            else
+              docker build -t ${IMAGE_PREFIX}/clinic-app-${service}:${IMAGE_TAG} \
+                -f services/${service}/Dockerfile.optimized .
+            fi
+            
+            docker push ${IMAGE_PREFIX}/clinic-app-${service}:${IMAGE_TAG}
+            
+            # Tag as latest
+            docker tag ${IMAGE_PREFIX}/clinic-app-${service}:${IMAGE_TAG} \
+              ${IMAGE_PREFIX}/clinic-app-${service}:latest
+            docker push ${IMAGE_PREFIX}/clinic-app-${service}:latest
+          done
+
+  # Deploy to Cloud Run
+  deploy-gcp:
+    name: 🚀 Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Google Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🏗️ Deploy to Cloud Run
+        run: |
+          ENVIRONMENT=${{ github.ref_name == 'main' && 'production' || 'staging' }}
+          IMAGE_TAG="${{ github.sha }}"
+          IMAGE_PREFIX="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}"
+          
+          # Deploy API Gateway
+          gcloud run deploy clinic-app-api-gateway-${ENVIRONMENT} \
+            --image ${IMAGE_PREFIX}/clinic-app-api-gateway:${IMAGE_TAG} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 10 \
+            --set-env-vars="NODE_ENV=${ENVIRONMENT},POSTGRES_HOST=${{ secrets.POSTGRES_HOST }},JWT_SECRET=${{ secrets.JWT_SECRET }}"
+
+          # Deploy Auth Service
+          gcloud run deploy clinic-app-auth-service-${ENVIRONMENT} \
+            --image ${IMAGE_PREFIX}/clinic-app-auth-service:${IMAGE_TAG} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --no-allow-unauthenticated \
+            --memory 1Gi \
+            --cpu 1
+
+          # Deploy Frontend
+          gcloud run deploy clinic-app-frontend-${ENVIRONMENT} \
+            --image ${IMAGE_PREFIX}/clinic-app-frontend:${IMAGE_TAG} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1
+
+          # Get service URLs
+          API_URL=$(gcloud run services describe clinic-app-api-gateway-${ENVIRONMENT} \
+            --region ${{ env.REGION }} --format 'value(status.url)')
+          
+          FRONTEND_URL=$(gcloud run services describe clinic-app-frontend-${ENVIRONMENT} \
+            --region ${{ env.REGION }} --format 'value(status.url)')
+          
+          echo "API_URL=${API_URL}" >> $GITHUB_ENV
+          echo "FRONTEND_URL=${FRONTEND_URL}" >> $GITHUB_ENV
+
+      - name: 🏥 Health Check
+        run: |
+          # Health check
+          for i in {1..20}; do
+            if curl -f "${API_URL}/health"; then
+              echo "GCP deployment successful!"
+              echo "Frontend: ${FRONTEND_URL}"
+              echo "API: ${API_URL}"
+              exit 0
+            fi
+            echo "Waiting for deployment... ($i/20)"
+            sleep 30
+          done
+          
+          echo "Health check failed"
+          exit 1

@@ -32,7 +32,7 @@ import {
 import {
   Settings as SettingsIcon,
   Security as SecurityIcon,
-  Integration as IntegrationsIcon,
+  Extension as IntegrationsIcon,
   Notifications as NotificationsIcon,
   Build as MaintenanceIcon,
   ExpandMore as ExpandMoreIcon,

@@ -1,0 +1,665 @@
+version: '3.8'
+
+services:
+  # Enterprise Dependency Resolution Service
+  deps-resolver:
+    build:
+      context: .
+      dockerfile: Dockerfile.deps
+      target: deps-resolver
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: yarn check --integrity
+    profiles:
+      - deps-management
+
+  # Core Infrastructure
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-database.sql:/docker-entrypoint-initdb.d/init-database.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinic-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinic-network
+
+  nats:
+    image: nats:2-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js", "-m", "8222"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - clinic-network
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - clinic-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - clinic-network
+
+  # Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/load-balancer/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway
+    networks:
+      - clinic-network
+
+  # Core Services
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: ["node", "dist/main.js"]
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - clinic-network
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  appointments-service:
+    build:
+      context: .
+      dockerfile: services/appointments-service/Dockerfile
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  files-service:
+    build:
+      context: .
+      dockerfile: services/files-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: services/notifications-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  notes-service:
+    build:
+      context: .
+      dockerfile: services/notes-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3006
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3007
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  settings-service:
+    build:
+      context: .
+      dockerfile: services/settings-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3008
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: services/billing-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3009
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      TRANZILLA_TERMINAL: ${TRANZILLA_TERMINAL}
+      TRANZILLA_USERNAME: ${TRANZILLA_USERNAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  cdn-service:
+    build:
+      context: .
+      dockerfile: services/cdn-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      CDN_PORT: 3011
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      CDN_S3_BUCKET: ${CDN_S3_BUCKET:-clinic-cdn-assets}
+      CLOUDFRONT_DISTRIBUTION_ID: ${CLOUDFRONT_DISTRIBUTION_ID}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}
+    ports:
+      - "3011:3011"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  google-integration-service:
+    build:
+      context: .
+      dockerfile: services/google-integration-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3012
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+    ports:
+      - "3012:3012"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  therapists-service:
+    build:
+      context: .
+      dockerfile: services/therapists-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3013
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3013:3013"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3013/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  client-relationships-service:
+    build:
+      context: .
+      dockerfile: services/client-relationships-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3014
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3014:3014"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3014/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  progress-service:
+    build:
+      context: .
+      dockerfile: services/progress-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3015
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3015:3015"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  # Email Testing (Development/Staging)
+  maildev:
+    image: maildev/maildev
+    ports:
+      - "1080:1080"  # Web interface
+      - "1025:1025"  # SMTP server
+    networks:
+      - clinic-network
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      NODE_ENV: production
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:4000}
+    ports:
+      - "5173:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - clinic-network
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - clinic-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - clinic-network
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - clinic-network
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - clinic-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  elasticsearch_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+
+networks:
+  clinic-network:
+    driver: bridge

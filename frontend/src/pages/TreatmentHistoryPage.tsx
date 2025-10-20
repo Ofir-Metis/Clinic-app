@@ -31,7 +31,7 @@ const Calendar = RBC.Calendar as React.ComponentType<any>;
 const dateFnsLocalizer = RBC.dateFnsLocalizer;
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import {
   Appointment,
   getAppointments,

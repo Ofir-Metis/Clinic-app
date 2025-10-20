@@ -1,0 +1,31 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY services/ai-service/package.json ./services/ai-service/
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --production
+
+# Copy built common library
+COPY libs/common/dist ./libs/common/dist
+COPY libs/common/package.json ./libs/common/
+
+# Copy built service
+COPY services/ai-service/dist ./services/ai-service/dist
+
+# Create symlink to common library
+RUN cd services/ai-service && \
+    mkdir -p node_modules/@clinic && \
+    ln -sf ../../../libs/common node_modules/@clinic/common
+
+WORKDIR /app/services/ai-service
+
+# Install wget for health checks
+RUN apk add --no-cache wget
+
+EXPOSE 3005
+
+CMD ["node", "dist/main.js"]

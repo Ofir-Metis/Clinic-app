@@ -1,0 +1,31 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+COPY services/analytics-service/package.json ./services/analytics-service/
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --production
+
+# Copy built common library
+COPY libs/common/dist ./libs/common/dist
+COPY libs/common/package.json ./libs/common/
+
+# Copy built service
+COPY services/analytics-service/dist ./services/analytics-service/dist
+
+# Create symlink to common library
+RUN cd services/analytics-service && \
+    mkdir -p node_modules/@clinic && \
+    ln -sf ../../../libs/common node_modules/@clinic/common
+
+WORKDIR /app/services/analytics-service
+
+# Install wget for health checks
+RUN apk add --no-cache wget
+
+EXPOSE 3007
+
+CMD ["node", "dist/main.js"]

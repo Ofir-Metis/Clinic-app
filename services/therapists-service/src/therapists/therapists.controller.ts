@@ -23,7 +23,7 @@ export class TherapistsController {
 
   @Get(':id/profile')
   getProfile(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getProfile(id);
+    return this.service.getProfile(id.toString());
   }
 
   @UseGuards(JwtAuthGuard)
@@ -36,6 +36,6 @@ export class TherapistsController {
     if (req.user.id !== id) {
       throw new ForbiddenException();
     }
-    return this.service.updateProfile(id, dto);
+    return this.service.updateProfile(id.toString(), dto);
   }
 }

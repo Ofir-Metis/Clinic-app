@@ -53,7 +53,7 @@ interface TableStats {
   lastAutoAnalyze?: Date;
 }
 
-interface OptimizationReport {
+export interface OptimizationReport {
   analysisDate: Date;
   databaseSize: string;
   totalTables: number;

@@ -189,9 +189,9 @@ async function generatePostmanCollection(document: any, outputDir: string) {
     };
 
     for (const [method, operation] of Object.entries(methods as any)) {
-      if (typeof operation === 'object' && operation.operationId) {
+      if (typeof operation === 'object' && operation && 'operationId' in operation && operation.operationId) {
         const request = {
-          name: operation.summary || `${method.toUpperCase()} ${path}`,
+          name: (operation as any).summary || `${method.toUpperCase()} ${path}`,
           request: {
             method: method.toUpperCase(),
             header: [
@@ -206,7 +206,7 @@ async function generatePostmanCollection(document: any, outputDir: string) {
               host: ["{{base_url}}"],
               path: path.split('/').filter(p => p)
             },
-            description: operation.description || operation.summary
+            description: (operation as any).description || (operation as any).summary
           }
         };
 
@@ -429,7 +429,7 @@ async function generateApiSummary(document: any, outputDir: string) {
   // Analyze endpoints
   for (const [path, methods] of Object.entries(document.paths)) {
     for (const [method, operation] of Object.entries(methods as any)) {
-      if (typeof operation === 'object' && operation.operationId) {
+      if (typeof operation === 'object' && operation && 'operationId' in operation && operation.operationId) {
         summary.statistics.totalEndpoints++;
         
         // Count by method
@@ -438,8 +438,8 @@ async function generateApiSummary(document: any, outputDir: string) {
           (summary.statistics.endpointsByMethod[methodUpper] || 0) + 1;
 
         // Count by tag
-        if (operation.tags) {
-          operation.tags.forEach((tag: string) => {
+        if ((operation as any).tags) {
+          (operation as any).tags.forEach((tag: string) => {
             summary.statistics.endpointsByTag[tag] = 
               (summary.statistics.endpointsByTag[tag] || 0) + 1;
           });
@@ -449,10 +449,10 @@ async function generateApiSummary(document: any, outputDir: string) {
         summary.endpoints.push({
           path,
           method: methodUpper,
-          summary: operation.summary,
-          tags: operation.tags || [],
-          security: operation.security ? true : false,
-          deprecated: operation.deprecated || false
+          summary: (operation as any).summary,
+          tags: (operation as any).tags || [],
+          security: (operation as any).security ? true : false,
+          deprecated: (operation as any).deprecated || false
         });
       }
     }

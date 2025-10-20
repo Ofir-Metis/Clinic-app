@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiParam } from '@nestjs/swagger';
-import { JwtAuthGuard, RolesGuard, Roles } from '@clinic/common';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
 import { AssetsService } from './assets.service';
 import { Response as ExpressResponse } from 'express';
 
@@ -31,7 +31,7 @@ export class AssetsController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Asset uploaded successfully' })
   @UseInterceptors(FileInterceptor('file'))
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async uploadAsset(
     @UploadedFile() file: Express.Multer.File,
     @Query('folder') folder?: string,
@@ -92,7 +92,7 @@ export class AssetsController {
   @ApiOperation({ summary: 'Get asset metadata' })
   @ApiParam({ name: 'key', description: 'Asset key (can contain slashes)' })
   @ApiResponse({ status: 200, description: 'Asset metadata retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getAssetInfo(@Param('key') key: string) {
     const info = await this.assetsService.getAssetInfo(key);
     
@@ -110,7 +110,7 @@ export class AssetsController {
   @ApiOperation({ summary: 'Delete asset by key' })
   @ApiParam({ name: 'key', description: 'Asset key (can contain slashes)' })
   @ApiResponse({ status: 200, description: 'Asset deleted successfully' })
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async deleteAsset(@Param('key') key: string) {
     const exists = await this.assetsService.assetExists(key);
     
@@ -126,7 +126,7 @@ export class AssetsController {
   @Post('invalidate')
   @ApiOperation({ summary: 'Invalidate CDN cache for specific assets' })
   @ApiResponse({ status: 200, description: 'Cache invalidation initiated' })
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async invalidateCache(@Query('keys') keys: string) {
     if (!keys) {
       throw new HttpException('No keys provided', HttpStatus.BAD_REQUEST);
@@ -146,7 +146,7 @@ export class AssetsController {
   @ApiOperation({ summary: 'Get CDN URL for asset' })
   @ApiParam({ name: 'key', description: 'Asset key (can contain slashes)' })
   @ApiResponse({ status: 200, description: 'Asset URL retrieved successfully' })
-  @Roles('client', 'coach', 'admin')
+  @Roles(UserRole.CLIENT, UserRole.COACH, UserRole.ADMIN)
   async getAssetUrl(@Param('key') key: string) {
     const url = this.assetsService.getAssetUrl(key);
     

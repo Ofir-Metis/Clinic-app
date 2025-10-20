@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { CentralizedLoggerService } from './centralized-logger.service';
+import { User } from '../auth/types';
 
 declare global {
   namespace Express {
@@ -36,14 +37,15 @@ export class LoggingMiddleware implements NestMiddleware {
     const originalWrite = res.write;
     const chunks: Buffer[] = [];
 
-    res.write = function(chunk: any) {
+    res.write = function(chunk: any, ...args: any[]) {
       if (chunk) {
         chunks.push(Buffer.from(chunk));
       }
-      return originalWrite.apply(res, arguments);
-    };
+      return originalWrite.apply(res, [chunk, ...args]);
+    } as any;
 
-    res.end = function(chunk?: any) {
+    const self = this;
+    res.end = function(chunk?: any): any {
       if (chunk) {
         chunks.push(Buffer.from(chunk));
       }
@@ -60,8 +62,8 @@ export class LoggingMiddleware implements NestMiddleware {
         url: req.url,
         userAgent: req.get('User-Agent'),
         ipAddress: getClientIp(req),
-        userId: req.user?.id || req.user?.sub,
-        sessionId: req.sessionID || req.headers['x-session-id'] as string,
+        userId: (req.user as any)?.id || (req.user as any)?.sub,
+        sessionId: req.sessionId || req.headers['x-session-id'] as string,
         statusCode: res.statusCode,
         duration,
         requestSize: parseInt(req.get('content-length') || '0'),
@@ -74,7 +76,7 @@ export class LoggingMiddleware implements NestMiddleware {
       const message = `${req.method} ${req.url} ${res.statusCode} - ${duration}ms`;
 
       if (level === 'error') {
-        logger.logError(message, {
+        self.logger.logError(message, {
           ...logContext,
           error: {
             statusCode: res.statusCode,
@@ -82,17 +84,21 @@ export class LoggingMiddleware implements NestMiddleware {
           }
         });
       } else {
-        logger.info(message, logContext);
+        self.logger.info(message, logContext);
       }
 
       // Performance logging for slow requests
       if (duration > 1000) {
-        logger.performanceLog(`${req.method} ${req.url}`, duration, logContext);
+        self.logger.warning(`Slow request: ${req.method} ${req.url}`, {
+          ...logContext,
+          duration,
+          performance: true
+        });
       }
 
       // Security logging
       if (res.statusCode === 401 || res.statusCode === 403) {
-        logger.securityLog(`Unauthorized request: ${req.method} ${req.url}`, {
+        self.logger.warning(`Unauthorized request: ${req.method} ${req.url}`, {
           ...logContext,
           securityEvent: 'unauthorized_request',
           alertLevel: 'medium'
@@ -100,14 +106,14 @@ export class LoggingMiddleware implements NestMiddleware {
       }
 
       if (res.statusCode === 429) {
-        logger.securityLog(`Rate limit exceeded: ${req.method} ${req.url}`, {
+        self.logger.warning(`Rate limit exceeded: ${req.method} ${req.url}`, {
           ...logContext,
           securityEvent: 'rate_limit_exceeded',
           alertLevel: 'low'
         });
       }
 
-      originalEnd.apply(res, arguments);
+      return originalEnd.apply(res, arguments);
     };
 
     next();

@@ -125,7 +125,7 @@ class RecordingAITester {
         role: 'user',
         content: 'Respond with exactly: "OpenAI API connection successful"'
       }],
-      max_tokens: 20
+      max_completion_tokens: 20
     });
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -326,8 +326,7 @@ class RecordingAITester {
           content: `Please analyze this coaching session: ${transcript}`
         }
       ],
-      max_tokens: 1000,
-      temperature: 0.3,
+      max_completion_tokens: 1000,
       response_format: { type: 'json_object' }
     });
 

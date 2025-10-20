@@ -9,7 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { MFAStorageService } from './mfa-storage.service';
 import { MFAService } from './mfa.service';
-import { CentralizedLoggerService } from '../logging/centralized-logger.service';
+// import { CentralizedLoggerService } from '../logging/centralized-logger.service'; // Temporarily disabled for production stability
 
 export const MFA_REQUIRED_KEY = 'mfa_required';
 export const MFA_SKIP_KEY = 'mfa_skip';
@@ -46,8 +46,8 @@ export class MFAGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly mfaStorageService: MFAStorageService,
-    private readonly mfaService: MFAService,
-    private readonly centralizedLogger: CentralizedLoggerService
+    private readonly mfaService: MFAService
+    // private readonly centralizedLogger: CentralizedLoggerService // Temporarily disabled
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -90,12 +90,9 @@ export class MFAGuard implements CanActivate {
 
     // Check if user has MFA enabled
     if (!userMFASettings?.isMFAEnabled) {
-      this.centralizedLogger.securityLog('Access denied - MFA not enabled for required endpoint', {
+      this.logger.warn(`Access denied - MFA not enabled for required endpoint: ${request.method} ${request.path}`, {
         userId: user.id,
-        endpoint: request.path,
-        method: request.method,
-        service: 'mfa-guard',
-        alertLevel: 'high'
+        service: 'mfa-guard'
       });
 
       throw new UnauthorizedException({
@@ -109,12 +106,9 @@ export class MFAGuard implements CanActivate {
     const mfaVerified = this.checkMFAVerification(request, user);
 
     if (!mfaVerified) {
-      this.centralizedLogger.securityLog('Access denied - MFA verification required', {
+      this.logger.warn(`Access denied - MFA verification required: ${request.method} ${request.path}`, {
         userId: user.id,
-        endpoint: request.path,
-        method: request.method,
-        service: 'mfa-guard',
-        alertLevel: 'medium'
+        service: 'mfa-guard'
       });
 
       throw new UnauthorizedException({
@@ -126,12 +120,9 @@ export class MFAGuard implements CanActivate {
 
     // Check if MFA verification is still valid (not expired)
     if (!this.isMFAVerificationValid(request, user)) {
-      this.centralizedLogger.securityLog('Access denied - MFA verification expired', {
+      this.logger.warn(`Access denied - MFA verification expired: ${request.method} ${request.path}`, {
         userId: user.id,
-        endpoint: request.path,
-        method: request.method,
-        service: 'mfa-guard',
-        alertLevel: 'medium'
+        service: 'mfa-guard'
       });
 
       throw new UnauthorizedException({
@@ -142,13 +133,9 @@ export class MFAGuard implements CanActivate {
     }
 
     // Log successful MFA-protected access
-    this.centralizedLogger.auditLog('MFA-protected endpoint accessed', {
+    this.logger.log(`MFA-protected endpoint accessed: ${request.method} ${request.path}`, {
       userId: user.id,
-      endpoint: request.path,
-      method: request.method,
-      service: 'mfa-guard',
-      hipaaRelevant: true,
-      auditRequired: true
+      service: 'mfa-guard'
     });
 
     return true;
@@ -259,10 +246,11 @@ export class RoleBasedMFAGuard extends MFAGuard {
 
     // Check role-based MFA requirements
     const roleRequirements = this.getMFARequirementsByRole(user.roles);
+    let mfaRequired = false;
     
     if (roleRequirements.alwaysRequired) {
-      // Force MFA requirement regardless of endpoint
-      this.reflector.getAllAndOverride = () => true;
+      // Force MFA requirement regardless of endpoint metadata
+      mfaRequired = true;
     }
 
     // Apply additional security for sensitive roles

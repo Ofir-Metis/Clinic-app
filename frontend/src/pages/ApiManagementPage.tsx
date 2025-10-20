@@ -71,7 +71,7 @@ import {
   Stop as StopIcon,
   Shield as ShieldIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 
 interface ApiOverview {
   totalApiKeys: number;

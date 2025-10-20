@@ -16,7 +16,7 @@ export interface RenderedTemplate {
 
 @Injectable()
 export class EmailTemplatesService {
-  private readonly logger = new Logger(EmailTemplatesService.service);
+  private readonly logger = new Logger(EmailTemplatesService.name);
 
   private templates = new Map<string, {
     subject: string;

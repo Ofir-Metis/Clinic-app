@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CommonModule } from '@clinic/common';
 import { HealthController } from './health/health.controller';
 import { AiGraphqlModule } from './graphql/graphql.module';
 import { OpenaiService } from './openai.service';
@@ -12,25 +14,13 @@ import { Transcription } from './entities/transcription.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    
-    // Database connection with new entities
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: +(process.env.POSTGRES_PORT || 5432),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DB,
-      entities: [SessionSummary, Transcription],
-      synchronize: process.env.NODE_ENV !== 'production', // Enable for development
-      logging: process.env.NODE_ENV === 'development',
-    }),
+    // Enterprise CommonModule provides centralized config, logging, database, and security
+    CommonModule,
 
-    // Entity repositories
+    // Entity repositories for AI-specific entities
     TypeOrmModule.forFeature([SessionSummary, Transcription]),
 
-    // NATS microservice clients
+    // NATS microservice clients for AI service communication
     ClientsModule.register([
       {
         name: 'FILES_SERVICE',
@@ -38,6 +28,8 @@ import { Transcription } from './entities/transcription.entity';
         options: {
           servers: [process.env.NATS_URL || 'nats://localhost:4222'],
           queue: 'files-service-queue',
+          maxReconnectAttempts: 10,
+          reconnectTimeWait: 2000,
         },
       },
       {
@@ -46,6 +38,8 @@ import { Transcription } from './entities/transcription.entity';
         options: {
           servers: [process.env.NATS_URL || 'nats://localhost:4222'],
           queue: 'appointments-service-queue',
+          maxReconnectAttempts: 10,
+          reconnectTimeWait: 2000,
         },
       },
       {
@@ -54,9 +48,22 @@ import { Transcription } from './entities/transcription.entity';
         options: {
           servers: [process.env.NATS_URL || 'nats://localhost:4222'],
           queue: 'notifications-service-queue',
+          maxReconnectAttempts: 10,
+          reconnectTimeWait: 2000,
         },
       },
     ]),
+
+    // JWT and Authentication - CommonModule provides JwtService, but we need module-specific config
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'clinic-ai-service-fallback-2024',
+      signOptions: { 
+        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+        issuer: process.env.JWT_ISSUER || 'clinic-ai-service',
+        audience: process.env.JWT_AUDIENCE || 'clinic-users'
+      },
+    }),
 
     AiGraphqlModule,
   ],

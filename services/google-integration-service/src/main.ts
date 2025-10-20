@@ -8,19 +8,38 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter, LoggingInterceptor, LoggingMiddleware, CentralizedLoggerService } from '@clinic/common';
 
 async function bootstrap() {
-  const logger = new Logger('GoogleIntegrationService');
+  const logger = new Logger('Google-Integration-Service');
   
   try {
+    logger.log('🚀 Starting Google Integration Service...');
+    
+    // Wait for infrastructure to be ready
+    logger.log('⏳ Waiting for database and message broker to be ready...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
+
+    // Initialize centralized logging
+    const loggerService = app.get(CentralizedLoggerService);
+    app.useGlobalFilters(new AllExceptionsFilter());
+    app.useGlobalInterceptors(new LoggingInterceptor(loggerService));
+    
+    // Apply logging middleware with proper context binding
+    const loggingMiddleware = new LoggingMiddleware(loggerService);
+    app.use((req, res, next) => loggingMiddleware.use(req, res, next));
+    
+    logger.log('✅ Enterprise logging initialized');
 
     // Global validation pipe
     app.useGlobalPipes(new ValidationPipe({
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      disableErrorMessages: process.env.NODE_ENV === 'production'
     }));
 
     // CORS configuration
@@ -77,9 +96,9 @@ async function bootstrap() {
     const port = configService.get<number>('PORT', 3009);
     await app.listen(port, '0.0.0.0');
 
-    logger.log(`🚀 Google Integration Service started on port ${port}`);
+    logger.log(`🎉 Google Integration Service successfully started on port ${port}`);
+    logger.log(`📚 API documentation: http://localhost:${port}/docs`);
     logger.log(`🔧 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
-    logger.log(`🗄️  Database: ${configService.get<string>('DATABASE_HOST', 'localhost')}:${configService.get<number>('DATABASE_PORT', 5432)}`);
     
     // Log Google OAuth configuration status
     const hasGoogleConfig = !!(
@@ -94,8 +113,8 @@ async function bootstrap() {
     }
 
   } catch (error) {
-    logger.error('❌ Failed to start Google Integration Service:', error);
-    process.exit(1);
+    logger.error('💥 Failed to start Google Integration Service:', error instanceof Error ? error.stack : String(error));
+    throw error;
   }
 }
 

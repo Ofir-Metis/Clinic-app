@@ -1,0 +1,64 @@
+# Optimized multi-stage build for auth-service
+# Split dependency installation for better caching and reliability
+
+FROM node:20-alpine AS base
+WORKDIR /app
+RUN apk add --no-cache python3 make g++ && \
+    npm config set fetch-timeout 600000 && \
+    npm config set fetch-retry-mintimeout 10000 && \
+    npm config set fetch-retry-maxtimeout 60000
+
+# Dependencies stage - cache this layer
+FROM base AS deps
+COPY package.json yarn.lock ./
+COPY tsconfig.base.json ./
+RUN yarn config set registry https://registry.yarnpkg.com && \
+    yarn config set network-timeout 600000 -g && \
+    yarn config set network-concurrency 1 && \
+    yarn install --frozen-lockfile --ignore-optional --network-concurrency 1
+
+# Source code stage
+FROM base AS source
+COPY --from=deps /app/node_modules ./node_modules
+COPY services ./services
+COPY libs ./libs
+COPY tsconfig.base.json ./
+
+# Build shared library (install TypeScript first)
+RUN npm install -g typescript
+RUN cd libs/common && yarn build
+
+# Build auth service
+FROM base AS build
+WORKDIR /app
+# Install TypeScript globally for build stage
+RUN npm install -g typescript
+COPY --from=source /app/node_modules ./node_modules
+COPY --from=source /app/services/auth-service ./services/auth-service
+COPY --from=source /app/libs ./libs
+COPY --from=source /app/tsconfig.base.json ./tsconfig.base.json
+
+WORKDIR /app/services/auth-service
+ENV PATH="../../node_modules/.bin:$PATH"
+RUN yarn build
+
+# Production runtime
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+# Install only production dependencies
+COPY --from=build /app/services/auth-service/package.json ./package.json
+RUN npm install --only=production --ignore-scripts
+
+# Copy application files
+COPY --from=build /app/services/auth-service/dist ./dist
+COPY --from=build /app/libs/common/dist ./libs/common/dist
+
+# Setup @clinic/common module link
+RUN rm -rf ./node_modules/@clinic && \
+    mkdir -p ./node_modules/@clinic/common && \
+    cp -r ./libs/common/dist/* ./node_modules/@clinic/common/ && \
+    echo '{"name": "@clinic/common", "version": "1.0.0", "main": "index.js"}' > ./node_modules/@clinic/common/package.json
+
+EXPOSE 3001
+CMD ["node", "dist/main.js"]

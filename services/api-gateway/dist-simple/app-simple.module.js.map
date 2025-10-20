@@ -1,0 +1,1 @@
+{"version":3,"file":"app-simple.module.js","sourceRoot":"","sources":["../src/app-simple.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAwC;AACxC,gFAA2E;AAC3E,4DAAwD;AAOjD,IAAM,eAAe,GAArB,MAAM,eAAe;CAAG,CAAA;AAAlB,0CAAe;0BAAf,eAAe;IAL3B,IAAA,eAAM,EAAC;QACN,OAAO,EAAE,EAAE;QACX,WAAW,EAAE,CAAC,iDAAsB,CAAC;QACrC,SAAS,EAAE,CAAC,8BAAa,CAAC;KAC3B,CAAC;GACW,eAAe,CAAG"}

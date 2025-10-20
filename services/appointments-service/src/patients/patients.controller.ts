@@ -17,7 +17,6 @@ import { GetPatientsDto } from './dto/get-patients.dto';
 import { GetPatientDetailDto } from './dto/get-patient-detail.dto';
 import { GetSessionsDto } from './dto/get-sessions.dto';
 import { CreatePatientDto } from './dto/create-patient.dto';
-import { NotificationsService } from '../scheduling/notifications.service';
 
 /**
  * Controller exposing patient list endpoints.
@@ -26,7 +25,6 @@ import { NotificationsService } from '../scheduling/notifications.service';
 export class PatientsController {
   constructor(
     private readonly service: PatientsService,
-    private readonly notifications: NotificationsService,
   ) {}
 
   @UseGuards(JwtAuthGuard)
@@ -74,12 +72,7 @@ export class PatientsController {
   async add(@Body() dto: CreatePatientDto, @Request() req: any) {
     const { patient, existing } = await this.service.addOrInvite(dto, req.user.id);
     if (patient) {
-      if (!existing) {
-        await this.notifications.sendAppointmentInvite(patient.email, { datetime: new Date().toISOString() });
-        if (patient.whatsappOptIn) {
-          await this.notifications.sendAppointmentInvite(patient.phone, { datetime: new Date().toISOString() });
-        }
-      }
+      // TODO: Add notification service integration later
       return { id: patient.id, existing };
     } else {
       return { id: null, existing };

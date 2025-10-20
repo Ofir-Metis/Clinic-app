@@ -69,7 +69,7 @@ services:
       EMAIL_USER: ${EMAIL_USER}
       EMAIL_PASS: ${EMAIL_PASS}
     ports:
-      - '3002:3000'
+      - '3002:3002'
   files-service:
     build:
       context: .
@@ -78,11 +78,13 @@ services:
       - postgres
       - minio
     environment:
+      PORT: 3000
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
       S3_ENDPOINT: ${S3_ENDPOINT}
     ports:
       - '3003:3000'
@@ -103,7 +105,7 @@ services:
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
     ports:
-      - '3004:3000'
+      - '3004:3004'
   ai-service:
     build:
       context: .
@@ -148,7 +150,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - '3007:3000'
+      - '3007:3007'
   settings-service:
     build:
       context: .
@@ -163,7 +165,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
     ports:
-      - '3008:3000'
+      - '3008:3008'
   billing-service:
     build:
       context: .
@@ -256,6 +258,7 @@ services:
       - postgres
       - redis
     environment:
+      PORT: ${PORT}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
       SETTINGS_URL: ${SETTINGS_URL}
@@ -266,6 +269,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       NATS_URL: ${NATS_URL}
       NODE_ENV: ${NODE_ENV}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      # Redis configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # HIPAA compliance and security
+      PHI_ENCRYPTION_KEY: ${PHI_ENCRYPTION_KEY:-clinic_phi_encryption_key_production_2024_very_secure_default_key}
       # WebSocket configuration
       WS_CORS_ORIGIN: ${FRONTEND_ORIGIN}
       WS_TRANSPORTS: "websocket,polling"
@@ -275,6 +284,16 @@ services:
       MINIO_ROOT_PASSWORD: minio123
       # AI service configuration
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Microservice URLs for dashboard
+      APPOINTMENTS_URL: http://appointments-service:3002
+      NOTES_URL: http://notes-service:3000
+      ANALYTICS_URL: http://analytics-service:3000
+      AUTH_URL: http://auth-service:3000
+      FILES_URL: http://files-service:3000
+      NOTIFICATIONS_URL: http://notifications-service:3000
+      BILLING_URL: http://billing-service:3009
+      THERAPISTS_URL: http://therapists-service:3013
+      CLIENT_RELATIONSHIPS_URL: http://client-relationships-service:3014
     ports:
       - '4000:3000'
   google-integration-service:
@@ -308,8 +327,8 @@ services:
       - auth-service
     environment:
       # API endpoints
-      REACT_APP_API_URL: http://api-gateway:3000
-      REACT_APP_WS_URL: http://api-gateway:3000
+      REACT_APP_API_URL: http://localhost:4000
+      REACT_APP_WS_URL: http://localhost:4000
       # Recording configuration
       REACT_APP_MAX_FILE_SIZE: 500
       REACT_APP_SUPPORTED_FORMATS: "mp4,mov,avi,mp3,wav,m4a,webm"
@@ -319,3 +338,13 @@ services:
       REACT_APP_ENABLE_RECORDINGS: "true"
     ports:
       - '5173:80'
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - frontend
+      - api-gateway
+    volumes:
+      - ./frontend.nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+      - '443:443'

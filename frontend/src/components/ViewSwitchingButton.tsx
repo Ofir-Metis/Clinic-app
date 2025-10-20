@@ -23,7 +23,7 @@ import {
   Psychology as TherapistIcon,
   ExitToApp as ExitIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 import { useViewSwitching } from '../hooks/useViewSwitching';
 
 interface ClientOption {

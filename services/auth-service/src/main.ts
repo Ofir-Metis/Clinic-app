@@ -6,9 +6,10 @@ import { LoggingMiddleware } from '@clinic/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalInterceptors(new LoggingInterceptor());
+  // Temporary: Disable logging middleware to prevent crashes
+  // app.useGlobalInterceptors(new LoggingInterceptor({} as any));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.use(new LoggingMiddleware().use);
-  await app.listen(process.env.PORT || 3000);
+  // app.use(new LoggingMiddleware({} as any).use);
+  await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 bootstrap();

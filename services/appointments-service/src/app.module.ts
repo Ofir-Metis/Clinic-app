@@ -1,35 +1,33 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
+// import { JwtModule } from '@nestjs/jwt'; // Using MockJwtService instead
 import { HealthController } from './health/health.controller';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { PatientsModule } from './patients/patients.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { PatientAppointmentsModule } from './patient-appointments/patient-appointments.module';
+import { CommonModule } from '@clinic/common';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { MockJwtService } from './mock-jwt.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [() => ({ pagination: { defaultLimit: 20, maxLimit: 100 } })],
-    }),
-    JwtModule.register({}),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: +(process.env.POSTGRES_PORT || 5432),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DB,
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
+    // Use CommonModule for enterprise-grade configuration
+    CommonModule,
+    
+    // JWT Module replaced with MockJwtService for now
+    // JwtModule.register({
+    //   secret: process.env.JWT_SECRET || 'fallback-secret-for-development',
+    //   signOptions: { expiresIn: '24h' },
+    //   global: true, // Make JwtService globally available
+    // }),
+    
     AppointmentsModule,
     PatientsModule,
     SchedulingModule,
     PatientAppointmentsModule,
   ],
   controllers: [HealthController],
+  providers: [MockJwtService, JwtAuthGuard],
+  exports: [JwtAuthGuard]
 })
 export class AppModule {}

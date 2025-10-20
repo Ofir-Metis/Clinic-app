@@ -10,6 +10,9 @@ export * from './cache-manager.service';
 export * from './cache.interceptor';
 export * from './cache.module';
 
+// Import types for internal use
+import type { CacheStats } from './cache-manager.service';
+
 // Decorators and utilities
 export * from './cache.decorator';
 

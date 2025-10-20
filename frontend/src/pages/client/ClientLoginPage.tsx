@@ -31,6 +31,10 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
+import ErrorAlert from '../../components/ErrorAlert';
+import LoadingButton from '../../components/LoadingButton';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 interface LoginFormData {
   email: string;
@@ -47,8 +51,8 @@ const ClientLoginPage: React.FC = () => {
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const { error, handleError, clearError, setRetryAction } = useErrorHandler();
 
   const handleInputChange = (field: keyof LoginFormData) => (
     event: React.ChangeEvent<HTMLInputElement>
@@ -58,32 +62,38 @@ const ClientLoginPage: React.FC = () => {
       [field]: event.target.value
     }));
     // Clear error when user starts typing
-    if (error) setError(null);
+    if (error) clearError();
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
+    clearError();
     
-    try {
-      // Mock API call - replace with actual client auth service
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock successful login
-      localStorage.setItem('clientToken', 'mock-client-token');
-      localStorage.setItem('clientUser', JSON.stringify({
-        id: '1',
-        name: 'Sarah Johnson',
-        email: formData.email,
-        coachName: 'Dr. Emily Chen'
-      }));
-      
-      navigate('/client/dashboard');
-    } catch (err) {
-      setError('Invalid email or password. Please check your credentials and try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    const attemptLogin = async () => {
+      try {
+        // Mock API call - replace with actual client auth service
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock successful login
+        localStorage.setItem('clientToken', 'mock-client-token');
+        localStorage.setItem('clientUser', JSON.stringify({
+          id: '1',
+          name: 'Sarah Johnson',
+          email: formData.email,
+          coachName: 'Dr. Emily Chen'
+        }));
+        
+        navigate('/client/dashboard');
+      } catch (err) {
+        handleError(err, 'auth');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    setRetryAction(() => attemptLogin);
+    await attemptLogin();
   };
 
   const isFormValid = formData.email && formData.password;
@@ -111,8 +121,14 @@ const ClientLoginPage: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 6 }}>
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <LoadingOverlay 
+            loading={isLoading} 
+            message="Connecting to your coaching journey..."
+            variant="overlay"
+            backdrop
+          >
+            {/* Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Avatar
               sx={{
                 width: 80,
@@ -160,6 +176,7 @@ const ClientLoginPage: React.FC = () => {
                 value={formData.email}
                 onChange={handleInputChange('email')}
                 placeholder="your.email@example.com"
+                autoComplete="email"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
@@ -182,6 +199,7 @@ const ClientLoginPage: React.FC = () => {
                 value={formData.password}
                 onChange={handleInputChange('password')}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
@@ -198,26 +216,23 @@ const ClientLoginPage: React.FC = () => {
 
               {error && (
                 <Fade in>
-                  <Alert
-                    severity="error"
-                    sx={{
-                      borderRadius: 3,
-                      '& .MuiAlert-message': {
-                        fontSize: '0.95rem'
-                      }
-                    }}
-                  >
-                    {error}
-                  </Alert>
+                  <ErrorAlert 
+                    error={error} 
+                    onRetry={() => handleSubmit(new Event('submit') as any)}
+                    onClose={clearError}
+                    showDetails={process.env.NODE_ENV === 'development'}
+                  />
                 </Fade>
               )}
 
-              <Button
+              <LoadingButton
                 type="submit"
                 variant="contained"
                 size="large"
-                disabled={!isFormValid || isLoading}
-                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+                disabled={!isFormValid}
+                loading={isLoading}
+                loadingText="Signing In..."
+                startIcon={<LoginIcon />}
                 sx={{
                   py: 2,
                   borderRadius: 3,
@@ -233,8 +248,8 @@ const ClientLoginPage: React.FC = () => {
                   }
                 }}
               >
-                {isLoading ? 'Signing In...' : 'Start My Journey'}
-              </Button>
+                Start My Journey
+              </LoadingButton>
             </Stack>
           </Box>
 
@@ -308,6 +323,7 @@ const ClientLoginPage: React.FC = () => {
               Your journey of growth starts here ✨
             </Typography>
           </Box>
+        </LoadingOverlay>
         </CardContent>
       </Card>
     </Box>

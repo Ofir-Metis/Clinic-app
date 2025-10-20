@@ -65,7 +65,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Shield as ShieldIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 
 interface ComplianceOverview {
   complianceScore: number;

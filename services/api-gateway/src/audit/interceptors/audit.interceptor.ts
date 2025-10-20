@@ -85,8 +85,8 @@ export class AuditInterceptor implements NestInterceptor {
 
   private buildAuditContext(request: Request) {
     return {
-      userId: request.user?.id,
-      userRole: request.user?.role,
+      userId: (request.user as any)?.id,
+      userRole: (request.user as any)?.role,
       patientId: this.extractPatientId(request),
       sessionId: request.sessionID,
       ipAddress: this.getClientIpAddress(request),

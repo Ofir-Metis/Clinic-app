@@ -1,0 +1,11 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="16" fill="#2E7D6B"/>
+
+  <!-- Wellness leaf symbol -->
+  <path d="M16 8 C20 8 24 12 24 16 C24 20 20 24 16 24 C16 20 16 12 16 8 Z" fill="#4A9B8A"/>
+  <path d="M16 8 C12 8 8 12 8 16 C8 20 12 24 16 24 C16 20 16 12 16 8 Z" fill="#E8F5E8"/>
+
+  <!-- Central dot -->
+  <circle cx="16" cy="16" r="2" fill="#FFFFFF"/>
+</svg>

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -29,22 +29,43 @@ export class AuthService {
    * Register a new user and return a signed JWT.
    */
   async register(createUserDto: CreateUserDto) {
-    const hashed = await bcrypt.hash(createUserDto.password, 10);
-    const userRole = createUserDto.role && ['therapist', 'patient', 'user'].includes(createUserDto.role)
-      ? createUserDto.role
-      : 'user';
-    const user = this.usersRepository.create({
-      email: createUserDto.email,
-      name: createUserDto.name,
-      password: hashed,
-      roles: [userRole],
-    });
-    await this.usersRepository.save(user);
-    const access_token = await this.jwtService.signAsync({
-      sub: user.id,
-      roles: user.roles,
-    });
-    return { access_token };
+    try {
+      // Check if user already exists
+      const existingUser = await this.usersRepository.findOne({
+        where: { email: createUserDto.email }
+      });
+      
+      if (existingUser) {
+        this.logger.error('Registration failed', { email: createUserDto.email, error: 'User with this email already exists' });
+        throw new ConflictException('A user with this email address already exists. Please use a different email or try logging in.');
+      }
+
+      const hashed = await bcrypt.hash(createUserDto.password, 10);
+      const userRole = createUserDto.role && ['therapist', 'patient', 'user'].includes(createUserDto.role)
+        ? createUserDto.role
+        : 'user';
+      const user = this.usersRepository.create({
+        email: createUserDto.email,
+        name: createUserDto.name,
+        password: hashed,
+        roles: [userRole],
+      });
+      await this.usersRepository.save(user);
+      const access_token = await this.jwtService.signAsync({
+        sub: user.id,
+        roles: user.roles,
+      });
+      return { access_token };
+    } catch (error) {
+      // If it's already an HTTP exception (like ConflictException), re-throw it
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+      
+      // For other errors, log and throw a generic bad request
+      this.logger.error('Registration failed', { email: createUserDto.email, error: error instanceof Error ? error.message : String(error) });
+      throw new BadRequestException('Registration failed. Please check your information and try again.');
+    }
   }
 
   /**
@@ -74,5 +95,32 @@ export class AuthService {
     });
     this.logger.info('login success', { userId: user.id });
     return { access_token };
+  }
+
+  /**
+   * Get user information by email for role-based redirection
+   */
+  async getUserByEmail(email: string) {
+    try {
+      const user = await this.usersRepository.findOne({ 
+        where: { email },
+        select: ['id', 'email', 'name', 'roles']
+      });
+      
+      if (!user) {
+        this.logger.debug('User not found', { email });
+        return null;
+      }
+      
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles: user.roles
+      };
+    } catch (error) {
+      this.logger.error('Failed to get user by email', { email, error: error instanceof Error ? error.message : String(error) });
+      return null;
+    }
   }
 }

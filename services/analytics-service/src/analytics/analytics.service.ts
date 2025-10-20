@@ -18,7 +18,7 @@ export class AnalyticsService {
     try {
       const { startDate, endDate } = this.parsePeriod(filters.period);
       const coachFilter = filters.coachId ? 'AND coach_id = $3' : '';
-      const params = [startDate, endDate];
+      const params: (Date | string)[] = [startDate, endDate];
       if (filters.coachId) params.push(filters.coachId);
 
       const [
@@ -53,11 +53,7 @@ export class AnalyticsService {
         ],
       };
     } catch (error) {
-      this.logger.error('Failed to get dashboard analytics', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get dashboard analytics: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -109,11 +105,7 @@ export class AnalyticsService {
         insights: await this.generateAppointmentInsights(appointmentData),
       };
     } catch (error) {
-      this.logger.error('Failed to get appointment analytics', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get appointment analytics: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -153,11 +145,7 @@ export class AnalyticsService {
         insights: await this.generateClientInsights(clientGrowth, clientRetention, clientEngagement),
       };
     } catch (error) {
-      this.logger.error('Failed to get client analytics', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get client analytics: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -196,11 +184,7 @@ export class AnalyticsService {
         insights: await this.generateRevenueInsights(revenueData),
       };
     } catch (error) {
-      this.logger.error('Failed to get revenue analytics', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get revenue analytics: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -237,11 +221,7 @@ export class AnalyticsService {
         insights: await this.generatePerformanceInsights(performanceData[0]),
       };
     } catch (error) {
-      this.logger.error('Failed to get performance metrics', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get performance metrics: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -267,11 +247,7 @@ export class AnalyticsService {
         predictions: await this.generatePredictions(trends),
       };
     } catch (error) {
-      this.logger.error('Failed to get trend analysis', {
-        service: 'analytics-service',
-        error: error.message,
-        filters,
-      });
+      this.logger.error(`Failed to get trend analysis: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -307,12 +283,7 @@ export class AnalyticsService {
 
       return report;
     } catch (error) {
-      this.logger.error('Failed to generate custom report', {
-        service: 'analytics-service',
-        error: error.message,
-        userId,
-        createReportDto,
-      });
+      this.logger.error(`Failed to generate custom report: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }

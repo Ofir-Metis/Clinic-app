@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrometheusService } from '@clinic/common/monitoring';
-import { StructuredLoggerService } from '@clinic/common/logging';
+// import { PrometheusService, StructuredLoggerService } from '@clinic/common'; // TODO: Add PrometheusService export
+import { CentralizedLoggerService } from '@clinic/common';
 
 /**
  * Custom Metrics Service
@@ -77,8 +77,7 @@ export interface HealthcareMetrics {
 @Injectable()
 export class CustomMetricsService {
   private readonly logger = new Logger(CustomMetricsService.name);
-  private readonly structuredLogger: StructuredLoggerService;
-  private readonly prometheus: PrometheusService;
+  // private readonly prometheus: PrometheusService; // TODO: Add when PrometheusService is available
   
   // Prometheus metrics
   private readonly activeUsersGauge;
@@ -89,29 +88,31 @@ export class CustomMetricsService {
   private readonly performanceHistogram;
   
   constructor(
-    structuredLogger: StructuredLoggerService,
-    prometheus: PrometheusService
+    // private readonly structuredLogger: CentralizedLoggerService
+    // TODO: Add prometheus: PrometheusService when available
   ) {
-    this.structuredLogger = structuredLogger;
-    this.prometheus = prometheus;
+    // this.prometheus = prometheus;
     
-    // Initialize Prometheus metrics
-    this.activeUsersGauge = this.prometheus.createGauge({
-      name: 'clinic_active_users_total',
-      help: 'Number of active users by role',
-      labelNames: ['role', 'time_period']
-    });
+    // TODO: Uncomment when PrometheusService is available
+    /*
     
-    this.sessionCounter = this.prometheus.createCounter({
-      name: 'clinic_sessions_total',
-      help: 'Total number of sessions by status',
-      labelNames: ['status', 'therapist_id', 'client_id']
-    });
-    
-    this.systemHealthGauge = this.prometheus.createGauge({
-      name: 'clinic_system_health',
-      help: 'System health metrics',
-      labelNames: ['metric_type', 'service']
+    // TODO: Initialize Prometheus metrics when PrometheusService is available
+    // this.activeUsersGauge = this.prometheus.createGauge({
+    //   name: 'clinic_active_users_total',
+    //   help: 'Number of active users by role',
+    //   labelNames: ['role', 'time_period']
+    // });
+    // 
+    // this.sessionCounter = this.prometheus.createCounter({
+    //   name: 'clinic_sessions_total',
+    //   help: 'Total number of sessions by status',
+    //   labelNames: ['status', 'therapist_id', 'client_id']
+    // });
+    // 
+    // this.systemHealthGauge = this.prometheus.createGauge({
+    //   name: 'clinic_system_health',
+    //   help: 'System health metrics',
+    //   labelNames: ['metric_type', 'service']
     });
     
     this.businessMetricsGauge = this.prometheus.createGauge({
@@ -132,6 +133,7 @@ export class CustomMetricsService {
       labelNames: ['operation_type', 'user_role'],
       buckets: [0.1, 0.5, 1, 2.5, 5, 10, 30, 60]
     });
+    */
   }
   
   /**
@@ -170,20 +172,12 @@ export class CustomMetricsService {
       await this.updatePrometheusMetrics(metrics);
       
       const duration = Date.now() - startTime;
-      this.structuredLogger.info('Healthcare metrics collected', {
-        operation: 'collect_healthcare_metrics',
-        duration,
-        metricsCollected: Object.keys(metrics).length
-      });
+      this.logger.log('Healthcare metrics collected');
       
       return metrics;
       
     } catch (error) {
-      this.structuredLogger.error('Failed to collect healthcare metrics', {
-        operation: 'collect_healthcare_metrics',
-        error: error.message,
-        stack: error.stack
-      });
+      this.logger.error('Failed to collect healthcare metrics', error);
       throw error;
     }
   }
@@ -355,10 +349,7 @@ export class CustomMetricsService {
   async scheduledBusinessMetricsCollection() {
     try {
       const businessMetrics = await this.collectBusinessMetrics();
-      this.structuredLogger.info('Business metrics collected', {
-        operation: 'collect_business_metrics',
-        metrics: businessMetrics
-      });
+      this.logger.log('Business metrics collected');
     } catch (error) {
       this.logger.error('Business metrics collection failed', error);
     }

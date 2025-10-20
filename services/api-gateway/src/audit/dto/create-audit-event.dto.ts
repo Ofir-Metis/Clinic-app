@@ -124,4 +124,8 @@ export class CreateAuditEventDto {
   @IsOptional()
   @IsBoolean()
   includeInComplianceReport?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  suspiciousActivity?: boolean;
 }

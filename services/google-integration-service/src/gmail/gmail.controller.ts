@@ -315,9 +315,9 @@ export class GmailController {
   @ApiResponse({ status: 200, description: 'Email logs retrieved successfully' })
   async getEmailLogs(
     @Query('googleAccountId') googleAccountId: string,
+    @Req() req: AuthenticatedRequest,
     @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-    @Req() req: AuthenticatedRequest
+    @Query('offset') offset?: string
   ) {
     try {
       if (!googleAccountId) {
@@ -354,8 +354,8 @@ export class GmailController {
   @ApiResponse({ status: 200, description: 'Email statistics retrieved successfully' })
   async getEmailStats(
     @Query('googleAccountId') googleAccountId: string,
-    @Query('days') days?: string,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
+    @Query('days') days?: string
   ) {
     try {
       if (!googleAccountId) {

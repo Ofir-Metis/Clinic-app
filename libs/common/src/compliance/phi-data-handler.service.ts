@@ -174,7 +174,7 @@ export class PHIDataHandlerService {
     try {
       const serializedData = JSON.stringify(data);
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipher('aes-256-gcm', this.encryptionKey);
+      const cipher = crypto.createCipheriv('aes-256-gcm', this.encryptionKey.slice(0, 32), iv);
       
       let encrypted = cipher.update(serializedData, 'utf8', 'hex');
       encrypted += cipher.final('hex');
@@ -190,7 +190,7 @@ export class PHIDataHandlerService {
       };
 
       this.centralizedLogger.auditLog('PHI data encrypted', {
-        dataType,
+        dataType: dataType as 'system' | 'phi' | 'pii' | 'general',
         encryptionAlgorithm: 'aes-256-gcm',
         service: 'phi-data-handler',
         action: 'data_encrypted',
@@ -202,7 +202,7 @@ export class PHIDataHandlerService {
 
     } catch (error) {
       this.centralizedLogger.logError('PHI encryption failed', {
-        dataType,
+        dataType: dataType as 'system' | 'phi' | 'pii' | 'general',
         error: error.message,
         service: 'phi-data-handler'
       });
@@ -225,7 +225,7 @@ export class PHIDataHandlerService {
         throw new Error('Data type mismatch during decryption');
       }
 
-      const decipher = crypto.createDecipher('aes-256-gcm', this.encryptionKey);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', this.encryptionKey.slice(0, 32), Buffer.from(encryptedObj.iv, 'hex'));
       decipher.setAuthTag(Buffer.from(encryptedObj.authTag, 'hex'));
       
       let decrypted = decipher.update(encryptedObj.encrypted, 'hex', 'utf8');
@@ -234,7 +234,7 @@ export class PHIDataHandlerService {
       const data = JSON.parse(decrypted);
 
       this.centralizedLogger.auditLog('PHI data decrypted', {
-        dataType: expectedDataType,
+        dataType: expectedDataType as 'system' | 'phi' | 'pii' | 'general',
         service: 'phi-data-handler',
         action: 'data_decrypted',
         hipaaRelevant: true,
@@ -474,7 +474,7 @@ export class PHIDataHandlerService {
       timestamp: new Date(),
       userId: request.userId,
       patientId: request.patientId,
-      dataType: request.dataType,
+      dataType: request.dataType as 'system' | 'phi' | 'pii' | 'general',
       operation: request.operation,
       purpose: request.purpose,
       accessGranted,
@@ -494,7 +494,7 @@ export class PHIDataHandlerService {
       auditId,
       userId: request.userId,
       patientId: request.patientId,
-      dataType: request.dataType,
+      dataType: request.dataType as 'system' | 'phi' | 'pii' | 'general',
       operation: request.operation,
       accessGranted,
       denyReason,

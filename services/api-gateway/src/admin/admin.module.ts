@@ -5,6 +5,7 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { DatabaseModule } from './database.module';
+import { ComplianceModule } from '@clinic/common';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AdminUtilsService } from './admin-utils.service';
@@ -28,7 +29,11 @@ import { AdminDatabaseService } from './admin-database.service';
 import { JwtService } from '@clinic/common';
 
 @Module({
-  imports: [HttpModule, DatabaseModule],
+  imports: [
+    HttpModule, 
+    DatabaseModule,
+    ComplianceModule.register({ isGlobal: false }), // Add compliance services for admin features
+  ],
   controllers: [AdminController, AdminSetupController, SecurityController, BackupController, MonitoringController, ConfigController, ComplianceController, ApiManagementController, PerformanceController],
   providers: [AdminService, AdminUtilsService, AdminSetupService, SecurityService, BackupService, MonitoringService, ConfigService, ComplianceService, ApiManagementService, PerformanceService, AdminDatabaseService, JwtService],
   exports: [AdminService, AdminUtilsService, AdminSetupService, SecurityService, BackupService, MonitoringService, ConfigService, ComplianceService, ApiManagementService, PerformanceService, AdminDatabaseService, DatabaseModule],

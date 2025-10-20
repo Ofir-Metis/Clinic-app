@@ -59,7 +59,7 @@ class WebSocketService {
           return;
         }
 
-        const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:4000';
+        const wsUrl = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL || 'http://localhost:4000';
         
         this.socket = io(`${wsUrl}/recording-status`, {
           auth: {

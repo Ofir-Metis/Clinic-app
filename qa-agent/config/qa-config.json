@@ -1,0 +1,96 @@
+{
+  "application": {
+    "name": "Clinic Management App",
+    "type": "Healthcare/Wellness Platform",
+    "urls": {
+      "development": "http://localhost:5173",
+      "staging": "http://localhost:5174",
+      "production": "https://your-domain.com"
+    },
+    "target_environment": "development"
+  },
+  "testing": {
+    "browsers": [
+      "chromium",
+      "firefox",
+      "webkit"
+    ],
+    "viewports": [
+      {"name": "mobile", "width": 375, "height": 667},
+      {"name": "tablet", "width": 768, "height": 1024},
+      {"name": "desktop", "width": 1920, "height": 1080},
+      {"name": "ultrawide", "width": 3440, "height": 1440}
+    ],
+    "screenshot_quality": 90,
+    "visual_threshold": 0.05,
+    "performance_budget": {
+      "lcp": 2500,
+      "fid": 100,
+      "cls": 0.1
+    }
+  },
+  "qa_scenarios": {
+    "user_personas": [
+      {
+        "name": "first_time_client",
+        "description": "New client registering and booking first appointment",
+        "workflows": ["registration", "profile_setup", "appointment_booking"]
+      },
+      {
+        "name": "returning_coach",
+        "description": "Experienced coach managing multiple clients",
+        "workflows": ["dashboard_navigation", "client_management", "session_notes"]
+      },
+      {
+        "name": "admin_user",
+        "description": "System administrator managing platform",
+        "workflows": ["user_management", "system_settings", "analytics_review"]
+      }
+    ],
+    "exploratory_areas": [
+      "navigation_intuitiveness",
+      "form_usability",
+      "error_handling",
+      "responsive_behavior",
+      "accessibility_compliance"
+    ]
+  },
+  "visual_standards": {
+    "design_system": "Material-UI",
+    "primary_colors": ["#2E7D6B", "#4CAF50", "#81C784"],
+    "typography": {
+      "primary_font": "Inter",
+      "fallback_fonts": ["system-ui", "sans-serif"]
+    },
+    "spacing_unit": 8,
+    "border_radius": 8,
+    "shadow_levels": 3
+  },
+  "enhancement_criteria": {
+    "modern_design_trends": [
+      "glassmorphism",
+      "neumorphism",
+      "micro_interactions",
+      "smooth_animations"
+    ],
+    "healthcare_specific": [
+      "trust_indicators",
+      "empowerment_colors",
+      "accessibility_excellence",
+      "professional_credibility"
+    ],
+    "technical_excellence": [
+      "performance_optimization",
+      "cross_platform_consistency",
+      "progressive_enhancement",
+      "responsive_design"
+    ]
+  },
+  "reporting": {
+    "output_formats": ["html", "json", "pdf"],
+    "include_screenshots": true,
+    "include_recommendations": true,
+    "generate_mockups": true,
+    "performance_metrics": true
+  }
+}

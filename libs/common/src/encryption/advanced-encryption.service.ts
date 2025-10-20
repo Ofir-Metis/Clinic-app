@@ -150,19 +150,23 @@ export class AdvancedEncryptionService {
         'sha512'
       );
 
-      // Perform encryption
-      const cipher = crypto.createCipher(this.config.algorithm, derivedKey);
-      cipher.setAAD(Buffer.from(JSON.stringify({
-        keyId: this.keyManagement.currentKeyId,
-        dataType: context?.dataType || 'generic',
-        userId: context?.userId,
-        timestamp: new Date().toISOString()
-      })));
+      // Perform encryption  
+      const cipher = crypto.createCipheriv(this.config.algorithm, derivedKey.slice(0, 32), iv);
+      
+      // Set AAD only for GCM modes
+      if (this.config.algorithm.includes('gcm')) {
+        (cipher as any).setAAD(Buffer.from(JSON.stringify({
+          keyId: this.keyManagement.currentKeyId,
+          dataType: context?.dataType || 'generic',
+          userId: context?.userId,
+          timestamp: new Date().toISOString()
+        })));
+      }
 
       let encrypted = cipher.update(processedData);
       encrypted = Buffer.concat([encrypted, cipher.final()]);
 
-      const tag = this.config.algorithm.includes('gcm') ? cipher.getAuthTag() : undefined;
+      const tag = this.config.algorithm.includes('gcm') ? (cipher as any).getAuthTag() : undefined;
 
       const result: EncryptedData = {
         data: encrypted.toString('base64'),
@@ -236,7 +240,7 @@ export class AdvancedEncryptionService {
       );
 
       // Perform decryption
-      const decipher = crypto.createDecipher(encryptedData.algorithm as any, derivedKey);
+      const decipher = crypto.createDecipheriv(encryptedData.algorithm as any, derivedKey.slice(0, 32), iv);
       
       if (tag && encryptedData.algorithm.includes('gcm')) {
         decipher.setAuthTag(tag);
@@ -312,9 +316,10 @@ export class AdvancedEncryptionService {
       );
 
       // Create streams
+      const streamIv = crypto.randomBytes(this.config.ivLength);
       const readStream = fs.createReadStream(inputPath, { highWaterMark: chunkSize });
       const writeStream = fs.createWriteStream(outputPath);
-      const cipher = crypto.createCipher(this.config.algorithm, derivedKey);
+      const cipher = crypto.createCipheriv(this.config.algorithm, derivedKey, streamIv);
 
       // Handle streaming encryption
       await new Promise<void>((resolve, reject) => {
@@ -326,7 +331,7 @@ export class AdvancedEncryptionService {
         cipher.on('error', reject);
       });
 
-      const tag = this.config.algorithm.includes('gcm') ? cipher.getAuthTag() : undefined;
+      const tag = this.config.algorithm.includes('gcm') ? (cipher as any).getAuthTag() : undefined;
 
       // Create metadata file
       const metadata: EncryptedData = {
@@ -409,7 +414,7 @@ export class AdvancedEncryptionService {
       const chunkSize = context?.chunkSize || 1024 * 1024;
       const readStream = fs.createReadStream(encryptedPath, { highWaterMark: chunkSize });
       const writeStream = fs.createWriteStream(outputPath);
-      const decipher = crypto.createDecipher(metadata.algorithm as any, derivedKey);
+      const decipher = crypto.createDecipheriv(metadata.algorithm as any, derivedKey, iv);
 
       if (tag && metadata.algorithm.includes('gcm')) {
         decipher.setAuthTag(tag);

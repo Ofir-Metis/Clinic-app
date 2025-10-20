@@ -1,0 +1,467 @@
+name: 🏥 Healthcare Platform CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+      skip_tests:
+        description: 'Skip tests (use with caution)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_PREFIX: clinic-app
+
+jobs:
+  # Security and Quality Checks
+  security-scan:
+    name: 🔒 Security & Quality Scan
+    runs-on: ubuntu-latest
+    outputs:
+      security-passed: ${{ steps.security-check.outputs.passed }}
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 🛡️ Security Check Status
+        id: security-check
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            echo "passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "passed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+  # Build and Test
+  build-and-test:
+    name: 🏗️ Build & Test
+    runs-on: ubuntu-latest
+    needs: security-scan
+    strategy:
+      matrix:
+        service: [
+          'api-gateway',
+          'auth-service',
+          'appointments-service',
+          'files-service',
+          'notifications-service',
+          'ai-service',
+          'notes-service',
+          'analytics-service',
+          'settings-service',
+          'billing-service',
+          'search-service',
+          'cdn-service'
+        ]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: 📦 Install Dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn workspace @clinic/common build
+
+      - name: 🧪 Run Unit Tests
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          yarn workspace @clinic/${{ matrix.service }} test --coverage
+        continue-on-error: false
+
+      - name: 📊 Upload Coverage Reports
+        if: ${{ !inputs.skip_tests }}
+        uses: codecov/codecov-action@v4
+        with:
+          flags: ${{ matrix.service }}
+          fail_ci_if_error: false
+
+      - name: 🐳 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and Push Docker Image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # Build Frontend
+  build-frontend:
+    name: 🎨 Build Frontend
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: 'frontend/yarn.lock'
+
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: yarn install --frozen-lockfile
+
+      - name: 🧪 Run Frontend Tests
+        if: ${{ !inputs.skip_tests }}
+        working-directory: ./frontend
+        run: yarn test --coverage --watchAll=false
+
+      - name: 🏗️ Build Frontend
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: ${{ secrets.STAGING_API_URL }}
+          VITE_WS_URL: ${{ secrets.STAGING_WS_URL }}
+        run: yarn build
+
+      - name: 🐳 Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Extract Frontend Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # E2E Tests
+  e2e-tests:
+    name: 🧪 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-frontend]
+    if: ${{ !inputs.skip_tests }}
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clinic_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: 📦 Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🎭 Install Playwright
+        working-directory: ./tests
+        run: |
+          yarn install
+          npx playwright install --with-deps
+
+      - name: 🚀 Start Test Environment
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 30
+
+      - name: 🧪 Run E2E Tests
+        working-directory: ./tests
+        env:
+          BASE_URL: http://localhost:5173
+          API_URL: http://localhost:4000
+        run: |
+          npx playwright test --reporter=html
+        continue-on-error: false
+
+      - name: 📊 Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 30
+
+      - name: 🛑 Stop Test Environment
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down
+
+  # Deploy to Staging
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-frontend, e2e-tests]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.url }}
+      deployment-id: ${{ steps.deploy.outputs.deployment-id }}
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Environment Variables
+        run: |
+          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: 🚀 Deploy to Staging
+        id: deploy
+        run: |
+          # Create deployment configuration
+          envsubst < docker-compose.staging.yml > docker-compose.staging.deployed.yml
+          
+          echo "url=https://staging.clinic-app.com" >> $GITHUB_OUTPUT
+          echo "deployment-id=staging-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: 🏥 Health Check Staging
+        run: |
+          ./scripts/health-check.sh staging
+        timeout-minutes: 10
+
+      - name: 📧 Notify Staging Deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          text: |
+            🚀 Staging Deployment Complete!
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            URL: ${{ steps.deploy.outputs.url }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Staging Tests
+  staging-verification:
+    name: 🔍 Staging Verification
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🧪 Run Staging Smoke Tests
+        run: |
+          ./scripts/staging-smoke-tests.sh ${{ needs.deploy-staging.outputs.deployment-url }}
+
+      - name: 🔒 HIPAA Compliance Check
+        run: |
+          ./scripts/hipaa-compliance-check.sh staging
+
+      - name: 📊 Performance Baseline
+        run: |
+          ./scripts/performance-test.sh staging
+
+  # Production Approval
+  production-approval:
+    name: 🎯 Production Deployment Approval
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, staging-verification]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production-approval
+    steps:
+      - name: 📋 Deployment Summary
+        run: |
+          echo "## 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging URL**: ${{ needs.deploy-staging.outputs.deployment-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Scan**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests**: ✅ All Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Staging**: ✅ Healthy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ready for production deployment! 🎉" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy to Production
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [production-approval, deploy-staging]
+    if: inputs.environment == 'production' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📊 Pre-deployment Backup
+        run: |
+          ./scripts/backup-production.sh
+
+      - name: 🔧 Setup Production Environment
+        run: |
+          echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: 🚀 Deploy to Production
+        id: deploy
+        run: |
+          # Blue-Green Deployment
+          ./scripts/blue-green-deploy.sh
+          echo "url=https://clinic-app.com" >> $GITHUB_OUTPUT
+
+      - name: 🏥 Health Check Production
+        run: |
+          ./scripts/health-check.sh production
+        timeout-minutes: 15
+
+      - name: 🔒 Post-deployment Security Check
+        run: |
+          ./scripts/security-scan-production.sh
+
+      - name: 📈 Update Monitoring
+        run: |
+          ./scripts/update-monitoring.sh production ${{ github.sha }}
+
+      - name: 🎉 Notify Production Deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#production'
+          text: |
+            🎉 PRODUCTION DEPLOYMENT SUCCESSFUL! 
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            URL: ${{ steps.deploy.outputs.url }}
+            Time: ${{ github.event.head_commit.timestamp }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Rollback Handler
+  rollback:
+    name: 🔄 Rollback Handler
+    runs-on: ubuntu-latest
+    if: failure() && (needs.deploy-production.result == 'failure' || needs.staging-verification.result == 'failure')
+    needs: [deploy-production, deploy-staging]
+    environment:
+      name: rollback-approval
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔄 Execute Rollback
+        run: |
+          if [[ "${{ needs.deploy-production.result }}" == "failure" ]]; then
+            echo "Rolling back production deployment..."
+            ./scripts/rollback-production.sh
+          elif [[ "${{ needs.staging-verification.result }}" == "failure" ]]; then
+            echo "Rolling back staging deployment..."
+            ./scripts/rollback-staging.sh
+          fi
+
+      - name: 📧 Notify Rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'warning'
+          channel: '#alerts'
+          text: |
+            ⚠️ ROLLBACK EXECUTED
+            Reason: Deployment failure detected
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

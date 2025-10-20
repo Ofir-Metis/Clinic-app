@@ -18,7 +18,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Insights as InsightsIcon,
 } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { theme } from '../theme';
 import WellnessLayout from '../layouts/WellnessLayout';
 

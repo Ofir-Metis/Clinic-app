@@ -15,9 +15,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { DashboardService, DashboardConfig, DashboardData } from './dashboard.service';
 import { CustomMetricsService, HealthcareMetrics } from './custom-metrics.service';
-import { JwtAuthGuard } from '@clinic/common/auth';
-import { RolesGuard, Roles } from '@clinic/common/auth';
-import { StructuredLoggerService } from '@clinic/common/logging';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
+import { StructuredLoggerService } from '@clinic/common';
 
 /**
  * Dashboard Controller
@@ -43,7 +42,7 @@ export class DashboardController {
    * Get all available dashboards for the current user
    */
   @Get()
-  @Roles('admin', 'manager', 'therapist')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.THERAPIST)
   @ApiOperation({ 
     summary: 'Get available dashboards',
     description: 'Returns all dashboards accessible by the current user role'
@@ -57,11 +56,7 @@ export class DashboardController {
     try {
       const dashboards = this.dashboardService.getAvailableDashboards(userRole);
       
-      this.structuredLogger.info('Available dashboards retrieved', {
-        operation: 'get_available_dashboards',
-        userRole,
-        dashboardCount: dashboards.length
-      });
+      this.structuredLogger.log('Available dashboards retrieved');
       
       return {
         success: true,
@@ -82,7 +77,7 @@ export class DashboardController {
    * Get specific dashboard configuration
    */
   @Get(':dashboardId/config')
-  @Roles('admin', 'manager')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ 
     summary: 'Get dashboard configuration',
     description: 'Returns the configuration for a specific dashboard'
@@ -126,7 +121,7 @@ export class DashboardController {
    * Get dashboard data with real-time metrics
    */
   @Get(':dashboardId/data')
-  @Roles('admin', 'manager', 'therapist')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.THERAPIST)
   @ApiOperation({ 
     summary: 'Get dashboard data',
     description: 'Returns real-time dashboard data including metrics and alerts'
@@ -154,13 +149,7 @@ export class DashboardController {
         );
       }
       
-      this.structuredLogger.info('Dashboard data retrieved', {
-        operation: 'get_dashboard_data',
-        dashboardId,
-        status: dashboardData.status,
-        alertCount: dashboardData.alerts.length,
-        forceRefresh
-      });
+      this.structuredLogger.log('Dashboard data retrieved');
       
       return {
         success: true,
@@ -185,7 +174,7 @@ export class DashboardController {
    * Get raw healthcare metrics
    */
   @Get('metrics/healthcare')
-  @Roles('admin', 'manager')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ 
     summary: 'Get healthcare metrics',
     description: 'Returns raw healthcare metrics data'
@@ -199,11 +188,7 @@ export class DashboardController {
     try {
       const metrics = await this.customMetricsService.collectHealthcareMetrics();
       
-      this.structuredLogger.info('Healthcare metrics retrieved', {
-        operation: 'get_healthcare_metrics',
-        activeUsers: metrics.activeUsers.total,
-        completedSessions: metrics.sessions.completed
-      });
+      this.structuredLogger.log('Healthcare metrics retrieved');
       
       return {
         success: true,
@@ -224,7 +209,7 @@ export class DashboardController {
    * Get system health status
    */
   @Get('health')
-  @Roles('admin', 'manager', 'therapist')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.THERAPIST)
   @ApiOperation({ 
     summary: 'Get system health',
     description: 'Returns current system health status'
@@ -266,7 +251,7 @@ export class DashboardController {
    * Create custom dashboard
    */
   @Post()
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Create custom dashboard',
     description: 'Creates a new custom monitoring dashboard'
@@ -282,11 +267,7 @@ export class DashboardController {
       
       await this.dashboardService.createCustomDashboard(dashboardConfig);
       
-      this.structuredLogger.info('Custom dashboard created', {
-        operation: 'create_custom_dashboard',
-        dashboardId: dashboardConfig.dashboardId,
-        widgetCount: dashboardConfig.widgets.length
-      });
+      this.structuredLogger.log('Custom dashboard created');
       
       return {
         success: true,
@@ -312,7 +293,7 @@ export class DashboardController {
    * Update dashboard configuration
    */
   @Put(':dashboardId/config')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Update dashboard configuration',
     description: 'Updates the configuration of an existing dashboard'
@@ -328,11 +309,7 @@ export class DashboardController {
     try {
       await this.dashboardService.updateDashboardConfig(dashboardId, updates);
       
-      this.structuredLogger.info('Dashboard configuration updated', {
-        operation: 'update_dashboard_config',
-        dashboardId,
-        updates: Object.keys(updates)
-      });
+      this.structuredLogger.log('Dashboard configuration updated');
       
       return {
         success: true,
@@ -361,7 +338,7 @@ export class DashboardController {
    * Clear dashboard cache
    */
   @Delete(':dashboardId/cache')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Clear dashboard cache',
     description: 'Clears the cache for a specific dashboard to force data refresh'
@@ -394,7 +371,7 @@ export class DashboardController {
    * Get dashboard alerts
    */
   @Get(':dashboardId/alerts')
-  @Roles('admin', 'manager')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ 
     summary: 'Get dashboard alerts',
     description: 'Returns current alerts for a specific dashboard'

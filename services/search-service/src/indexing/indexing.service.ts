@@ -11,10 +11,7 @@ export class IndexingService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.logger.info('Indexing service initialized', {
-      service: 'search-service',
-      component: 'indexing',
-    });
+    this.logger.log('Indexing service initialized - search-service/indexing', 'IndexingService');
   }
 
   /**
@@ -27,18 +24,9 @@ export class IndexingService implements OnModuleInit {
       const document = this.transformClientData(data);
       await this.elasticsearch.indexDocument('clients', data.id, document);
       
-      this.logger.info('Client indexed successfully', {
-        service: 'search-service',
-        component: 'indexing',
-        clientId: data.id,
-      });
+      this.logger.log(`Client indexed successfully: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to index client', {
-        service: 'search-service',
-        component: 'indexing',
-        clientId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index client ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -50,18 +38,9 @@ export class IndexingService implements OnModuleInit {
     try {
       await this.elasticsearch.deleteDocument('clients', data.id);
       
-      this.logger.info('Client removed from index', {
-        service: 'search-service',
-        component: 'indexing',
-        clientId: data.id,
-      });
+      this.logger.log(`Client removed from index: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to remove client from index', {
-        service: 'search-service',
-        component: 'indexing',
-        clientId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to remove client from index ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -75,18 +54,9 @@ export class IndexingService implements OnModuleInit {
       const document = this.transformAppointmentData(data);
       await this.elasticsearch.indexDocument('appointments', data.id, document);
       
-      this.logger.info('Appointment indexed successfully', {
-        service: 'search-service',
-        component: 'indexing',
-        appointmentId: data.id,
-      });
+      this.logger.log(`Appointment indexed successfully: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to index appointment', {
-        service: 'search-service',
-        component: 'indexing',
-        appointmentId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index appointment ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -98,18 +68,9 @@ export class IndexingService implements OnModuleInit {
     try {
       await this.elasticsearch.deleteDocument('appointments', data.id);
       
-      this.logger.info('Appointment removed from index', {
-        service: 'search-service',
-        component: 'indexing',
-        appointmentId: data.id,
-      });
+      this.logger.log(`Appointment removed from index: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to remove appointment from index', {
-        service: 'search-service',
-        component: 'indexing',
-        appointmentId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to remove appointment from index ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -123,18 +84,9 @@ export class IndexingService implements OnModuleInit {
       const document = this.transformSessionNotesData(data);
       await this.elasticsearch.indexDocument('session-notes', data.id, document);
       
-      this.logger.info('Session notes indexed successfully', {
-        service: 'search-service',
-        component: 'indexing',
-        sessionNotesId: data.id,
-      });
+      this.logger.log(`Session notes indexed successfully: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to index session notes', {
-        service: 'search-service',
-        component: 'indexing',
-        sessionNotesId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index session notes ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -146,18 +98,9 @@ export class IndexingService implements OnModuleInit {
     try {
       await this.elasticsearch.deleteDocument('session-notes', data.id);
       
-      this.logger.info('Session notes removed from index', {
-        service: 'search-service',
-        component: 'indexing',
-        sessionNotesId: data.id,
-      });
+      this.logger.log(`Session notes removed from index: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to remove session notes from index', {
-        service: 'search-service',
-        component: 'indexing',
-        sessionNotesId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to remove session notes from index ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -171,18 +114,9 @@ export class IndexingService implements OnModuleInit {
       const document = this.transformFileData(data);
       await this.elasticsearch.indexDocument('files', data.id, document);
       
-      this.logger.info('File indexed successfully', {
-        service: 'search-service',
-        component: 'indexing',
-        fileId: data.id,
-      });
+      this.logger.log(`File indexed successfully: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to index file', {
-        service: 'search-service',
-        component: 'indexing',
-        fileId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index file ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -194,18 +128,9 @@ export class IndexingService implements OnModuleInit {
     try {
       await this.elasticsearch.deleteDocument('files', data.id);
       
-      this.logger.info('File removed from index', {
-        service: 'search-service',
-        component: 'indexing',
-        fileId: data.id,
-      });
+      this.logger.log(`File removed from index: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to remove file from index', {
-        service: 'search-service',
-        component: 'indexing',
-        fileId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to remove file from index ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -219,18 +144,9 @@ export class IndexingService implements OnModuleInit {
       const document = this.transformCoachData(data);
       await this.elasticsearch.indexDocument('coaches', data.id, document);
       
-      this.logger.info('Coach indexed successfully', {
-        service: 'search-service',
-        component: 'indexing',
-        coachId: data.id,
-      });
+      this.logger.log(`Coach indexed successfully: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to index coach', {
-        service: 'search-service',
-        component: 'indexing',
-        coachId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to index coach ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -242,18 +158,9 @@ export class IndexingService implements OnModuleInit {
     try {
       await this.elasticsearch.deleteDocument('coaches', data.id);
       
-      this.logger.info('Coach removed from index', {
-        service: 'search-service',
-        component: 'indexing',
-        coachId: data.id,
-      });
+      this.logger.log(`Coach removed from index: ${data.id}`, 'IndexingService');
     } catch (error) {
-      this.logger.error('Failed to remove coach from index', {
-        service: 'search-service',
-        component: 'indexing',
-        coachId: data.id,
-        error: error.message,
-      });
+      this.logger.error(`Failed to remove coach from index ${data.id}: ${error.message}`, undefined, 'IndexingService');
     }
   }
 
@@ -271,12 +178,7 @@ export class IndexingService implements OnModuleInit {
         return { success: true, message: 'Reindexed all indices' };
       }
     } catch (error) {
-      this.logger.error('Reindex operation failed', {
-        service: 'search-service',
-        component: 'indexing',
-        index: data.index,
-        error: error.message,
-      });
+      this.logger.error(`Reindex operation failed for ${data.index || 'all indices'}: ${error.message}`, undefined, 'IndexingService');
       return { success: false, message: error.message };
     }
   }
@@ -384,11 +286,7 @@ export class IndexingService implements OnModuleInit {
    * Reindex a single index
    */
   private async reindexSingle(index: string): Promise<void> {
-    this.logger.info(`Starting reindex for ${index}`, {
-      service: 'search-service',
-      component: 'indexing',
-      index,
-    });
+    this.logger.log(`Starting reindex for ${index}`, 'IndexingService');
 
     // This would typically involve:
     // 1. Fetching all data from the database

@@ -259,27 +259,27 @@ export class EnhanceAppointmentsSchema1704067300000 implements MigrationInterfac
       }
     }
 
-    // Create indexes for better query performance
-    const indexes = [
-      new Index('IDX_appointments_therapist_id', ['therapist_id']),
-      new Index('IDX_appointments_client_id', ['client_id']),
-      new Index('IDX_appointments_start_time', ['start_time']),
-      new Index('IDX_appointments_status', ['status']),
-      new Index('IDX_appointments_meeting_type', ['meeting_type']),
-      new Index('IDX_appointments_google_event_id', ['google_event_id']),
-      new Index('IDX_appointments_recording_session_id', ['recording_session_id']),
-      new Index('IDX_appointments_created_at', ['created_at']),
-      new Index('IDX_appointments_therapist_start_time', ['therapist_id', 'start_time']),
-      new Index('IDX_appointments_client_start_time', ['client_id', 'start_time']),
-      new Index('IDX_appointments_status_start_time', ['status', 'start_time'])
+    // Create indexes for better query performance using SQL
+    const indexQueries = [
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_therapist_id" ON "appointments" ("therapist_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_client_id" ON "appointments" ("client_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_start_time" ON "appointments" ("start_time")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_status" ON "appointments" ("status")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_meeting_type" ON "appointments" ("meeting_type")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_google_event_id" ON "appointments" ("google_event_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_recording_session_id" ON "appointments" ("recording_session_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_created_at" ON "appointments" ("created_at")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_therapist_start_time" ON "appointments" ("therapist_id", "start_time")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_client_start_time" ON "appointments" ("client_id", "start_time")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_appointments_status_start_time" ON "appointments" ("status", "start_time")`
     ];
 
-    for (const index of indexes) {
+    for (const query of indexQueries) {
       try {
-        await queryRunner.createIndex('appointments', index);
+        await queryRunner.query(query);
       } catch (error) {
         // Index might already exist, continue
-        console.log(`Index ${index.name} might already exist: ${error}`);
+        console.log(`Index creation failed, might already exist: ${error.message}`);
       }
     }
 

@@ -24,26 +24,23 @@ export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed'
 @Index(['processingStatus'])
 export class SessionSummary {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'appointment_id' })
-  @Index()
-  appointmentId: string;
+  appointmentId!: string;
 
   @Column({ name: 'coach_id' })
-  @Index()
-  coachId: string;
+  coachId!: string;
 
   @Column({ name: 'client_id' })
-  @Index()
-  clientId: string;
+  clientId!: string;
 
   @Column({
     type: 'enum',
     enum: ['initial-consultation', 'follow-up', 'goal-setting', 'progress-review', 'breakthrough', 'other'],
     name: 'session_type'
   })
-  sessionType: SessionType;
+  sessionType!: SessionType;
 
   @Column({
     type: 'enum',
@@ -51,40 +48,40 @@ export class SessionSummary {
     default: 'pending',
     name: 'processing_status'
   })
-  processingStatus: ProcessingStatus;
+  processingStatus!: ProcessingStatus;
 
   // Core Summary Data
   @Column('text', { array: true, name: 'key_insights' })
-  keyInsights: string[];
+  keyInsights!: string[];
 
   @Column('text', { array: true, name: 'progress_made' })
-  progressMade: string[];
+  progressMade!: string[];
 
   @Column('text', { array: true, name: 'challenges_discussed' })
-  challengesDiscussed: string[];
+  challengesDiscussed!: string[];
 
   @Column('text', { array: true, name: 'action_items' })
-  actionItems: string[];
+  actionItems!: string[];
 
   @Column('text', { name: 'next_session_focus' })
-  nextSessionFocus: string;
+  nextSessionFocus!: string;
 
   @Column({
     type: 'enum',
     enum: ['positive', 'neutral', 'challenging', 'breakthrough'],
     name: 'emotional_tone'
   })
-  emotionalTone: EmotionalTone;
+  emotionalTone!: EmotionalTone;
 
   @Column({
     type: 'enum',
     enum: ['high', 'medium', 'low'],
     name: 'client_engagement'
   })
-  clientEngagement: ClientEngagement;
+  clientEngagement!: ClientEngagement;
 
   @Column('text', { array: true, name: 'coaching_techniques' })
-  coachingTechniques: string[];
+  coachingTechniques!: string[];
 
   // Optional Fields
   @Column('text', { array: true, nullable: true, name: 'breakthrough_moments' })
@@ -94,10 +91,10 @@ export class SessionSummary {
   homework?: string[];
 
   @Column({ name: 'follow_up_required', default: false })
-  followUpRequired: boolean;
+  followUpRequired!: boolean;
 
   @Column({ name: 'confidence_level', type: 'decimal', precision: 3, scale: 1 })
-  confidenceLevel: number;
+  confidenceLevel!: number;
 
   // Metadata
   @Column('text', { nullable: true, name: 'raw_transcript' })
@@ -126,7 +123,7 @@ export class SessionSummary {
 
   // Coach Review
   @Column({ name: 'reviewed_by_coach', default: false })
-  reviewedByCoach: boolean;
+  reviewedByCoach!: boolean;
 
   @Column('text', { nullable: true, name: 'coach_feedback' })
   coachFeedback?: string;
@@ -139,19 +136,19 @@ export class SessionSummary {
 
   // Client Access
   @Column({ name: 'shared_with_client', default: false })
-  sharedWithClient: boolean;
+  sharedWithClient!: boolean;
 
   @Column({ name: 'client_viewed', default: false })
-  clientViewed: boolean;
+  clientViewed!: boolean;
 
   @Column({ name: 'client_viewed_at', nullable: true })
   clientViewedAt?: Date;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Computed Properties
   get isComplete(): boolean {

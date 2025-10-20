@@ -23,10 +23,7 @@ export class CacheService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async warmupCache(): Promise<void> {
-    this.logger.info('Starting cache warmup', {
-      service: 'cdn-service',
-      component: 'cache',
-    });
+    this.logger.log('Starting cache warmup', 'CacheService');
 
     try {
       // List of frequently accessed assets to warm up
@@ -36,17 +33,9 @@ export class CacheService {
       const warmupPromises = frequentAssets.map(asset => this.warmupAsset(asset));
       await Promise.allSettled(warmupPromises);
 
-      this.logger.info('Cache warmup completed', {
-        service: 'cdn-service',
-        component: 'cache',
-        assetsWarmedUp: frequentAssets.length,
-      });
+      this.logger.log(`Cache warmup completed - assets warmed up: ${frequentAssets.length}`, 'CacheService');
     } catch (error) {
-      this.logger.error('Cache warmup failed', {
-        service: 'cdn-service',
-        component: 'cache',
-        error: error.message,
-      });
+      this.logger.error(`Cache warmup failed: ${error.message}`, undefined, 'CacheService');
     }
   }
 
@@ -54,12 +43,9 @@ export class CacheService {
    * Clean up old cache entries
    * Runs every Sunday at 2 AM
    */
-  @Cron(CronExpression.EVERY_SUNDAY_AT_2AM)
+  @Cron('0 2 * * 0') // Every Sunday at 2 AM
   async cleanupCache(): Promise<void> {
-    this.logger.info('Starting cache cleanup', {
-      service: 'cdn-service',
-      component: 'cache',
-    });
+    this.logger.log('Starting cache cleanup', 'CacheService');
 
     try {
       // Invalidate old or unused assets
@@ -71,17 +57,9 @@ export class CacheService {
         this.cacheStats.lastInvalidation = new Date();
       }
 
-      this.logger.info('Cache cleanup completed', {
-        service: 'cdn-service',
-        component: 'cache',
-        assetsInvalidated: oldAssets.length,
-      });
+      this.logger.log(`Cache cleanup completed - assets invalidated: ${oldAssets.length}`, 'CacheService');
     } catch (error) {
-      this.logger.error('Cache cleanup failed', {
-        service: 'cdn-service',
-        component: 'cache',
-        error: error.message,
-      });
+      this.logger.error(`Cache cleanup failed: ${error.message}`, undefined, 'CacheService');
     }
   }
 
@@ -129,22 +107,11 @@ export class CacheService {
       this.cacheStats.invalidations += paths.length;
       this.cacheStats.lastInvalidation = new Date();
 
-      this.logger.info('Cache invalidated by pattern', {
-        service: 'cdn-service',
-        component: 'cache',
-        pattern,
-        paths,
-        invalidationId,
-      });
+      this.logger.log(`Cache invalidated by pattern: ${pattern}, paths: ${paths.join(', ')}, invalidationId: ${invalidationId}`, 'CacheService');
 
       return invalidationId;
     } catch (error) {
-      this.logger.error('Failed to invalidate cache by pattern', {
-        service: 'cdn-service',
-        component: 'cache',
-        pattern,
-        error: error.message,
-      });
+      this.logger.error(`Failed to invalidate cache by pattern ${pattern}: ${error.message}`, undefined, 'CacheService');
       throw error;
     }
   }
@@ -248,19 +215,9 @@ export class CacheService {
       
       // In a real implementation, you would make an HTTP request here
       // For now, just log the intent
-      this.logger.debug('Warming up asset', {
-        service: 'cdn-service',
-        component: 'cache',
-        assetKey,
-        url,
-      });
+      this.logger.debug(`Warming up asset: ${assetKey} at ${url}`, 'CacheService');
     } catch (error) {
-      this.logger.warn('Failed to warm up asset', {
-        service: 'cdn-service',
-        component: 'cache',
-        assetKey,
-        error: error.message,
-      });
+      this.logger.warn(`Failed to warm up asset ${assetKey}: ${error.message}`, 'CacheService');
     }
   }
 

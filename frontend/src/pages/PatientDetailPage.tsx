@@ -29,7 +29,7 @@ import {
   Visibility as ViewIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import {
   getPatientDetail,

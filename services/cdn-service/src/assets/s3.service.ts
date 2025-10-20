@@ -58,14 +58,7 @@ export class S3Service {
 
       const response = await this.s3Client.send(command);
       
-      this.logger.info('Asset uploaded to S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket,
-        key: options.key,
-        size: buffer.length,
-        contentType,
-      });
+      this.logger.log(`Asset uploaded to S3: ${options.key} (${buffer.length} bytes, bucket: ${bucket})`, 'S3Service');
 
       return {
         key: options.key,
@@ -76,13 +69,7 @@ export class S3Service {
         metadata: options.metadata,
       };
     } catch (error) {
-      this.logger.error('Failed to upload asset to S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket,
-        key: options.key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to upload asset to S3 ${options.key}: ${error.message}`, undefined, 'S3Service');
       throw error;
     }
   }
@@ -121,13 +108,7 @@ export class S3Service {
 
       return { buffer, info };
     } catch (error) {
-      this.logger.error('Failed to get asset from S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket: bucketName,
-        key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to get asset from S3 ${key}: ${error.message}`, undefined, 'S3Service');
       throw error;
     }
   }
@@ -146,20 +127,9 @@ export class S3Service {
 
       await this.s3Client.send(command);
       
-      this.logger.info('Asset deleted from S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket: bucketName,
-        key,
-      });
+      this.logger.log(`Asset deleted from S3: ${key} (bucket: ${bucketName})`, 'S3Service');
     } catch (error) {
-      this.logger.error('Failed to delete asset from S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket: bucketName,
-        key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to delete asset from S3 ${key}: ${error.message}`, undefined, 'S3Service');
       throw error;
     }
   }
@@ -213,13 +183,7 @@ export class S3Service {
         return null;
       }
       
-      this.logger.error('Failed to get asset info from S3', {
-        service: 'cdn-service',
-        component: 's3',
-        bucket: bucketName,
-        key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to get asset info from S3 ${key}: ${error.message}`, undefined, 'S3Service');
       throw error;
     }
   }

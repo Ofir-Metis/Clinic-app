@@ -53,7 +53,7 @@ import {
   Add as AddIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 
 interface SecurityOverview {
   mfaStatus: {

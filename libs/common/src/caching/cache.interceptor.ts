@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { User } from '../auth/types';
 import { Request, Response } from 'express';
 import { CacheManagerService, CacheConfig } from './cache-manager.service';
 import { CentralizedLoggerService } from '../logging/centralized-logger.service';
@@ -175,7 +176,7 @@ export class CacheInterceptor implements NestInterceptor {
       request.path,
       this.serializeQuery(request.query),
       this.serializeHeaders(request.headers, config),
-      request.user?.id || 'anonymous'
+      (request.user as User)?.id || 'anonymous'
     ];
 
     if (config.includeBody && request.body) {
@@ -298,7 +299,7 @@ export class CacheInterceptor implements NestInterceptor {
     return {
       requestId: request.headers['x-request-id'] as string,
       correlationId: request.headers['x-correlation-id'] as string,
-      userId: request.user?.id || request.user?.sub,
+      userId: (request.user as User)?.id || (request.user as User)?.sub,
       sessionId: request.sessionID || request.headers['x-session-id'] as string,
       ipAddress: this.getClientIp(request),
       userAgent: request.get('User-Agent'),

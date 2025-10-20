@@ -69,23 +69,12 @@ export class OptimizationService {
 
       const optimizedBuffer = await transformer.toBuffer();
 
-      this.logger.debug('Image optimized', {
-        service: 'cdn-service',
-        component: 'optimization',
-        originalSize: buffer.length,
-        optimizedSize: optimizedBuffer.length,
-        format: outputFormat,
-        compression: ((buffer.length - optimizedBuffer.length) / buffer.length * 100).toFixed(2) + '%',
-      });
+      const compressionRate = ((buffer.length - optimizedBuffer.length) / buffer.length * 100).toFixed(2);
+      this.logger.debug(`Image optimized: ${buffer.length} -> ${optimizedBuffer.length} bytes (${compressionRate}% compression, format: ${outputFormat})`, 'OptimizationService');
 
       return optimizedBuffer;
     } catch (error) {
-      this.logger.error('Image optimization failed', {
-        service: 'cdn-service',
-        component: 'optimization',
-        error: error.message,
-        options,
-      });
+      this.logger.error(`Image optimization failed: ${error.message}`, undefined, 'OptimizationService');
       
       // Return original buffer if optimization fails
       return buffer;
@@ -111,12 +100,7 @@ export class OptimizationService {
 
         results.push({ width, buffer: optimizedBuffer });
       } catch (error) {
-        this.logger.warn('Failed to generate responsive image', {
-          service: 'cdn-service',
-          component: 'optimization',
-          width,
-          error: error.message,
-        });
+        this.logger.warn(`Failed to generate responsive image at ${width}px: ${error.message}`, 'OptimizationService');
       }
     }
 
@@ -177,11 +161,7 @@ export class OptimizationService {
         colorSpace: metadata.space || 'unknown',
       };
     } catch (error) {
-      this.logger.error('Failed to get image metadata', {
-        service: 'cdn-service',
-        component: 'optimization',
-        error: error.message,
-      });
+      this.logger.error(`Failed to get image metadata: ${error.message}`, undefined, 'OptimizationService');
       
       return {
         width: 0,

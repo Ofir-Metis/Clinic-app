@@ -1,10 +1,8 @@
 import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { DatabaseOptimizationService } from '@clinic/common/database/database-optimization.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { CentralizedLoggerService } from '@clinic/common/logging/centralized-logger.service';
+import { DatabaseOptimizationService, OptimizationReport } from '@clinic/common';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
+import { CentralizedLoggerService } from '@clinic/common';
 
 interface OptimizationAnalysisQuery {
   includeQueryAnalysis?: boolean;
@@ -47,7 +45,7 @@ export class DatabaseOptimizationController {
    * optimization recommendations for production healthcare environments.
    */
   @Get('analysis')
-  @Roles('admin', 'super_admin')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Perform comprehensive database performance analysis',
     description: `
@@ -155,7 +153,7 @@ export class DatabaseOptimizationController {
   })
   async performAnalysis(
     @Query() query: OptimizationAnalysisQuery
-  ) {
+  ): Promise<{ success: boolean; data: OptimizationReport; metadata: any }> {
     try {
       await this.centralizedLogger.auditLog('Database optimization analysis requested', {
         includeQueryAnalysis: query.includeQueryAnalysis,
@@ -199,7 +197,7 @@ export class DatabaseOptimizationController {
    * index creation, removal of unused indexes, and maintenance tasks.
    */
   @Post('optimize')
-  @Roles('super_admin')
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Apply database optimization recommendations',
     description: `
@@ -283,7 +281,7 @@ export class DatabaseOptimizationController {
         dropIndexes: dto.dropIndexes,
         runMaintenance: dto.runMaintenance,
         skipConfirmation: dto.skipConfirmation,
-        recommendationsCount: Object.values(dto.recommendations).reduce((sum, arr) => sum + arr.length, 0),
+        recommendationsCount: Object.values(dto.recommendations).reduce((sum: number, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0),
         service: 'database-optimization-controller'
       });
 
@@ -331,7 +329,7 @@ export class DatabaseOptimizationController {
    * a full analysis. Useful for monitoring dashboards and health checks.
    */
   @Get('health')
-  @Roles('admin', 'super_admin')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Get database health summary',
     description: `

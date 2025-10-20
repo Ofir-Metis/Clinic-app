@@ -38,7 +38,11 @@ const PageAppBar: React.FC<PageAppBarProps> = ({
       <Toolbar sx={{ flexDirection: isRtl ? 'row-reverse' : 'row', gap: 1 }}>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {avatarUrls.map((url, idx) => (
-            <Avatar key={idx} src={url} />
+            <Avatar
+              key={idx}
+              src={url}
+              alt={`User avatar ${idx + 1}`}
+            />
           ))}
         </Box>
         <Typography variant="h6" sx={{ flexGrow: 1, textAlign: 'center' }}>

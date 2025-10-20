@@ -13,10 +13,9 @@ import {
   Logger
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { DataRetentionService, RetentionPolicy, RetentionExecutionResult } from './data-retention.service';
-import { JwtAuthGuard } from '@clinic/common/auth';
-import { RolesGuard, Roles } from '@clinic/common/auth';
-import { StructuredLoggerService } from '@clinic/common/logging';
+import { DataRetentionService, RetentionPolicy, RetentionExecutionResult, DataType } from './data-retention.service';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
+import { StructuredLoggerService } from '@clinic/common';
 
 /**
  * Data Retention Controller
@@ -25,11 +24,13 @@ import { StructuredLoggerService } from '@clinic/common/logging';
  * Supports HIPAA-compliant data lifecycle management with automated cleanup and archival.
  */
 
+// DataType enum imported from service
+
 export class CreateRetentionPolicyDto {
   id: string;
   name: string;
   description: string;
-  dataType: string;
+  dataType: DataType;
   retentionPeriod: number;
   archivalPeriod: number;
   isEnabled: boolean;
@@ -63,7 +64,7 @@ export class DataRetentionController {
    * Get all retention policies
    */
   @Get('policies')
-  @Roles('admin', 'compliance_officer')
+  @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ 
     summary: 'Get all retention policies',
     description: 'Returns all configured data retention policies'
@@ -77,10 +78,7 @@ export class DataRetentionController {
     try {
       const policies = this.dataRetentionService.getRetentionPolicies();
       
-      this.structuredLogger.info('Retention policies retrieved', {
-        operation: 'get_retention_policies',
-        policyCount: policies.length
-      });
+      this.structuredLogger.log('Retention policies retrieved');
       
       return {
         success: true,
@@ -101,7 +99,7 @@ export class DataRetentionController {
    * Get specific retention policy
    */
   @Get('policies/:policyId')
-  @Roles('admin', 'compliance_officer')
+  @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ 
     summary: 'Get retention policy',
     description: 'Returns details of a specific retention policy'
@@ -145,7 +143,7 @@ export class DataRetentionController {
    * Create new retention policy
    */
   @Post('policies')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Create retention policy',
     description: 'Creates a new data retention policy'
@@ -161,12 +159,7 @@ export class DataRetentionController {
       
       await this.dataRetentionService.createRetentionPolicy(createDto);
       
-      this.structuredLogger.info('Retention policy created', {
-        operation: 'create_retention_policy',
-        policyId: createDto.id,
-        dataType: createDto.dataType,
-        retentionPeriod: createDto.retentionPeriod
-      });
+      this.structuredLogger.log('Retention policy created');
       
       return {
         success: true,
@@ -192,7 +185,7 @@ export class DataRetentionController {
    * Update retention policy
    */
   @Put('policies/:policyId')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Update retention policy',
     description: 'Updates an existing retention policy'
@@ -208,11 +201,7 @@ export class DataRetentionController {
     try {
       await this.dataRetentionService.updateRetentionPolicy(policyId, updateDto);
       
-      this.structuredLogger.info('Retention policy updated', {
-        operation: 'update_retention_policy',
-        policyId,
-        updates: Object.keys(updateDto)
-      });
+      this.structuredLogger.log('Retention policy updated');
       
       return {
         success: true,
@@ -241,7 +230,7 @@ export class DataRetentionController {
    * Execute retention policies manually
    */
   @Post('execute')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Execute retention policies',
     description: 'Manually triggers execution of all enabled retention policies'
@@ -253,20 +242,11 @@ export class DataRetentionController {
   })
   async executeRetentionPolicies() {
     try {
-      this.structuredLogger.info('Manual retention policy execution requested', {
-        operation: 'manual_execute_retention_policies'
-      });
+      this.structuredLogger.log('Manual retention policy execution requested');
       
       const results = await this.dataRetentionService.executeRetentionPolicies();
       
-      this.structuredLogger.info('Manual retention policy execution completed', {
-        operation: 'manual_execute_retention_policies_complete',
-        totalPolicies: results.length,
-        successfulPolicies: results.filter(r => r.status === 'success').length,
-        totalProcessed: results.reduce((sum, r) => sum + r.recordsProcessed, 0),
-        totalArchived: results.reduce((sum, r) => sum + r.recordsArchived, 0),
-        totalDeleted: results.reduce((sum, r) => sum + r.recordsDeleted, 0)
-      });
+      this.structuredLogger.log('Manual retention policy execution completed');
       
       return {
         success: true,
@@ -295,7 +275,7 @@ export class DataRetentionController {
    * Execute specific retention policy
    */
   @Post('execute/:policyId')
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ 
     summary: 'Execute specific retention policy',
     description: 'Manually triggers execution of a specific retention policy'
@@ -323,11 +303,7 @@ export class DataRetentionController {
         );
       }
       
-      this.structuredLogger.info('Manual execution of specific retention policy requested', {
-        operation: 'manual_execute_specific_retention_policy',
-        policyId,
-        policyName: policy.name
-      });
+      this.structuredLogger.log('Manual execution of specific retention policy requested');
       
       const result = await this.dataRetentionService.executeSinglePolicy(policy);
       
@@ -354,7 +330,7 @@ export class DataRetentionController {
    * Get retention statistics
    */
   @Get('statistics')
-  @Roles('admin', 'compliance_officer')
+  @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ 
     summary: 'Get retention statistics',
     description: 'Returns statistics about data retention and archival operations'
@@ -387,7 +363,7 @@ export class DataRetentionController {
    * Get compliance status
    */
   @Get('compliance-status')
-  @Roles('admin', 'compliance_officer')
+  @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ 
     summary: 'Get compliance status',
     description: 'Returns HIPAA and regulatory compliance status for data retention'
@@ -438,12 +414,7 @@ export class DataRetentionController {
         }
       });
       
-      this.structuredLogger.info('Compliance status retrieved', {
-        operation: 'get_compliance_status',
-        overallStatus: complianceStatus.overallStatus,
-        hipaaCompliant: complianceStatus.hipaaCompliant,
-        issueCount: complianceStatus.issues.length
-      });
+      this.structuredLogger.log('Compliance status retrieved');
       
       return {
         success: true,
@@ -464,7 +435,7 @@ export class DataRetentionController {
    * Preview retention policy impact
    */
   @Post('policies/:policyId/preview')
-  @Roles('admin', 'compliance_officer')
+  @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ 
     summary: 'Preview retention policy impact',
     description: 'Shows what records would be affected by a retention policy without executing it'
@@ -501,7 +472,7 @@ export class DataRetentionController {
       };
       
       // Add warnings for critical data types
-      if (policy.dataType === 'PATIENT_RECORDS' || policy.dataType === 'SESSION_NOTES') {
+      if (policy.dataType === DataType.PATIENT_RECORDS || policy.dataType === DataType.SESSION_NOTES) {
         preview.warnings.push('This policy affects critical healthcare data - ensure compliance requirements are met');
       }
       
@@ -560,7 +531,7 @@ export class DataRetentionController {
     }
     
     // Validate HIPAA compliance for healthcare data
-    const healthcareDataTypes = ['PATIENT_RECORDS', 'SESSION_NOTES', 'RECORDINGS', 'BILLING_RECORDS'];
+    const healthcareDataTypes = [DataType.PATIENT_RECORDS, DataType.SESSION_NOTES, DataType.RECORDINGS, DataType.BILLING_RECORDS];
     if (healthcareDataTypes.includes(policy.dataType)) {
       if (policy.retentionPeriod < 72) { // Less than 6 years
         throw new HttpException(

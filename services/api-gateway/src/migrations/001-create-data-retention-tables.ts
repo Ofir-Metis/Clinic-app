@@ -181,47 +181,67 @@ export class CreateDataRetentionTables1706000000001 implements MigrationInterfac
       true,
     );
 
-    // Create indexes for retention_policies
-    await queryRunner.createIndex(
-      'retention_policies',
-      new Index('idx_retention_policies_data_type', ['data_type']),
-    );
+    // Create indexes using SQL for compatibility
+    const indexQueries = [
+      `CREATE INDEX IF NOT EXISTS "idx_retention_policies_data_type" ON "retention_policies" ("data_type")`,
+      `CREATE INDEX IF NOT EXISTS "idx_retention_policies_enabled" ON "retention_policies" ("is_enabled")`,
+      `CREATE INDEX IF NOT EXISTS "idx_retention_policies_last_executed" ON "retention_policies" ("last_executed_at")`,
+      `CREATE INDEX IF NOT EXISTS "idx_archived_records_policy_date" ON "archived_records" ("retention_policy_id", "archived_at")`,
+      `CREATE INDEX IF NOT EXISTS "idx_archived_records_original" ON "archived_records" ("original_table", "original_id")`,
+      `CREATE INDEX IF NOT EXISTS "idx_archived_records_archived_at" ON "archived_records" ("archived_at")`,
+      `CREATE INDEX IF NOT EXISTS "idx_archived_records_deletion_scheduled" ON "archived_records" ("deletion_scheduled_at")`,
+      `CREATE INDEX IF NOT EXISTS "idx_archived_records_status" ON "archived_records" ("status")`,
+    ];
+    
+    for (const query of indexQueries) {
+      try {
+        await queryRunner.query(query);
+      } catch (error) {
+        console.log(`Index creation skipped: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    
+    // Legacy approach (commented out)
+    // await queryRunner.createIndex(
+    //   'retention_policies',
+    //   new Index('idx_retention_policies_data_type', ['data_type']),
+    // );
 
-    await queryRunner.createIndex(
-      'retention_policies',
-      new Index('idx_retention_policies_enabled', ['is_enabled']),
-    );
+    // await queryRunner.createIndex(
+    //   'retention_policies',
+    //   new Index('idx_retention_policies_enabled', ['is_enabled']),
+    // );
 
-    await queryRunner.createIndex(
-      'retention_policies',
-      new Index('idx_retention_policies_last_executed', ['last_executed_at']),
-    );
+    // await queryRunner.createIndex(
+    //   'retention_policies',
+    //   new Index('idx_retention_policies_last_executed', ['last_executed_at']),
+    // );
 
     // Create indexes for archived_records
-    await queryRunner.createIndex(
-      'archived_records',
-      new Index('idx_archived_records_policy_date', ['retention_policy_id', 'archived_at']),
-    );
+    // await queryRunner.createIndex(
+    //   'archived_records',
+    //   new Index('idx_archived_records_policy_date', ['retention_policy_id', 'archived_at']),
+    // );
 
-    await queryRunner.createIndex(
-      'archived_records',
-      new Index('idx_archived_records_original', ['original_table', 'original_id']),
-    );
+    // await queryRunner.createIndex(
+    //   'archived_records',
+    //   new Index('idx_archived_records_original', ['original_table', 'original_id']),
+    // );
 
-    await queryRunner.createIndex(
-      'archived_records',
-      new Index('idx_archived_records_archived_at', ['archived_at']),
-    );
+    // await queryRunner.createIndex(
+    //   'archived_records',
+    //   new Index('idx_archived_records_archived_at', ['archived_at']),
+    // );
 
-    await queryRunner.createIndex(
-      'archived_records',
-      new Index('idx_archived_records_deletion_scheduled', ['deletion_scheduled_at']),
-    );
+    // await queryRunner.createIndex(
+    //   'archived_records',
+    //   new Index('idx_archived_records_deletion_scheduled', ['deletion_scheduled_at']),
+    // );
 
-    await queryRunner.createIndex(
-      'archived_records',
-      new Index('idx_archived_records_status', ['status']),
-    );
+    // await queryRunner.createIndex(
+    //   'archived_records',
+    //   new Index('idx_archived_records_status', ['status']),
+    // );
 
     // Add foreign key constraint
     await queryRunner.query(`

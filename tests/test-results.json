@@ -1,0 +1,183 @@
+
+> @clinic/comprehensive-tests@1.0.0 test
+> npx playwright test --reporter=json
+
+🚀 Global test setup starting...
+📁 Created test-results directory
+✅ Docker is running
+🐳 Ensuring infrastructure services are running...
+✅ Infrastructure services are running
+🔧 Building shared library...
+✅ Shared library built successfully
+🔍 Verifying database connectivity...
+⚠️ Database connectivity check failed
+✅ Global test setup completed successfully
+🏁 Global test teardown starting...
+📊 Test artifacts summary:
+  ❌ test-credentials.json (missing)
+  ❌ credentials-report.md (missing)
+  ❌ comprehensive-test-report.json (missing)
+  ❌ playwright-report.json (missing)
+  ❌ junit-report.xml (missing)
+
+📁 All test results saved to: C:\Users\Ofir\Clinic-app\tests\test-results
+✅ Global test teardown completed successfully
+{
+  "config": {
+    "configFile": "C:\\Users\\Ofir\\Clinic-app\\tests\\playwright.config.ts",
+    "rootDir": "C:/Users/Ofir/Clinic-app/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\Ofir\\Clinic-app\\tests\\global-setup.ts",
+    "globalTeardown": "C:\\Users\\Ofir\\Clinic-app\\tests\\global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      },
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      },
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      },
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      },
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      },
+      {
+        "outputDir": "C:/Users/Ofir/Clinic-app/tests/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "iPad",
+        "name": "iPad",
+        "testDir": "C:/Users/Ofir/Clinic-app/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\appointments-service\\src\\appointments\\appointments.service.ts: Decorators cannot be used to decorate parameters. (70:4)\n\n\u001b[0m \u001b[90m 68 |\u001b[39m\n \u001b[90m 69 |\u001b[39m   constructor(\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[33m@\u001b[39m\u001b[33mInjectRepository\u001b[39m(\u001b[33mAppointment\u001b[39m)\n \u001b[90m    |\u001b[39m     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly repo\u001b[33m:\u001b[39m \u001b[33mRepository\u001b[39m\u001b[33m<\u001b[39m\u001b[33mAppointment\u001b[39m\u001b[33m>\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 72 |\u001b[39m   ) {}\n \u001b[90m 73 |\u001b[39m\u001b[0m",
+      "stack": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\appointments-service\\src\\appointments\\appointments.service.ts: Decorators cannot be used to decorate parameters. (70:4)\n\n\u001b[0m \u001b[90m 68 |\u001b[39m\n \u001b[90m 69 |\u001b[39m   constructor(\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[33m@\u001b[39m\u001b[33mInjectRepository\u001b[39m(\u001b[33mAppointment\u001b[39m)\n \u001b[90m    |\u001b[39m     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly repo\u001b[33m:\u001b[39m \u001b[33mRepository\u001b[39m\u001b[33m<\u001b[39m\u001b[33mAppointment\u001b[39m\u001b[33m>\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 72 |\u001b[39m   ) {}\n \u001b[90m 73 |\u001b[39m\u001b[0m\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\services\\appointments-service\\src\\appointments\\appointments.module.ts:4:1)\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\appointments.integration.spec.ts:5:1)",
+      "location": {
+        "file": "C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\appointments.integration.spec.ts",
+        "line": 70,
+        "column": 4
+      },
+      "snippet": "\u001b[90m   at \u001b[39mintegration\\services\\appointments.integration.spec.ts:70\n\n\u001b[0m \u001b[90m 68 |\u001b[39m\n \u001b[90m 69 |\u001b[39m     \u001b[90m// Create test users\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 70 |\u001b[39m     \u001b[36mconst\u001b[39m client \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m integrationTest\u001b[33m.\u001b[39mcreateTestUser(\u001b[32m'client'\u001b[39m\u001b[33m,\u001b[39m {\n \u001b[90m    |\u001b[39m    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 71 |\u001b[39m       email\u001b[33m:\u001b[39m \u001b[32m'client-appointments@example.com'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 72 |\u001b[39m       password\u001b[33m:\u001b[39m \u001b[32m'TestPassword123!'\u001b[39m\n \u001b[90m 73 |\u001b[39m     })\u001b[33m;\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\auth-service\\src\\auth\\auth.service.ts: Decorators cannot be used to decorate parameters. (17:4)\n\n\u001b[0m \u001b[90m 15 |\u001b[39m \u001b[36mexport\u001b[39m \u001b[36mclass\u001b[39m \u001b[33mAuthService\u001b[39m {\n \u001b[90m 16 |\u001b[39m   constructor(\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 17 |\u001b[39m     \u001b[33m@\u001b[39m\u001b[33mInjectRepository\u001b[39m(\u001b[33mUser\u001b[39m)\n \u001b[90m    |\u001b[39m     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 18 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly usersRepository\u001b[33m:\u001b[39m \u001b[33mRepository\u001b[39m\u001b[33m<\u001b[39m\u001b[33mUser\u001b[39m\u001b[33m>\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 19 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly jwtService\u001b[33m:\u001b[39m \u001b[33mJwtService\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 20 |\u001b[39m   ) {}\u001b[0m",
+      "stack": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\auth-service\\src\\auth\\auth.service.ts: Decorators cannot be used to decorate parameters. (17:4)\n\n\u001b[0m \u001b[90m 15 |\u001b[39m \u001b[36mexport\u001b[39m \u001b[36mclass\u001b[39m \u001b[33mAuthService\u001b[39m {\n \u001b[90m 16 |\u001b[39m   constructor(\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 17 |\u001b[39m     \u001b[33m@\u001b[39m\u001b[33mInjectRepository\u001b[39m(\u001b[33mUser\u001b[39m)\n \u001b[90m    |\u001b[39m     \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 18 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly usersRepository\u001b[33m:\u001b[39m \u001b[33mRepository\u001b[39m\u001b[33m<\u001b[39m\u001b[33mUser\u001b[39m\u001b[33m>\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 19 |\u001b[39m     \u001b[36mprivate\u001b[39m readonly jwtService\u001b[33m:\u001b[39m \u001b[33mJwtService\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 20 |\u001b[39m   ) {}\u001b[0m\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\services\\auth-service\\src\\auth\\auth.module.ts:5:1)\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\auth.integration.spec.ts:6:1)",
+      "location": {
+        "file": "C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\auth.integration.spec.ts",
+        "line": 17,
+        "column": 4
+      },
+      "snippet": "\u001b[90m   at \u001b[39mintegration\\services\\auth.integration.spec.ts:17\n\n\u001b[0m \u001b[90m 15 |\u001b[39m         \u001b[90m// Add any auth-specific test configuration\u001b[39m\n \u001b[90m 16 |\u001b[39m       }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 17 |\u001b[39m     })()\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 18 |\u001b[39m\n \u001b[90m 19 |\u001b[39m     \u001b[36mawait\u001b[39m integrationTest\u001b[33m.\u001b[39msetupTest(\u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m 20 |\u001b[39m       \u001b[36mconst\u001b[39m config \u001b[33m=\u001b[39m integrationTest[\u001b[32m'testEnv'\u001b[39m]\u001b[33m.\u001b[39mgetConfig()\u001b[33m;\u001b[39m\u001b[0m"
+    },
+    {
+      "message": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\files-service\\src\\files\\files.controller.ts: Decorators cannot be used to decorate parameters. (9:15)\n\n\u001b[0m \u001b[90m  7 |\u001b[39m\n \u001b[90m  8 |\u001b[39m   \u001b[33m@\u001b[39m\u001b[33mGet\u001b[39m(\u001b[32m'upload-url/:key'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m   getUploadUrl(\u001b[33m@\u001b[39m\u001b[33mParam\u001b[39m(\u001b[32m'key'\u001b[39m) key\u001b[33m:\u001b[39m string) {\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mservice\u001b[33m.\u001b[39muploadUrl(key)\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m   }\n \u001b[90m 12 |\u001b[39m }\u001b[0m",
+      "stack": "SyntaxError: C:\\Users\\Ofir\\Clinic-app\\services\\files-service\\src\\files\\files.controller.ts: Decorators cannot be used to decorate parameters. (9:15)\n\n\u001b[0m \u001b[90m  7 |\u001b[39m\n \u001b[90m  8 |\u001b[39m   \u001b[33m@\u001b[39m\u001b[33mGet\u001b[39m(\u001b[32m'upload-url/:key'\u001b[39m)\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m   getUploadUrl(\u001b[33m@\u001b[39m\u001b[33mParam\u001b[39m(\u001b[32m'key'\u001b[39m) key\u001b[33m:\u001b[39m string) {\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m     \u001b[36mreturn\u001b[39m \u001b[36mthis\u001b[39m\u001b[33m.\u001b[39mservice\u001b[33m.\u001b[39muploadUrl(key)\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m   }\n \u001b[90m 12 |\u001b[39m }\u001b[0m\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\services\\files-service\\src\\files\\files.module.ts:5:1)\n    at Object.<anonymous> (C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\files.integration.spec.ts:5:1)",
+      "location": {
+        "file": "C:\\Users\\Ofir\\Clinic-app\\tests\\integration\\services\\files.integration.spec.ts",
+        "line": 9,
+        "column": 15
+      },
+      "snippet": "\u001b[90m   at \u001b[39mintegration\\services\\files.integration.spec.ts:9\n\n\u001b[0m \u001b[90m  7 |\u001b[39m \u001b[36mimport\u001b[39m \u001b[33m*\u001b[39m \u001b[36mas\u001b[39m path \u001b[36mfrom\u001b[39m \u001b[32m'path'\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m  8 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m  9 |\u001b[39m describe(\u001b[32m'Files Service Integration Tests'\u001b[39m\u001b[33m,\u001b[39m () \u001b[33m=>\u001b[39m {\n \u001b[90m    |\u001b[39m               \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 10 |\u001b[39m   \u001b[36mlet\u001b[39m integrationTest\u001b[33m:\u001b[39m \u001b[33mBaseIntegrationTest\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 11 |\u001b[39m   \u001b[36mlet\u001b[39m clientToken\u001b[33m:\u001b[39m string\u001b[33m;\u001b[39m\n \u001b[90m 12 |\u001b[39m   \u001b[36mlet\u001b[39m coachToken\u001b[33m:\u001b[39m string\u001b[33m;\u001b[39m\u001b[0m"
+    }
+  ],
+  "stats": {
+    "startTime": "2025-09-18T17:44:53.915Z",
+    "duration": 594542.541,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

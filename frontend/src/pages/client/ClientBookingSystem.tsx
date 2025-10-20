@@ -548,7 +548,11 @@ const ClientBookingSystem: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar sx={{ mr: 2 }} src={appointment.coachImage}>
+                  <Avatar
+                    sx={{ mr: 2 }}
+                    src={appointment.coachImage}
+                    alt={`${appointment.coachName} profile picture`}
+                  >
                     {appointment.coachName.split(' ').map(n => n[0]).join('')}
                   </Avatar>
                   <Box>

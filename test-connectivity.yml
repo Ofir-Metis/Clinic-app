@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres  
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - test-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.production
+    ports:
+      - "5173:80"
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

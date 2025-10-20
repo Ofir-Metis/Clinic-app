@@ -25,10 +25,27 @@ export class ResetService {
       : undefined,
   });
 
-  private twilio = new Twilio(
-    process.env.TWILIO_ACCOUNT_SID || '',
-    process.env.TWILIO_AUTH_TOKEN || '',
-  );
+  private twilio?: Twilio;
+
+  private getTwilioClient(): Twilio | null {
+    if (this.twilio) return this.twilio;
+    
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    
+    if (!accountSid || !authToken || accountSid.includes('placeholder') || authToken.includes('placeholder')) {
+      this.logger.warn('Twilio credentials not configured - SMS functionality disabled');
+      return null;
+    }
+    
+    try {
+      this.twilio = new Twilio(accountSid, authToken);
+      return this.twilio;
+    } catch (error) {
+      this.logger.error('Failed to initialize Twilio client', error);
+      return null;
+    }
+  }
 
   constructor(
     @InjectRepository(ResetToken) private readonly tokenRepo: Repository<ResetToken>,
@@ -57,11 +74,21 @@ export class ResetService {
     });
     const phone = (user as any).phone;
     if (phone) {
-      await this.twilio.messages.create({
-        to: phone,
-        from: process.env.WHATSAPP_FROM || '',
-        body: `Reset your password: ${url}`,
-      });
+      const twilioClient = this.getTwilioClient();
+      if (twilioClient) {
+        try {
+          await twilioClient.messages.create({
+            to: phone,
+            from: process.env.WHATSAPP_FROM || '',
+            body: `Reset your password: ${url}`,
+          });
+          this.logger.log(`SMS reset notification sent to ${phone}`);
+        } catch (error) {
+          this.logger.error(`Failed to send SMS reset notification: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      } else {
+        this.logger.warn('SMS notification skipped - Twilio not configured');
+      }
     }
     return raw;
   }

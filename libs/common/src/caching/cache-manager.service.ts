@@ -561,7 +561,7 @@ export class CacheManagerService implements OnModuleInit, OnModuleDestroy {
       await this.redis.del(testKey);
       
       const latency = Date.now() - start;
-      const memoryInfo = await this.redis.memory('usage', 'test-key');
+      const memoryInfo = await this.redis.memory('USAGE', 'test-key');
       
       const status = latency > 1000 ? 'degraded' : 'healthy';
       
@@ -621,7 +621,7 @@ export class CacheManagerService implements OnModuleInit, OnModuleDestroy {
     
     // Simple encryption implementation (in production, use stronger encryption)
     const crypto = require('crypto');
-    const cipher = crypto.createCipher('aes-256-cbc', this.encryptionKey);
+    const cipher = crypto.createCipheriv('aes-256-cbc', this.encryptionKey);
     let encrypted = cipher.update(serialized, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     
@@ -635,7 +635,7 @@ export class CacheManagerService implements OnModuleInit, OnModuleDestroy {
     
     try {
       const crypto = require('crypto');
-      const decipher = crypto.createDecipher('aes-256-cbc', this.encryptionKey);
+      const decipher = crypto.createDecipheriv('aes-256-cbc', this.encryptionKey);
       let decrypted = decipher.update(value, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
       

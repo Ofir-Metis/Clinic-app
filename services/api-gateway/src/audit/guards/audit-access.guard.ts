@@ -34,7 +34,7 @@ export class AuditAccessGuard implements CanActivate {
         AuditSeverity.HIGH,
         {
           attemptedResource: 'audit_trail',
-          userRole: user.role,
+          userRole: (user as any).role,
           deniedReason: 'insufficient_permissions',
         },
       );
@@ -52,7 +52,7 @@ export class AuditAccessGuard implements CanActivate {
         {
           attemptedResource: 'patient_audit_log',
           patientId,
-          userRole: user.role,
+          userRole: (user as any).role,
           deniedReason: 'no_patient_access',
         },
       );
@@ -62,7 +62,7 @@ export class AuditAccessGuard implements CanActivate {
 
     // Log successful audit access
     await this.auditTrailService.logAdministrativeAction(
-      user.id,
+      (user as any).id,
       AuditEventType.AUDIT_LOG_ACCESSED,
       request,
       undefined,

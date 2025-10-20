@@ -1,0 +1,261 @@
+version: '3.8'
+
+# Enhanced Healthcare Platform Services
+# Additional services for advanced functionality
+# Usage: docker-compose -f docker-compose.core.yml -f docker-compose.enhanced.yml up -d
+
+services:
+  # Enhanced Infrastructure
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - clinic-network
+
+  # Advanced Application Services
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3005
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3007
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: services/billing-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3009
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      TRANZILLA_TERMINAL: ${TRANZILLA_TERMINAL}
+      TRANZILLA_USERNAME: ${TRANZILLA_USERNAME}
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    depends_on:
+      - postgres
+      - nats
+      - elasticsearch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  cdn-service:
+    build:
+      context: .
+      dockerfile: services/cdn-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      CDN_PORT: 3011
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      CDN_S3_BUCKET: ${CDN_S3_BUCKET:-clinic-cdn-assets}
+      CLOUDFRONT_DISTRIBUTION_ID: ${CLOUDFRONT_DISTRIBUTION_ID}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}
+    ports:
+      - "3011:3011"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  google-integration-service:
+    build:
+      context: .
+      dockerfile: services/google-integration-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3012
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+    ports:
+      - "3012:3012"
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  therapists-service:
+    build:
+      context: .
+      dockerfile: services/therapists-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3013
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3013:3013"
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3013/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  client-relationships-service:
+    build:
+      context: .
+      dockerfile: services/client-relationships-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3014
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3014:3014"
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3014/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+  progress-service:
+    build:
+      context: .
+      dockerfile: services/progress-service/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3015
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3015:3015"
+    depends_on:
+      - postgres
+      - nats
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3015/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - clinic-network
+
+volumes:
+  elasticsearch_data:
+
+networks:
+  clinic-network:
+    external: true

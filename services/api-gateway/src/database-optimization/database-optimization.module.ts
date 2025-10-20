@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { DatabaseOptimizationModule as CommonDatabaseOptimizationModule } from '@clinic/common/database/database-optimization.module';
-import { CentralizedLoggerModule } from '@clinic/common/logging/centralized-logger.module';
+import { DatabaseOptimizationModule as CommonDatabaseOptimizationModule } from '@clinic/common';
+import { CentralizedLoggerModule } from '@clinic/common';
 import { DatabaseOptimizationController } from './database-optimization.controller';
 
 /**

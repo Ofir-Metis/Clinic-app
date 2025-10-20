@@ -8,7 +8,7 @@ export const fetchAppointments = () => {
   const traceId = uuidv4();
   console.info({ traceId, action: 'fetchAppointments', payload: null });
   return api
-    .get('/dashboard/appointments', { headers: { 'X-Trace-Id': traceId } })
+    .get('/dashboard/appointments')
     .then((res) => res.data);
 };
 
@@ -16,7 +16,7 @@ export const fetchNotes = () => {
   const traceId = uuidv4();
   console.info({ traceId, action: 'fetchNotes', payload: null });
   return api
-    .get('/dashboard/notes', { headers: { 'X-Trace-Id': traceId } })
+    .get('/dashboard/notes')
     .then((res) => res.data);
 };
 
@@ -24,6 +24,6 @@ export const fetchStats = () => {
   const traceId = uuidv4();
   console.info({ traceId, action: 'fetchStats', payload: null });
   return api
-    .get('/dashboard/stats', { headers: { 'X-Trace-Id': traceId } })
+    .get('/dashboard/stats')
     .then((res) => res.data);
 };

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CustomMetricsService, HealthcareMetrics } from './custom-metrics.service';
-import { StructuredLoggerService } from '@clinic/common/logging';
+import { StructuredLoggerService } from '@clinic/common';
 
 /**
  * Dashboard Service
@@ -341,21 +341,12 @@ export class DashboardService {
       // Cache the data
       this.cachedData.set(dashboardId, dashboardData);
       
-      this.structuredLogger.info('Dashboard data generated', {
-        operation: 'get_dashboard_data',
-        dashboardId,
-        alertCount: alerts.length,
-        status
-      });
+      this.structuredLogger.log('Dashboard data generated');
       
       return dashboardData;
       
     } catch (error) {
-      this.structuredLogger.error('Failed to generate dashboard data', {
-        operation: 'get_dashboard_data',
-        dashboardId,
-        error: error.message
-      });
+      this.structuredLogger.log('Failed to generate dashboard data');
       throw error;
     }
   }
@@ -495,11 +486,7 @@ export class DashboardService {
   async createCustomDashboard(config: DashboardConfig): Promise<void> {
     this.dashboards.set(config.dashboardId, config);
     
-    this.structuredLogger.info('Custom dashboard created', {
-      operation: 'create_custom_dashboard',
-      dashboardId: config.dashboardId,
-      widgetCount: config.widgets.length
-    });
+    this.structuredLogger.log('Custom dashboard created');
   }
   
   /**
@@ -517,11 +504,7 @@ export class DashboardService {
     // Clear cached data to force refresh
     this.cachedData.delete(dashboardId);
     
-    this.structuredLogger.info('Dashboard configuration updated', {
-      operation: 'update_dashboard_config',
-      dashboardId,
-      updates: Object.keys(updates)
-    });
+    this.structuredLogger.log('Dashboard configuration updated');
   }
   
   /**

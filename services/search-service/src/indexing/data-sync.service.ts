@@ -14,10 +14,7 @@ export class DataSyncService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    this.logger.info('Data sync service initialized', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Data sync service initialized - search-service/data-sync', 'DataSyncService');
   }
 
   /**
@@ -26,10 +23,7 @@ export class DataSyncService implements OnModuleInit {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async syncAllData(): Promise<void> {
-    this.logger.info('Starting full data sync', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Starting full data sync', 'DataSyncService');
 
     try {
       await Promise.all([
@@ -40,16 +34,9 @@ export class DataSyncService implements OnModuleInit {
         this.syncCoaches(),
       ]);
 
-      this.logger.info('Full data sync completed successfully', {
-        service: 'search-service',
-        component: 'data-sync',
-      });
+      this.logger.log('Full data sync completed successfully', 'DataSyncService');
     } catch (error) {
-      this.logger.error('Full data sync failed', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Full data sync failed: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -57,15 +44,11 @@ export class DataSyncService implements OnModuleInit {
    * Sync incremental changes
    * Runs every 15 minutes
    */
-  @Cron(CronExpression.EVERY_15_MINUTES)
+  @Cron('*/15 * * * *')
   async syncIncrementalChanges(): Promise<void> {
     const since = new Date(Date.now() - 15 * 60 * 1000); // 15 minutes ago
     
-    this.logger.debug('Starting incremental data sync', {
-      service: 'search-service',
-      component: 'data-sync',
-      since: since.toISOString(),
-    });
+    this.logger.log(`Starting incremental data sync since ${since.toISOString()}`, 'DataSyncService');
 
     try {
       await Promise.all([
@@ -76,16 +59,9 @@ export class DataSyncService implements OnModuleInit {
         this.syncCoachesIncremental(since),
       ]);
 
-      this.logger.debug('Incremental data sync completed', {
-        service: 'search-service',
-        component: 'data-sync',
-      });
+      this.logger.log('Incremental data sync completed', 'DataSyncService');
     } catch (error) {
-      this.logger.error('Incremental data sync failed', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Incremental data sync failed: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -122,17 +98,9 @@ export class DataSyncService implements OnModuleInit {
         await this.elasticsearch.bulkIndex('clients', documents);
       }
 
-      this.logger.info(`Synced ${documents.length} clients`, {
-        service: 'search-service',
-        component: 'data-sync',
-        count: documents.length,
-      });
+      this.logger.log(`Synced ${documents.length} clients`, 'DataSyncService');
     } catch (error) {
-      this.logger.error('Failed to sync clients', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync clients: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -170,18 +138,10 @@ export class DataSyncService implements OnModuleInit {
 
         await this.elasticsearch.bulkIndex('clients', documents);
         
-        this.logger.debug(`Synced ${documents.length} updated clients`, {
-          service: 'search-service',
-          component: 'data-sync',
-          count: documents.length,
-        });
+        this.logger.log(`Synced ${documents.length} updated clients`, 'DataSyncService');
       }
     } catch (error) {
-      this.logger.error('Failed to sync clients incrementally', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync clients incrementally: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -219,17 +179,9 @@ export class DataSyncService implements OnModuleInit {
         await this.elasticsearch.bulkIndex('appointments', documents);
       }
 
-      this.logger.info(`Synced ${documents.length} appointments`, {
-        service: 'search-service',
-        component: 'data-sync',
-        count: documents.length,
-      });
+      this.logger.log(`Synced ${documents.length} appointments`, 'DataSyncService');
     } catch (error) {
-      this.logger.error('Failed to sync appointments', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync appointments: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -267,18 +219,10 @@ export class DataSyncService implements OnModuleInit {
 
         await this.elasticsearch.bulkIndex('appointments', documents);
         
-        this.logger.debug(`Synced ${documents.length} updated appointments`, {
-          service: 'search-service',
-          component: 'data-sync',
-          count: documents.length,
-        });
+        this.logger.log(`Synced ${documents.length} updated appointments`, 'DataSyncService');
       }
     } catch (error) {
-      this.logger.error('Failed to sync appointments incrementally', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync appointments incrementally: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -287,18 +231,12 @@ export class DataSyncService implements OnModuleInit {
    */
   private async syncSessionNotes(): Promise<void> {
     // Implementation depends on actual session notes table structure
-    this.logger.debug('Session notes sync placeholder', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Session notes sync placeholder', 'DataSyncService');
   }
 
   private async syncSessionNotesIncremental(since: Date): Promise<void> {
     // Implementation depends on actual session notes table structure
-    this.logger.debug('Session notes incremental sync placeholder', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Session notes incremental sync placeholder', 'DataSyncService');
   }
 
   /**
@@ -306,18 +244,12 @@ export class DataSyncService implements OnModuleInit {
    */
   private async syncFiles(): Promise<void> {
     // Implementation depends on actual files table structure
-    this.logger.debug('Files sync placeholder', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Files sync placeholder', 'DataSyncService');
   }
 
   private async syncFilesIncremental(since: Date): Promise<void> {
     // Implementation depends on actual files table structure
-    this.logger.debug('Files incremental sync placeholder', {
-      service: 'search-service',
-      component: 'data-sync',
-    });
+    this.logger.log('Files incremental sync placeholder', 'DataSyncService');
   }
 
   /**
@@ -353,17 +285,9 @@ export class DataSyncService implements OnModuleInit {
         await this.elasticsearch.bulkIndex('coaches', documents);
       }
 
-      this.logger.info(`Synced ${documents.length} coaches`, {
-        service: 'search-service',
-        component: 'data-sync',
-        count: documents.length,
-      });
+      this.logger.log(`Synced ${documents.length} coaches`, 'DataSyncService');
     } catch (error) {
-      this.logger.error('Failed to sync coaches', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync coaches: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 
@@ -398,18 +322,10 @@ export class DataSyncService implements OnModuleInit {
 
         await this.elasticsearch.bulkIndex('coaches', documents);
         
-        this.logger.debug(`Synced ${documents.length} updated coaches`, {
-          service: 'search-service',
-          component: 'data-sync',
-          count: documents.length,
-        });
+        this.logger.log(`Synced ${documents.length} updated coaches`, 'DataSyncService');
       }
     } catch (error) {
-      this.logger.error('Failed to sync coaches incrementally', {
-        service: 'search-service',
-        component: 'data-sync',
-        error: error.message,
-      });
+      this.logger.error(`Failed to sync coaches incrementally: ${error.message}`, undefined, 'DataSyncService');
     }
   }
 }

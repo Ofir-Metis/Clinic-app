@@ -4,9 +4,10 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CommonModule } from '@clinic/common';
 
 // Entity imports
 import { Client } from './entities/client.entity';
@@ -35,41 +36,10 @@ import { AchievementController } from './controllers/achievement.controller';
 
 @Module({
   imports: [
-    // Configuration
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
-    }),
+    // Enterprise CommonModule provides centralized config, logging, database, and security
+    CommonModule,
 
-    // Database Configuration
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 5432),
-        username: configService.get('DB_USERNAME', 'postgres'),
-        password: configService.get('DB_PASSWORD', 'password'),
-        database: configService.get('DB_NAME', 'clinic'),
-        entities: [
-          Client,
-          Coach,
-          ClientCoachRelationship,
-          RelationshipPermission,
-          SharedGoal,
-          Goal,
-          Achievement
-        ],
-        synchronize: configService.get('NODE_ENV') !== 'production',
-        logging: configService.get('NODE_ENV') === 'development',
-        ssl: configService.get('NODE_ENV') === 'production' ? {
-          rejectUnauthorized: false
-        } : false,
-      }),
-      inject: [ConfigService],
-    }),
-
-    // TypeORM Feature Modules
+    // Client Relationships specific entities via forFeature
     TypeOrmModule.forFeature([
       Client,
       Coach,
@@ -80,11 +50,10 @@ import { AchievementController } from './controllers/achievement.controller';
       Achievement
     ]),
 
-    // NATS Microservice Configuration
+    // NATS Microservice Configuration - uses ConfigService from CommonModule
     ClientsModule.registerAsync([
       {
         name: 'NATS_SERVICE',
-        imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.NATS,
           options: {
@@ -96,11 +65,10 @@ import { AchievementController } from './controllers/achievement.controller';
       },
     ]),
 
-    // External Service Connections
+    // External Service Connections - uses ConfigService from CommonModule
     ClientsModule.registerAsync([
       {
         name: 'AUTH_SERVICE',
-        imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.NATS,
           options: {
@@ -112,7 +80,6 @@ import { AchievementController } from './controllers/achievement.controller';
       },
       {
         name: 'NOTIFICATIONS_SERVICE',
-        imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.NATS,
           options: {
@@ -124,7 +91,6 @@ import { AchievementController } from './controllers/achievement.controller';
       },
       {
         name: 'APPOINTMENTS_SERVICE',
-        imports: [ConfigModule],
         useFactory: (configService: ConfigService) => ({
           transport: Transport.NATS,
           options: {

@@ -37,6 +37,7 @@ export interface PHIDataClassification {
 export interface HIPAAViolation {
   violationId: string;
   ruleId: string;
+  category: 'administrative' | 'physical' | 'technical';
   severity: 'minor' | 'major' | 'critical';
   description: string;
   detectedAt: Date;
@@ -425,6 +426,7 @@ export class HIPAAComplianceService {
     const violation: HIPAAViolation = {
       violationId,
       ruleId,
+      category: rule.category,
       severity,
       description,
       detectedAt: new Date(),
@@ -508,7 +510,7 @@ export class HIPAAComplianceService {
       // Log PHI access
       if (classification.auditRequired) {
         this.centralizedLogger.auditLog('PHI data accessed', {
-          dataType,
+          dataType: classification.classification as 'system' | 'phi' | 'pii' | 'general',
           userId,
           classification: classification.classification,
           encryptionRequired: classification.encryptionRequired,

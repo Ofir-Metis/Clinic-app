@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, HttpException, HttpStatus, Headers } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Throttle } from '@nestjs/throttler';
 import { firstValueFrom } from 'rxjs';
@@ -30,6 +30,42 @@ export class AuthController {
       return response.data;
     } catch (error) {
       throw new HttpException(error.response?.data || 'Auth service error', error.response?.status || HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  @Get('user-info')
+  @Throttle({ default: { ttl: 60000, limit: 30 } }) // 30 requests per minute
+  async getUserInfo(@Query('email') email: string) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`http://auth-service:3000/auth/user-info?email=${encodeURIComponent(email)}`, { withCredentials: true })
+      );
+      return response.data;
+    } catch (error) {
+      throw new HttpException(error.response?.data || 'Auth service error', error.response?.status || HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  @Get('verify')
+  @Throttle({ default: { ttl: 60000, limit: 60 } }) // 60 requests per minute
+  async verifyToken(@Headers('authorization') authorization: string) {
+    if (!authorization) {
+      throw new HttpException('Authorization header required', HttpStatus.UNAUTHORIZED);
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get('http://auth-service:3000/auth/verify', {
+          headers: { authorization },
+          withCredentials: true
+        })
+      );
+      return response.data;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Token verification failed',
+        error.response?.status || HttpStatus.UNAUTHORIZED
+      );
     }
   }
 } 

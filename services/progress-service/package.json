@@ -1,0 +1,37 @@
+{
+  "name": "@clinic/progress-service",
+  "version": "1.0.0",
+  "description": "Progress tracking and goal management service",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/src/main",
+    "start:dev": "ts-node src/main.ts",
+    "start:prod": "node dist/src/main"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/typeorm": "^10.0.0",
+    "@nestjs/microservices": "^10.0.0",
+    "@nestjs/passport": "^10.0.0",
+    "@nestjs/jwt": "^10.0.0",
+    "nats": "^2.15.1",
+    "typeorm": "^0.3.17",
+    "pg": "^8.11.0",
+    "@clinic/common": "*",
+    "reflect-metadata": "^0.1.13",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "@types/passport-jwt": "^3.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "@types/passport": "^1.0.12",
+    "typescript": "^5.1.3",
+    "ts-node": "^10.9.1"
+  }
+}

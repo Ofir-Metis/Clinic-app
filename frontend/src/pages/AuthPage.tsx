@@ -27,7 +27,7 @@ import {
   Psychology as PsychologyIcon,
 } from '@mui/icons-material';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
 import { GOOGLE_CLIENT_ID } from '../env';

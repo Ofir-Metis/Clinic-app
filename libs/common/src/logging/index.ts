@@ -8,6 +8,7 @@ export type { LogContext, LogEntry, LogLevel } from './structured-logger.service
 
 // New centralized logging system
 export { CentralizedLoggerService } from './centralized-logger.service';
+export { CentralizedLoggerModule } from './centralized-logger.module';
 export { LoggingModule } from './logging.module';
 export { LoggingInterceptor } from './logging.interceptor';
 export { LoggingMiddleware } from './logging.middleware';

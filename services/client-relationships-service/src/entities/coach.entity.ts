@@ -32,7 +32,7 @@ export enum VerificationStatus {
 @Entity('coaches')
 @Index(['email'], { unique: true })
 @Index(['status'])
-@Index(['specializations'], { using: 'gin' })
+@Index(['specializations'])
 export class Coach {
   @PrimaryGeneratedColumn('uuid')
   id: string;

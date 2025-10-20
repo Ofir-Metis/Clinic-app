@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { getTherapistProfile, updateTherapistProfile, TherapistProfile } from '../api/therapist';
@@ -62,7 +62,11 @@ const TherapistProfilePage: React.FC<{ id: number }> = ({ id }) => {
       <Box sx={{ p: 2 }}>
         <Grid container spacing={2} direction="column">
           <Grid item sx={{ display: 'flex', alignItems: 'center' }}>
-            <Avatar src={profile.media[0]} sx={{ width: 80, height: 80, mr: 2 }} />
+            <Avatar
+              src={profile.media[0]}
+              sx={{ width: 80, height: 80, mr: 2 }}
+              alt={`${profile.firstName} ${profile.lastName} profile picture`}
+            />
             <Box sx={{ flexGrow: 1 }}>
               {edit ? (
                 <input

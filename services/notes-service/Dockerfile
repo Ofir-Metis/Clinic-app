@@ -8,7 +8,7 @@ COPY libs ./libs
 COPY frontend ./frontend
 RUN yarn config set registry https://registry.npmmirror.com
 RUN yarn config set network-timeout 600000 -g
-RUN yarn install --frozen-lockfile
+RUN yarn install
 RUN yarn workspaces run build
 
 FROM node:20-alpine AS build

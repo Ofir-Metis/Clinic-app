@@ -110,7 +110,7 @@ export class GoalCategory {
       title: customizations?.title || this.template.defaultTitle,
       description: customizations?.description || this.template.descriptionTemplate,
       type: this.goalType,
-      measurementType: this.template.suggestedMeasurement
+      measurementType: this.template.suggestedMeasurementType
 
 ,
       categoryId: this.id,

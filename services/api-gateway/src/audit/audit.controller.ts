@@ -15,15 +15,12 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtAuthGuard, RolesGuard, Roles, CurrentUser } from '@clinic/common';
 import { AuditTrailService } from './audit-trail.service';
 import { CreateAuditEventDto } from './dto/create-audit-event.dto';
 import { AuditSearchDto } from './dto/audit-search.dto';
 import { AuditEvent } from './entities/audit-event.entity';
-import { UserRole } from '../auth/enums/user-role.enum';
+import { UserRole } from '@clinic/common';
 
 @ApiTags('Audit Trail')
 @ApiBearerAuth()

@@ -180,12 +180,12 @@ const SettingsPage: React.FC = () => {
               scrollButtons="auto"
               sx={{
                 '& .MuiTab-root': {
-                  minHeight: 80,
+                  minHeight: { xs: 88, sm: 80 }, // Enhanced mobile touch targets
                   justifyContent: 'flex-start',
                   alignItems: 'flex-start',
                   textAlign: 'left',
-                  px: 3,
-                  py: 2,
+                  px: { xs: 2, sm: 3 }, // Better mobile padding
+                  py: { xs: 2.5, sm: 2 }, // More vertical space on mobile
                   borderRadius: 2,
                   margin: 1,
                   transition: 'all 0.3s ease',
@@ -219,25 +219,29 @@ const SettingsPage: React.FC = () => {
                       }}>
                         {category.icon}
                       </Avatar>
-                      <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }}>
-                        <Typography 
-                          variant="subtitle1" 
-                          sx={{ 
+                      <Box sx={{ flex: 1, display: 'block' }}>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{
                             fontWeight: tab === index ? 600 : 500,
-                            mb: 0.5,
-                            color: tab === index ? 'primary.main' : 'text.primary'
+                            mb: { xs: 0, sm: 0.5 }, // Reduce margin on mobile
+                            color: tab === index ? 'primary.main' : 'text.primary',
+                            fontSize: { xs: '0.875rem', sm: '1rem' }, // Mobile-optimized sizing
+                            lineHeight: { xs: 1.3, sm: 1.5 }
                           }}
                         >
                           {category.title}
                         </Typography>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
+                        <Typography
+                          variant="caption"
+                          sx={{
                             color: 'text.secondary',
-                            display: '-webkit-box',
+                            display: { xs: 'none', sm: '-webkit-box' }, // Hide descriptions on mobile for cleaner UI
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            lineHeight: 1.2
                           }}
                         >
                           {category.description}
@@ -403,57 +407,81 @@ const SettingsPage: React.FC = () => {
                         {t.settings.theme.title}
                       </Typography>
                       
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} sm={4}>
-                          <Card sx={{ 
+                      <Grid container spacing={{ xs: 2, sm: 3 }}>
+                        <Grid item xs={12} sm={6} md={4}>
+                          <Card sx={{
                             cursor: 'pointer',
                             textAlign: 'center',
-                            p: 3,
+                            p: { xs: 2.5, sm: 3 }, // Better mobile padding
+                            minHeight: { xs: 120, sm: 140 }, // Consistent mobile height
                             border: `2px solid ${theme.palette.divider}`,
+                            borderRadius: 3,
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             '&:hover': {
                               borderColor: 'primary.main',
-                              transform: 'translateY(-2px)'
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+                            },
+                            '&:active': { // Better mobile feedback
+                              transform: 'translateY(0px)',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.1)}`
                             }
                           }}>
-                            <Typography variant="h4" sx={{ mb: 2 }}>☀️</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="h3" sx={{ mb: { xs: 1, sm: 2 }, fontSize: { xs: '2rem', sm: '2.5rem' } }}>☀️</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' } }}>
                               {t.settings.theme.light}
                             </Typography>
                           </Card>
                         </Grid>
-                        
-                        <Grid item xs={12} sm={4}>
-                          <Card sx={{ 
+
+                        <Grid item xs={12} sm={6} md={4}>
+                          <Card sx={{
                             cursor: 'pointer',
                             textAlign: 'center',
-                            p: 3,
+                            p: { xs: 2.5, sm: 3 }, // Better mobile padding
+                            minHeight: { xs: 120, sm: 140 }, // Consistent mobile height
                             border: `2px solid ${theme.palette.divider}`,
+                            borderRadius: 3,
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             '&:hover': {
                               borderColor: 'primary.main',
-                              transform: 'translateY(-2px)'
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`
+                            },
+                            '&:active': { // Better mobile feedback
+                              transform: 'translateY(0px)',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.1)}`
                             }
                           }}>
-                            <Typography variant="h4" sx={{ mb: 2 }}>🌙</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="h3" sx={{ mb: { xs: 1, sm: 2 }, fontSize: { xs: '2rem', sm: '2.5rem' } }}>🌙</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' } }}>
                               {t.settings.theme.dark}
                             </Typography>
                           </Card>
                         </Grid>
-                        
-                        <Grid item xs={12} sm={4}>
-                          <Card sx={{ 
+
+                        <Grid item xs={12} sm={6} md={4}>
+                          <Card sx={{
                             cursor: 'pointer',
                             textAlign: 'center',
-                            p: 3,
+                            p: { xs: 2.5, sm: 3 }, // Better mobile padding
+                            minHeight: { xs: 120, sm: 140 }, // Consistent mobile height
                             border: `2px solid ${theme.palette.primary.main}`,
                             background: alpha(theme.palette.primary.light, 0.1),
+                            borderRadius: 3,
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             '&:hover': {
                               borderColor: 'primary.dark',
-                              transform: 'translateY(-2px)'
+                              transform: 'translateY(-2px)',
+                              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.2)}`
+                            },
+                            '&:active': { // Better mobile feedback
+                              transform: 'translateY(0px)',
+                              boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.15)}`
                             }
                           }}>
-                            <Typography variant="h4" sx={{ mb: 2 }}>🌗</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            <Typography variant="h3" sx={{ mb: { xs: 1, sm: 2 }, fontSize: { xs: '2rem', sm: '2.5rem' } }}>🌗</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' } }}>
                               {t.settings.theme.auto}
                             </Typography>
                           </Card>
@@ -544,9 +572,9 @@ const SettingsPage: React.FC = () => {
                         <PersonIcon color="primary" />
                         Profile Information
                       </Typography>
-                      
-                      <Grid container spacing={4}>
-                        <Grid item xs={12} md={6}>
+
+                      <Grid container spacing={{ xs: 3, sm: 4 }}>
+                        <Grid item xs={12} sm={6} md={6}>
                           <Stack spacing={3}>
                             <TextField
                               fullWidth
@@ -589,8 +617,8 @@ const SettingsPage: React.FC = () => {
                             />
                           </Stack>
                         </Grid>
-                        
-                        <Grid item xs={12} md={6}>
+
+                        <Grid item xs={12} sm={6} md={6}>
                           <Stack spacing={3}>
                             <TextField
                               fullWidth
@@ -669,9 +697,9 @@ const SettingsPage: React.FC = () => {
                         <SettingsIcon color="primary" />
                         Application Preferences
                       </Typography>
-                      
-                      <Grid container spacing={4}>
-                        <Grid item xs={12} md={6}>
+
+                      <Grid container spacing={{ xs: 3, sm: 4 }}>
+                        <Grid item xs={12} sm={6} md={6}>
                           <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                             Session Defaults
                           </Typography>
@@ -733,8 +761,8 @@ const SettingsPage: React.FC = () => {
                             />
                           </Stack>
                         </Grid>
-                        
-                        <Grid item xs={12} md={6}>
+
+                        <Grid item xs={12} sm={6} md={6}>
                           <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                             Interface Options
                           </Typography>

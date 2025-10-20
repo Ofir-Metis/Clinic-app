@@ -1,7 +1,8 @@
-import { IsString, IsArray, IsOptional } from 'class-validator';
+import { IsString, IsArray, IsOptional, IsEnum, IsNumber, IsEmail, IsUrl } from 'class-validator';
+import { TherapistSpecialization } from '../therapist-profile.entity';
 
 /**
- * DTO validating therapist profile updates.
+ * Enterprise-grade DTO for therapist profile updates with comprehensive validation
  */
 export class UpdateTherapistProfileDto {
   @IsOptional()
@@ -17,10 +18,47 @@ export class UpdateTherapistProfileDto {
   bio?: string;
 
   @IsOptional()
+  @IsEmail()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsUrl()
+  website?: string;
+
+  @IsOptional()
   @IsArray()
-  services?: any[];
+  @IsEnum(TherapistSpecialization, { each: true })
+  specializations?: TherapistSpecialization[];
+
+  @IsOptional()
+  @IsNumber()
+  yearsOfExperience?: number;
+
+  @IsOptional()
+  @IsArray()
+  certifications?: any[];
+
+  @IsOptional()
+  @IsArray()
+  languages?: string[];
+
+  @IsOptional()
+  @IsArray()
+  timeZones?: string[];
+
+  @IsOptional()
+  pricing?: any;
 
   @IsOptional()
   @IsArray()
   media?: any[];
+
+  // Legacy compatibility
+  @IsOptional()
+  @IsArray()
+  services?: any[];
 }

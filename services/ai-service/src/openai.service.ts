@@ -86,13 +86,12 @@ export class OpenaiService {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          temperature: 0.3,
           max_completion_tokens: this.getMaxTokensForModel(modelToUse),
           response_format: { type: 'json_object' },
           // GPT-5 specific enhancements
           ...(modelToUse.includes('gpt-5') && {
-            verbosity: process.env.AI_VERBOSITY_LEVEL || 'medium',
-            reasoning_effort: process.env.AI_REASONING_EFFORT || 'standard'
+            verbosity: (process.env.AI_VERBOSITY_LEVEL as any) || 'medium',
+            reasoning_effort: (process.env.AI_REASONING_EFFORT as any) || 'standard'
           })
         });
       } catch (modelError: any) {
@@ -102,7 +101,6 @@ export class OpenaiService {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          temperature: 0.3,
           response_format: { type: 'json_object' }
         });
       }
@@ -151,7 +149,6 @@ export class OpenaiService {
         language: request.language || 'en',
         prompt: request.prompt || 'This is a personal development coaching session between a coach and client discussing goals, progress, and growth.',
         response_format: 'verbose_json',
-        temperature: 0.2
       });
 
       const result: TranscriptionResult = {
@@ -220,13 +217,12 @@ export class OpenaiService {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.4,
         max_completion_tokens: this.getMaxTokensForModel(modelToUse),
         response_format: { type: 'json_object' },
         // GPT-5 healthcare optimization
         ...(modelToUse.includes('gpt-5') && {
-          verbosity: 'medium',
-          reasoning_effort: 'standard'
+          verbosity: 'medium' as any,
+          reasoning_effort: 'standard' as any
         })
       });
 
@@ -454,12 +450,11 @@ ${request.coachNotes}
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.4,
         max_completion_tokens: 500, // Limited for quick responses
         // Use GPT-5-mini optimizations
         ...(modelToUse.includes('gpt-5') && {
-          verbosity: 'low', // Concise responses for quick insights
-          reasoning_effort: 'minimal' // Fast processing
+          verbosity: 'low' as any, // Concise responses for quick insights
+          reasoning_effort: 'minimal' as any // Fast processing
         })
       });
 
@@ -572,8 +567,7 @@ ${request.coachNotes}
       const completion = await this.openai.chat.completions.create({
         model: modelToUse,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-        max_tokens: 1000
+        max_completion_tokens: 1000
       });
       
       return completion.choices[0]?.message?.content || '';

@@ -11,12 +11,14 @@ import {
   getInitialLanguage, 
   storeLanguage, 
   isRTL,
-  getLanguageInfo
+  getLanguageInfo,
+  SUPPORTED_LANGUAGES
 } from '../i18n/index';
 
 interface LanguageContextType {
   language: SupportedLanguage;
-  t: TranslationKeys;
+  t: (key: string) => string;
+  translations: TranslationKeys;
   changeLanguage: (newLanguage: SupportedLanguage) => Promise<void>;
   isRTL: boolean;
   availableLanguages: typeof import('../i18n').SUPPORTED_LANGUAGES;
@@ -81,12 +83,25 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     }
   };
 
+  // Helper function to get translation by key
+  const getTranslation = (key: string): string => {
+    const keys = key.split('.');
+    let result: any = translations[language];
+    
+    for (const k of keys) {
+      result = result?.[k];
+    }
+    
+    return typeof result === 'string' ? result : key;
+  };
+
   const contextValue: LanguageContextType = {
     language,
-    t: translations[language],
+    t: getTranslation,
+    translations: translations[language],
     changeLanguage,
     isRTL: isRTL(language),
-    availableLanguages: require('../i18n').SUPPORTED_LANGUAGES,
+    availableLanguages: SUPPORTED_LANGUAGES,
     currentLanguageInfo: getLanguageInfo(language),
     isChangingLanguage
   };
@@ -109,8 +124,15 @@ export const useLanguage = (): LanguageContextType => {
 
 // Helper hook for easy translation access
 export const useTranslation = () => {
-  const { t, language, isRTL } = useLanguage();
-  return { t, language, isRTL };
+  const { t, language, isRTL, translations, changeLanguage } = useLanguage();
+
+  return {
+    t,                // Provide the translation function for t() access
+    translations,     // Provide the translations object for direct object access
+    language,
+    isRTL,
+    i18n: { language, changeLanguage }
+  };
 };
 
 // Helper hook for specific translation paths

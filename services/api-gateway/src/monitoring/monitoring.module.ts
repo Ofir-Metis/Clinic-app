@@ -1,11 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CustomMetricsService } from './custom-metrics.service';
-import { DashboardService } from './dashboard.service';
-import { DashboardController } from './dashboard.controller';
+// import { CustomMetricsService } from './custom-metrics.service'; // Temporarily disabled due to dependency issues
+// import { DashboardService } from './dashboard.service'; // Temporarily disabled
+// import { DashboardController } from './dashboard.controller'; // Temporarily disabled
 import { HealthCheckController } from './health-check.controller';
 import { CommonModule } from '@clinic/common';
+
+// Production-ready monitoring components
+import { MetricsService } from './metrics.service';
+import { MetricsController } from './metrics.controller';
+import { CircuitBreakerService } from '../common/circuit-breaker.service';
+import { ProductionConfigService } from '../config/production.config';
 
 /**
  * Monitoring Module
@@ -27,16 +33,23 @@ import { CommonModule } from '@clinic/common';
     ])
   ],
   controllers: [
-    DashboardController,
-    HealthCheckController
+    // DashboardController, // Temporarily disabled
+    // HealthCheckController, // Using HealthController from ../health/ instead
+    MetricsController
   ],
   providers: [
-    CustomMetricsService,
-    DashboardService
+    // CustomMetricsService, // Temporarily disabled
+    // DashboardService // Temporarily disabled
+    MetricsService,
+    CircuitBreakerService,
+    ProductionConfigService
   ],
   exports: [
-    CustomMetricsService,
-    DashboardService
+    // CustomMetricsService, // Temporarily disabled
+    // DashboardService // Temporarily disabled
+    MetricsService,
+    CircuitBreakerService,
+    ProductionConfigService
   ]
 })
 export class MonitoringModule {}

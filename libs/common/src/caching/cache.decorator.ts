@@ -155,7 +155,7 @@ export const CacheUpdate = (
  *   // All cached methods will inherit this configuration
  * }
  */
-export const CacheConfig = (config: Partial<CacheConfig>) => {
+export const CacheableConfig = (config: Partial<CacheConfig>) => {
   return SetMetadata(CACHE_KEY, config);
 };
 
@@ -180,7 +180,14 @@ export const HealthcareCache = (
     encryptionRequired?: boolean;
     hipaaCompliant?: boolean;
     auditAccess?: boolean;
-  } = {}
+  } = {
+    ttl: 300,
+    namespace: 'healthcare',
+    tags: [],
+    encryptionRequired: true,
+    hipaaCompliant: true,
+    auditAccess: true
+  }
 ) => {
   const healthcareConfig: CacheConfig = {
     ttl: config.ttl || 1800, // Default 30 minutes for healthcare data

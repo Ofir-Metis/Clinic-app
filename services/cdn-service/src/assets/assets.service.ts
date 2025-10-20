@@ -50,13 +50,7 @@ export class AssetsService {
         });
         optimized = true;
         
-        this.logger.info('Asset optimized', {
-          service: 'cdn-service',
-          component: 'assets',
-          originalSize: buffer.length,
-          optimizedSize: processedBuffer.length,
-          compression: ((buffer.length - processedBuffer.length) / buffer.length * 100).toFixed(2) + '%',
-        });
+        this.logger.log(`Asset optimized: ${filename} (${buffer.length} -> ${processedBuffer.length} bytes)`, 'AssetsService');
       }
 
       // Upload main asset
@@ -76,14 +70,7 @@ export class AssetsService {
 
       const url = this.cloudFrontService.getAssetUrl(key);
 
-      this.logger.info('Asset uploaded successfully', {
-        service: 'cdn-service',
-        component: 'assets',
-        key,
-        url,
-        size: info.size,
-        optimized,
-      });
+      this.logger.log(`Asset uploaded successfully: ${key} (${info.size} bytes, optimized: ${optimized})`, 'AssetsService');
 
       return {
         key,
@@ -92,12 +79,7 @@ export class AssetsService {
         optimized,
       };
     } catch (error) {
-      this.logger.error('Failed to upload asset', {
-        service: 'cdn-service',
-        component: 'assets',
-        filename,
-        error: error.message,
-      });
+      this.logger.error(`Failed to upload asset: ${error.message}`, 'AssetsService');
       throw error;
     }
   }
@@ -116,12 +98,7 @@ export class AssetsService {
     try {
       return await this.s3Service.getAsset(key);
     } catch (error) {
-      this.logger.error('Failed to get asset', {
-        service: 'cdn-service',
-        component: 'assets',
-        key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to get asset ${key}: ${error.message}`, undefined, 'AssetsService');
       throw error;
     }
   }
@@ -141,12 +118,7 @@ export class AssetsService {
           await this.s3Service.deleteAsset(variantKey);
         } catch (error) {
           // Continue if variant doesn't exist
-          this.logger.warn('Failed to delete asset variant', {
-            service: 'cdn-service',
-            component: 'assets',
-            variantKey,
-            error: error.message,
-          });
+          this.logger.warn(`Failed to delete asset variant ${variantKey}: ${error.message}`, 'AssetsService');
         }
       }
 
@@ -154,19 +126,9 @@ export class AssetsService {
       const pathsToInvalidate = [key, ...variantKeys];
       await this.cloudFrontService.invalidateCache(pathsToInvalidate);
 
-      this.logger.info('Asset deleted successfully', {
-        service: 'cdn-service',
-        component: 'assets',
-        key,
-        variantsDeleted: variantKeys.length,
-      });
+      this.logger.log(`Asset deleted successfully: ${key} (${variantKeys.length} variants deleted)`, 'AssetsService');
     } catch (error) {
-      this.logger.error('Failed to delete asset', {
-        service: 'cdn-service',
-        component: 'assets',
-        key,
-        error: error.message,
-      });
+      this.logger.error(`Failed to delete asset ${key}: ${error.message}`, undefined, 'AssetsService');
       throw error;
     }
   }
@@ -249,21 +211,9 @@ export class AssetsService {
           },
         });
 
-        this.logger.debug('Generated image variant', {
-          service: 'cdn-service',
-          component: 'assets',
-          originalKey,
-          variantKey,
-          variant,
-        });
+        this.logger.debug(`Generated image variant: ${originalKey} -> ${variantKey} (${variant})`, 'AssetsService');
       } catch (error) {
-        this.logger.error('Failed to generate image variant', {
-          service: 'cdn-service',
-          component: 'assets',
-          originalKey,
-          variant,
-          error: error.message,
-        });
+        this.logger.error(`Failed to generate image variant ${variant} for ${originalKey}: ${error.message}`, undefined, 'AssetsService');
       }
     });
 

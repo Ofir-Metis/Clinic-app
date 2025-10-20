@@ -399,87 +399,28 @@ export class CreateSessionAnalysisTables1698000000001 implements MigrationInterf
       true
     );
 
-    // Create indexes for session_summaries
-    await queryRunner.createIndex(
-      'session_summaries',
-      new Index({
-        name: 'IDX_session_summaries_appointment_id',
-        columnNames: ['appointment_id'],
-      })
-    );
+    // Create indexes using SQL for better compatibility
+    const indexQueries = [
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_session_summaries_appointment_id" ON "session_summaries" ("appointment_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_session_summaries_coach_id" ON "session_summaries" ("coach_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_session_summaries_client_id" ON "session_summaries" ("client_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_session_summaries_processing_status" ON "session_summaries" ("processing_status")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_session_summaries_created_at" ON "session_summaries" ("created_at")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_transcriptions_appointment_id" ON "transcriptions" ("appointment_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_transcriptions_recording_id" ON "transcriptions" ("recording_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_transcriptions_coach_id" ON "transcriptions" ("coach_id")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_transcriptions_status" ON "transcriptions" ("status")`,
+      `CREATE INDEX CONCURRENTLY IF NOT EXISTS "IDX_transcriptions_created_at" ON "transcriptions" ("created_at")`
+    ];
 
-    await queryRunner.createIndex(
-      'session_summaries',
-      new Index({
-        name: 'IDX_session_summaries_coach_id',
-        columnNames: ['coach_id'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'session_summaries',
-      new Index({
-        name: 'IDX_session_summaries_client_id',
-        columnNames: ['client_id'],
-      } as any)
-    );
-
-    await queryRunner.createIndex(
-      'session_summaries',
-      new Index({
-        name: 'IDX_session_summaries_processing_status',
-        columnNames: ['processing_status'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'session_summaries',
-      new Index({
-        name: 'IDX_session_summaries_created_at',
-        columnNames: ['created_at'],
-      })
-    );
-
-    // Create indexes for transcriptions
-    await queryRunner.createIndex(
-      'transcriptions',
-      new Index({
-        name: 'IDX_transcriptions_appointment_id',
-        columnNames: ['appointment_id'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'transcriptions',
-      new Index({
-        name: 'IDX_transcriptions_recording_id',
-        columnNames: ['recording_id'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'transcriptions',
-      new Index({
-        name: 'IDX_transcriptions_coach_id',
-        columnNames: ['coach_id'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'transcriptions',
-      new Index({
-        name: 'IDX_transcriptions_status',
-        columnNames: ['status'],
-      })
-    );
-
-    await queryRunner.createIndex(
-      'transcriptions',
-      new Index({
-        name: 'IDX_transcriptions_created_at',
-        columnNames: ['created_at'],
-      })
-    );
+    for (const query of indexQueries) {
+      try {
+        await queryRunner.query(query);
+      } catch (error) {
+        // Index might already exist, continue
+        console.log(`Index creation failed, might already exist: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
 
     // Create foreign key constraint
     await queryRunner.query(`

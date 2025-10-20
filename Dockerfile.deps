@@ -1,0 +1,21 @@
+# Enterprise Dependency Management Container
+FROM node:20-alpine as deps-resolver
+
+WORKDIR /app
+
+# Copy package management files
+COPY package.json yarn.lock* .yarnrc ./
+
+# Enterprise dependency resolution
+RUN apk add --no-cache git && \
+    yarn config set network-timeout 300000 && \
+    yarn config set registry https://registry.npmjs.org/ && \
+    yarn cache clean && \
+    yarn install --frozen-lockfile --production=false --ignore-optional
+
+# Verify lockfile integrity  
+RUN yarn check --integrity
+
+# Export clean lockfile
+FROM scratch as lockfile
+COPY --from=deps-resolver /app/yarn.lock /yarn.lock

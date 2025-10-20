@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CommonModule } from '@clinic/common';
 
 import { DatabaseModule } from './database/database.module';
 import { SubscriptionModule } from './subscription/subscription.module';
@@ -17,10 +16,8 @@ import { BillingService } from './billing.service';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    // Enterprise CommonModule provides centralized config, logging, database, and security
+    CommonModule,
     
     BullModule.forRoot({
       redis: {

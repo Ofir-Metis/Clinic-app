@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Registration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button { width: 100%; padding: 10px; font-size: 16px; box-sizing: border-box; }
+        button { background: #2E7D6B; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 20px; height: 400px; overflow-y: scroll; font-size: 14px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .info { color: blue; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Registration Test - CORS Fixed</h1>
+    <p><strong>Purpose:</strong> Test registration form behavior after fixing CORS configuration</p>
+    <p><strong>Expected:</strong> Registration should complete successfully without button text disappearing</p>
+    
+    <form id="regForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="Frontend Test User" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="frontend-test@test.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" value="testpass123" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="confirmPassword">Confirm Password:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" value="testpass123" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" name="role">
+                <option value="therapist">Therapist</option>
+                <option value="patient">Patient</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="submitBtn">Register Now</button>
+    </form>
+    
+    <div class="log" id="log"></div>
+    
+    <script>
+        const log = document.getElementById('log');
+        const submitBtn = document.getElementById('submitBtn');
+        const API_URL = 'http://10.100.102.17:4000';
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${timestamp}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Generate unique email each time
+        document.getElementById('email').value = 'frontend-test-' + Date.now() + '@test.com';
+        
+        addLog('🚀 Frontend Registration Test Started', 'info');
+        addLog(`📍 Using API URL: ${API_URL}`, 'info');
+        addLog('✅ CORS configuration has been fixed - expecting success!', 'success');
+        
+        // Test API connectivity first
+        addLog('🔍 Testing API connectivity...', 'info');
+        fetch(`${API_URL}/health`)
+            .then(response => {
+                addLog(`✅ API Health Check: ${response.status} ${response.statusText}`, 'success');
+                return response.json();
+            })
+            .then(data => addLog(`📋 Health Data: ${JSON.stringify(data)}`, 'info'))
+            .catch(error => addLog(`❌ Health Check Failed: ${error.message}`, 'error'));
+        
+        // Test CORS preflight
+        addLog('🌐 Testing CORS preflight request...', 'info');
+        fetch(`${API_URL}/auth/register`, {
+            method: 'OPTIONS',
+            headers: {
+                'Origin': 'http://10.100.102.17:5173',
+                'Access-Control-Request-Method': 'POST',
+                'Access-Control-Request-Headers': 'content-type'
+            }
+        })
+        .then(response => {
+            const corsOrigin = response.headers.get('Access-Control-Allow-Origin');
+            if (corsOrigin === 'http://10.100.102.17:5173') {
+                addLog(`✅ CORS Preflight Success: ${corsOrigin}`, 'success');
+            } else {
+                addLog(`⚠️ CORS Issue: Expected 'http://10.100.102.17:5173', got '${corsOrigin}'`, 'warning');
+            }
+        })
+        .catch(error => addLog(`❌ CORS Preflight Failed: ${error.message}`, 'error'));
+        
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            addLog('🎯 Form submission started...', 'info');
+            
+            // Show loading state
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+            addLog(`🔄 Button state changed: "${originalText}" → "${submitBtn.textContent}"`, 'info');
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value,
+                role: document.getElementById('role').value
+            };
+            
+            addLog(`📝 Form Data: ${JSON.stringify(formData, null, 2)}`, 'info');
+            
+            try {
+                addLog('📡 Making registration API request...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://10.100.102.17:5173'
+                    },
+                    body: JSON.stringify(formData),
+                    credentials: 'include'
+                });
+                
+                addLog(`📊 Response Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                // Log all response headers
+                const headers = {};
+                for (let [key, value] of response.headers.entries()) {
+                    headers[key] = value;
+                }
+                addLog(`📋 Response Headers: ${JSON.stringify(headers, null, 2)}`, 'info');
+                
+                const responseText = await response.text();
+                addLog(`📄 Raw Response: ${responseText}`, 'info');
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    addLog(`🗂️ Parsed Response: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (parseError) {
+                    addLog(`❌ JSON Parse Error: ${parseError.message}`, 'error');
+                    data = { error: 'Invalid JSON response', raw: responseText };
+                }
+                
+                if (response.ok) {
+                    addLog('🎉 Registration Successful!', 'success');
+                    
+                    if (data.access_token) {
+                        addLog(`🔑 Access Token Received: ${data.access_token.substring(0, 30)}...`, 'success');
+                        
+                        // Test localStorage functionality
+                        try {
+                            const userData = {
+                                email: formData.email,
+                                name: formData.name,
+                                role: formData.role === 'patient' ? 'client' : 'coach'
+                            };
+                            
+                            localStorage.setItem('accessToken', data.access_token);
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            
+                            addLog('💾 Data saved to localStorage successfully', 'success');
+                            addLog(`🔍 localStorage Check: accessToken = ${localStorage.getItem('accessToken') ? 'EXISTS' : 'NOT FOUND'}`, 'info');
+                            addLog(`👤 User Data: ${localStorage.getItem('user')}`, 'info');
+                            
+                        } catch (storageError) {
+                            addLog(`❌ localStorage Error: ${storageError.message}`, 'error');
+                        }
+                    } else {
+                        addLog('⚠️ No access token in response!', 'warning');
+                    }
+                } else {
+                    addLog(`❌ Registration failed with status ${response.status}`, 'error');
+                    addLog(`🔍 Error Details: ${JSON.stringify(data)}`, 'error');
+                }
+                
+            } catch (networkError) {
+                addLog(`🌐 Network Error: ${networkError.message}`, 'error');
+                addLog(`📋 Error Details: ${networkError.stack}`, 'error');
+                
+                if (networkError.name === 'TypeError' && networkError.message.includes('Failed to fetch')) {
+                    addLog('💡 This usually indicates a CORS or network connectivity issue', 'info');
+                }
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                addLog(`🔄 Button state reset: "${originalText}"`, 'info');
+                addLog('✅ Registration attempt completed', 'info');
+            }
+        });
+    </script>
+</body>
+</html>

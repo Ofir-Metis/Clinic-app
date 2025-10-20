@@ -260,8 +260,8 @@ export class CalendarController {
     @Query('googleAccountId') googleAccountId: string,
     @Query('startTime') startTime: string,
     @Query('endTime') endTime: string,
-    @Query('excludeEventId') excludeEventId?: string,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
+    @Query('excludeEventId') excludeEventId?: string
   ) {
     try {
       if (!googleAccountId || !startTime || !endTime) {
@@ -299,9 +299,9 @@ export class CalendarController {
   @ApiResponse({ status: 200, description: 'Sync logs retrieved successfully' })
   async getSyncLogs(
     @Query('googleAccountId') googleAccountId: string,
+    @Req() req: AuthenticatedRequest,
     @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-    @Req() req: AuthenticatedRequest
+    @Query('offset') offset?: string
   ) {
     try {
       if (!googleAccountId) {

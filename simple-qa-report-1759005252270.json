@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-09-27T20:34:12.234Z",
+  "summary": {
+    "totalPages": 4,
+    "averageScore": 8.5,
+    "passRate": 100,
+    "criticalIssues": 0
+  },
+  "pages": [
+    {
+      "name": "Homepage",
+      "path": "/",
+      "url": "http://localhost:5173/",
+      "timestamp": "2025-09-27T20:34:12.235Z",
+      "status": 200,
+      "content": "<!doctype html>\r\n<html lang=\"en\">\r\n  <head>\r\n    <meta charset=\"UTF-8\" />\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n    <meta name=\"description\" content=\"Professional wellness coaching platform for personal growth, life coaching, and wellness practitioners. Transform your life with expert guidance.\" />\r\n    <meta name=\"keywords\" content=\"wellness coaching, life coaching, personal growth, wellness practitioners, self-development, coaching platform\" />\r\n    <meta name=\"author\" content=\"Wellness Coach Platform\" />\r\n    <meta name=\"robots\" content=\"index, follow\" />\r\n\r\n    <!-- Open Graph meta tags for social sharing -->\r\n    <meta property=\"og:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta property=\"og:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n    <meta property=\"og:type\" content=\"website\" />\r\n    <meta property=\"og:site_name\" content=\"Wellness Coach Platform\" />\r\n\r\n    <!-- Twitter Card meta tags -->\r\n    <meta name=\"twitter:card\" content=\"summary_large_image\" />\r\n    <meta name=\"twitter:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta name=\"twitter:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n\r\n    <!-- Theme colors -->\r\n    <meta name=\"theme-color\" content=\"#2E7D6B\" />\r\n    <meta name=\"msapplication-TileColor\" content=\"#2E7D6B\" />\r\n\r\n    <!-- Favicon -->\r\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/favicon-40cbeb11.svg\" />\r\n    <link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />\r\n    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" />\r\n    <link rel=\"manifest\" href=\"/site.webmanifest\" />\r\n\r\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\r\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\r\n    <link\r\n      href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\"\r\n      ",
+      "issues": [],
+      "score": 10
+    },
+    {
+      "name": "Login Page",
+      "path": "/login",
+      "url": "http://localhost:5173/login",
+      "timestamp": "2025-09-27T20:34:12.264Z",
+      "status": 200,
+      "content": "<!doctype html>\r\n<html lang=\"en\">\r\n  <head>\r\n    <meta charset=\"UTF-8\" />\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n    <meta name=\"description\" content=\"Professional wellness coaching platform for personal growth, life coaching, and wellness practitioners. Transform your life with expert guidance.\" />\r\n    <meta name=\"keywords\" content=\"wellness coaching, life coaching, personal growth, wellness practitioners, self-development, coaching platform\" />\r\n    <meta name=\"author\" content=\"Wellness Coach Platform\" />\r\n    <meta name=\"robots\" content=\"index, follow\" />\r\n\r\n    <!-- Open Graph meta tags for social sharing -->\r\n    <meta property=\"og:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta property=\"og:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n    <meta property=\"og:type\" content=\"website\" />\r\n    <meta property=\"og:site_name\" content=\"Wellness Coach Platform\" />\r\n\r\n    <!-- Twitter Card meta tags -->\r\n    <meta name=\"twitter:card\" content=\"summary_large_image\" />\r\n    <meta name=\"twitter:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta name=\"twitter:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n\r\n    <!-- Theme colors -->\r\n    <meta name=\"theme-color\" content=\"#2E7D6B\" />\r\n    <meta name=\"msapplication-TileColor\" content=\"#2E7D6B\" />\r\n\r\n    <!-- Favicon -->\r\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/favicon-40cbeb11.svg\" />\r\n    <link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />\r\n    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" />\r\n    <link rel=\"manifest\" href=\"/site.webmanifest\" />\r\n\r\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\r\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\r\n    <link\r\n      href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\"\r\n      ",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ],
+      "score": 8
+    },
+    {
+      "name": "Registration Page",
+      "path": "/register",
+      "url": "http://localhost:5173/register",
+      "timestamp": "2025-09-27T20:34:12.266Z",
+      "status": 200,
+      "content": "<!doctype html>\r\n<html lang=\"en\">\r\n  <head>\r\n    <meta charset=\"UTF-8\" />\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n    <meta name=\"description\" content=\"Professional wellness coaching platform for personal growth, life coaching, and wellness practitioners. Transform your life with expert guidance.\" />\r\n    <meta name=\"keywords\" content=\"wellness coaching, life coaching, personal growth, wellness practitioners, self-development, coaching platform\" />\r\n    <meta name=\"author\" content=\"Wellness Coach Platform\" />\r\n    <meta name=\"robots\" content=\"index, follow\" />\r\n\r\n    <!-- Open Graph meta tags for social sharing -->\r\n    <meta property=\"og:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta property=\"og:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n    <meta property=\"og:type\" content=\"website\" />\r\n    <meta property=\"og:site_name\" content=\"Wellness Coach Platform\" />\r\n\r\n    <!-- Twitter Card meta tags -->\r\n    <meta name=\"twitter:card\" content=\"summary_large_image\" />\r\n    <meta name=\"twitter:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta name=\"twitter:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n\r\n    <!-- Theme colors -->\r\n    <meta name=\"theme-color\" content=\"#2E7D6B\" />\r\n    <meta name=\"msapplication-TileColor\" content=\"#2E7D6B\" />\r\n\r\n    <!-- Favicon -->\r\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/favicon-40cbeb11.svg\" />\r\n    <link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />\r\n    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" />\r\n    <link rel=\"manifest\" href=\"/site.webmanifest\" />\r\n\r\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\r\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\r\n    <link\r\n      href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\"\r\n      ",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ],
+      "score": 8
+    },
+    {
+      "name": "Client Registration",
+      "path": "/client/register",
+      "url": "http://localhost:5173/client/register",
+      "timestamp": "2025-09-27T20:34:12.268Z",
+      "status": 200,
+      "content": "<!doctype html>\r\n<html lang=\"en\">\r\n  <head>\r\n    <meta charset=\"UTF-8\" />\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n    <meta name=\"description\" content=\"Professional wellness coaching platform for personal growth, life coaching, and wellness practitioners. Transform your life with expert guidance.\" />\r\n    <meta name=\"keywords\" content=\"wellness coaching, life coaching, personal growth, wellness practitioners, self-development, coaching platform\" />\r\n    <meta name=\"author\" content=\"Wellness Coach Platform\" />\r\n    <meta name=\"robots\" content=\"index, follow\" />\r\n\r\n    <!-- Open Graph meta tags for social sharing -->\r\n    <meta property=\"og:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta property=\"og:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n    <meta property=\"og:type\" content=\"website\" />\r\n    <meta property=\"og:site_name\" content=\"Wellness Coach Platform\" />\r\n\r\n    <!-- Twitter Card meta tags -->\r\n    <meta name=\"twitter:card\" content=\"summary_large_image\" />\r\n    <meta name=\"twitter:title\" content=\"Wellness Coach Platform - Transform Your Life\" />\r\n    <meta name=\"twitter:description\" content=\"Professional wellness coaching platform for personal growth and transformation\" />\r\n\r\n    <!-- Theme colors -->\r\n    <meta name=\"theme-color\" content=\"#2E7D6B\" />\r\n    <meta name=\"msapplication-TileColor\" content=\"#2E7D6B\" />\r\n\r\n    <!-- Favicon -->\r\n    <link rel=\"icon\" type=\"image/svg+xml\" href=\"/assets/favicon-40cbeb11.svg\" />\r\n    <link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />\r\n    <link rel=\"apple-touch-icon\" href=\"/apple-touch-icon.png\" />\r\n    <link rel=\"manifest\" href=\"/site.webmanifest\" />\r\n\r\n    <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\r\n    <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\r\n    <link\r\n      href=\"https://fonts.googleapis.com/css2?family=Roboto&display=swap\"\r\n      ",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ],
+      "score": 8
+    }
+  ],
+  "criticalIssues": [
+    {
+      "page": "Login Page",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ]
+    },
+    {
+      "page": "Registration Page",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ]
+    },
+    {
+      "page": "Client Registration",
+      "issues": [
+        "Material-UI components not rendered (React app may not be loading)"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "P1 - HIGH",
+      "category": "Application Loading",
+      "description": "React application not loading properly on some pages",
+      "action": "Check for JavaScript errors and ensure proper routing configuration"
+    }
+  ]
+}

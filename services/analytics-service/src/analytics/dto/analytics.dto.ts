@@ -80,15 +80,15 @@ export class ReportFiltersDto {
 export class MetricConfigDto {
   @ApiProperty({ description: 'Metric name' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Metric type', enum: MetricType })
   @IsEnum(MetricType)
-  type: MetricType;
+  type!: MetricType;
 
   @ApiProperty({ description: 'Source field for the metric' })
   @IsString()
-  field: string;
+  field!: string;
 
   @ApiPropertyOptional({ description: 'Metric label for display' })
   @IsOptional()
@@ -104,11 +104,11 @@ export class MetricConfigDto {
 export class ChartConfigDto {
   @ApiProperty({ description: 'Chart type', enum: ['line', 'bar', 'pie', 'donut', 'area'] })
   @IsEnum(['line', 'bar', 'pie', 'donut', 'area'])
-  type: string;
+  type!: string;
 
   @ApiProperty({ description: 'Chart title' })
   @IsString()
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ description: 'X-axis field' })
   @IsOptional()
@@ -130,11 +130,11 @@ export class ChartConfigDto {
 export class CreateReportDto {
   @ApiProperty({ description: 'Report name' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Report type', enum: ReportType })
   @IsEnum(ReportType)
-  type: ReportType;
+  type!: ReportType;
 
   @ApiPropertyOptional({ description: 'Report description' })
   @IsOptional()
@@ -144,13 +144,13 @@ export class CreateReportDto {
   @ApiProperty({ description: 'Report filters' })
   @ValidateNested()
   @Type(() => ReportFiltersDto)
-  filters: ReportFiltersDto;
+  filters!: ReportFiltersDto;
 
   @ApiProperty({ description: 'Metrics to include in the report', type: [MetricConfigDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => MetricConfigDto)
-  metrics: MetricConfigDto[];
+  metrics!: MetricConfigDto[];
 
   @ApiPropertyOptional({ description: 'Chart configurations', type: [ChartConfigDto] })
   @IsOptional()
@@ -173,10 +173,10 @@ export class CreateReportDto {
 
 export class AnalyticsDataPointDto {
   @ApiProperty({ description: 'Data point label' })
-  label: string;
+  label!: string;
 
   @ApiProperty({ description: 'Data point value' })
-  value: number;
+  value!: number;
 
   @ApiPropertyOptional({ description: 'Data point timestamp' })
   timestamp?: Date;
@@ -187,10 +187,10 @@ export class AnalyticsDataPointDto {
 
 export class AnalyticsChartDto {
   @ApiProperty({ description: 'Chart configuration' })
-  config: ChartConfigDto;
+  config!: ChartConfigDto;
 
   @ApiProperty({ description: 'Chart data points', type: [AnalyticsDataPointDto] })
-  data: AnalyticsDataPointDto[];
+  data!: AnalyticsDataPointDto[];
 
   @ApiPropertyOptional({ description: 'Chart summary statistics' })
   summary?: {
@@ -205,28 +205,28 @@ export class AnalyticsChartDto {
 
 export class AnalyticsReportDto {
   @ApiProperty({ description: 'Report ID' })
-  id: string;
+  id!: string;
 
   @ApiProperty({ description: 'Report name' })
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Report type', enum: ReportType })
-  type: ReportType;
+  type!: ReportType;
 
   @ApiPropertyOptional({ description: 'Report description' })
   description?: string;
 
   @ApiProperty({ description: 'Report generation timestamp' })
-  generatedAt: Date;
+  generatedAt!: Date;
 
   @ApiProperty({ description: 'Report filters used' })
-  filters: ReportFiltersDto;
+  filters!: ReportFiltersDto;
 
   @ApiProperty({ description: 'Report metrics' })
-  metrics: Record<string, number>;
+  metrics!: Record<string, number>;
 
   @ApiProperty({ description: 'Report charts', type: [AnalyticsChartDto] })
-  charts: AnalyticsChartDto[];
+  charts!: AnalyticsChartDto[];
 
   @ApiPropertyOptional({ description: 'Report insights' })
   insights?: {

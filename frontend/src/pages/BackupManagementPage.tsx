@@ -61,7 +61,7 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 
 interface BackupOverview {
   totalBackups: number;

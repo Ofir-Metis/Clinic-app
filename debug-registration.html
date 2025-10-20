@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button { width: 100%; padding: 10px; font-size: 16px; }
+        button { background: #2E7D6B; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .log { background: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 20px; height: 300px; overflow-y: scroll; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Registration Debug Tool</h1>
+    
+    <form id="regForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="Debug User" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="debug@test.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" value="testpass123" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="confirmPassword">Confirm Password:</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" value="testpass123" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" name="role">
+                <option value="therapist">Therapist</option>
+                <option value="patient">Patient</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="submitBtn">Register</button>
+    </form>
+    
+    <div class="log" id="log"></div>
+    
+    <script>
+        const log = document.getElementById('log');
+        const submitBtn = document.getElementById('submitBtn');
+        const API_URL = 'http://10.100.102.17:4000';
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${timestamp}] ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Generate unique email each time
+        document.getElementById('email').value = 'debug' + Date.now() + '@test.com';
+        
+        addLog('Page loaded. Ready for registration test.');
+        addLog(`Using API URL: ${API_URL}`);
+        
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Disable button and change text
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Registering...';
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value,
+                role: document.getElementById('role').value
+            };
+            
+            addLog('Starting registration...', 'info');
+            addLog(`Form data: ${JSON.stringify(formData, null, 2)}`, 'info');
+            
+            try {
+                addLog('Making API request...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                    credentials: 'include'
+                });
+                
+                addLog(`Response status: ${response.status} ${response.statusText}`, 'info');
+                addLog(`Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+                
+                const responseText = await response.text();
+                addLog(`Raw response: ${responseText}`, 'info');
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                    addLog(`Parsed response: ${JSON.stringify(data, null, 2)}`, 'info');
+                } catch (parseError) {
+                    addLog(`JSON parse error: ${parseError.message}`, 'error');
+                    data = { error: 'Invalid JSON response', raw: responseText };
+                }
+                
+                if (response.ok) {
+                    addLog('Registration successful!', 'success');
+                    
+                    if (data.access_token) {
+                        addLog(`Access token received: ${data.access_token.substring(0, 30)}...`, 'success');
+                        
+                        // Test localStorage save
+                        try {
+                            localStorage.setItem('accessToken', data.access_token);
+                            localStorage.setItem('user', JSON.stringify({
+                                email: formData.email,
+                                name: formData.name,
+                                role: formData.role === 'patient' ? 'client' : 'coach'
+                            }));
+                            addLog('Data saved to localStorage successfully', 'success');
+                            addLog(`localStorage accessToken: ${localStorage.getItem('accessToken') ? 'EXISTS' : 'NOT FOUND'}`, 'info');
+                        } catch (storageError) {
+                            addLog(`localStorage error: ${storageError.message}`, 'error');
+                        }
+                    } else {
+                        addLog('No access token in response!', 'error');
+                    }
+                } else {
+                    addLog(`Registration failed with status ${response.status}`, 'error');
+                    addLog(`Error details: ${JSON.stringify(data)}`, 'error');
+                }
+                
+            } catch (networkError) {
+                addLog(`Network error: ${networkError.message}`, 'error');
+                addLog(`Error details: ${networkError.stack}`, 'error');
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                addLog('Registration attempt completed. Button reset.', 'info');
+            }
+        });
+        
+        // Test API connectivity on load
+        fetch(`${API_URL}/health`)
+            .then(response => response.json())
+            .then(data => addLog(`API health check: ${JSON.stringify(data)}`, 'success'))
+            .catch(error => addLog(`API health check failed: ${error.message}`, 'error'));
+    </script>
+</body>
+</html>

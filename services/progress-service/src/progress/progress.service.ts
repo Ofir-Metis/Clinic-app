@@ -206,8 +206,8 @@ export class ProgressService {
 
       // Set metadata
       entry.metadata = {
-        mood: request.mood,
-        confidence: request.confidence,
+        mood: request.mood as any,
+        confidence: request.confidence as any,
         effortLevel: request.effortLevel,
         timeSpent: request.timeSpent
       };

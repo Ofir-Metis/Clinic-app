@@ -1,56 +1,35 @@
-# Google Integration Service Dockerfile
-FROM node:20-alpine AS base
-
-# Set working directory
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Install dependencies for building native modules
 RUN apk add --no-cache python3 make g++
+COPY package.json yarn.lock ./
+COPY tsconfig.base.json ./
+COPY tsconfig.json ./
+COPY services ./services
+COPY libs ./libs
+COPY frontend ./frontend
+RUN yarn config set registry https://registry.yarnpkg.com
+RUN yarn config set network-timeout 600000 -g
+RUN yarn install
+RUN yarn workspaces run build
 
-FROM base AS deps
+FROM node:20-alpine AS build
+WORKDIR /app
+RUN apk add --no-cache python3 make g++
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/services/google-integration-service ./services/google-integration-service
+COPY --from=deps /app/libs ./libs
+COPY --from=deps /app/tsconfig.base.json ./tsconfig.base.json
+WORKDIR /app/services/google-integration-service
+ENV PATH="../../node_modules/.bin:$PATH"
+RUN yarn build
 
-# Copy package files
-COPY package*.json ./
-COPY yarn.lock* ./
-
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-FROM base AS builder
-
-# Copy package files
-COPY package*.json ./
-COPY yarn.lock* ./
-
-# Install all dependencies (including devDependencies)
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-FROM base AS runner
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nestjs
-
-# Copy built application
-COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
-COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/package.json ./package.json
-
-# Switch to non-root user
-USER nestjs
-
-# Expose port
-EXPOSE 3009
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3009/health || exit 1
-
-# Start the application
-CMD ["node", "dist/main"]
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=build /app/services/google-integration-service/dist ./dist
+COPY --from=build /app/services/google-integration-service/package.json ./package.json
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/libs/common/dist ./libs/common/dist
+RUN rm -rf ./node_modules/@clinic/common && \
+    mkdir -p ./node_modules/@clinic/common && \
+    cp -r ./libs/common/dist/* ./node_modules/@clinic/common/
+CMD ["node", "dist/main.js"]

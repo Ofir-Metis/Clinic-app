@@ -3,7 +3,7 @@
  * Creates tables for Google accounts, calendar sync logs, and email logs
  */
 
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateGoogleIntegrationTables1704067200000 implements MigrationInterface {
   name = 'CreateGoogleIntegrationTables1704067200000';
@@ -359,72 +359,114 @@ export class CreateGoogleIntegrationTables1704067200000 implements MigrationInte
     // Create indexes for better query performance
     await queryRunner.createIndex(
       'google_accounts',
-      new Index('IDX_google_accounts_user_id', ['user_id'])
+      new TableIndex({
+        name: 'IDX_google_accounts_user_id',
+        columnNames: ['user_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'google_accounts',
-      new Index('IDX_google_accounts_email', ['email'])
+      new TableIndex({
+        name: 'IDX_google_accounts_email',
+        columnNames: ['email'],
+      })
     );
 
     await queryRunner.createIndex(
       'google_accounts',
-      new Index('IDX_google_accounts_sync_status', ['sync_status'])
+      new TableIndex({
+        name: 'IDX_google_accounts_sync_status',
+        columnNames: ['sync_status'],
+      })
     );
 
     await queryRunner.createIndex(
       'calendar_sync_logs',
-      new Index('IDX_calendar_sync_logs_google_account_id', ['google_account_id'])
+      new TableIndex({
+        name: 'IDX_calendar_sync_logs_google_account_id',
+        columnNames: ['google_account_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'calendar_sync_logs',
-      new Index('IDX_calendar_sync_logs_appointment_id', ['appointment_id'])
+      new TableIndex({
+        name: 'IDX_calendar_sync_logs_appointment_id',
+        columnNames: ['appointment_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'calendar_sync_logs',
-      new Index('IDX_calendar_sync_logs_google_event_id', ['google_event_id'])
+      new TableIndex({
+        name: 'IDX_calendar_sync_logs_google_event_id',
+        columnNames: ['google_event_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'calendar_sync_logs',
-      new Index('IDX_calendar_sync_logs_sync_result', ['sync_result'])
+      new TableIndex({
+        name: 'IDX_calendar_sync_logs_sync_result',
+        columnNames: ['sync_result'],
+      })
     );
 
     await queryRunner.createIndex(
       'calendar_sync_logs',
-      new Index('IDX_calendar_sync_logs_synced_at', ['synced_at'])
+      new TableIndex({
+        name: 'IDX_calendar_sync_logs_synced_at',
+        columnNames: ['synced_at'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_google_account_id', ['google_account_id'])
+      new TableIndex({
+        name: 'IDX_email_logs_google_account_id',
+        columnNames: ['google_account_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_appointment_id', ['appointment_id'])
+      new TableIndex({
+        name: 'IDX_email_logs_appointment_id',
+        columnNames: ['appointment_id'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_recipient_email', ['recipient_email'])
+      new TableIndex({
+        name: 'IDX_email_logs_recipient_email',
+        columnNames: ['recipient_email'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_email_type', ['email_type'])
+      new TableIndex({
+        name: 'IDX_email_logs_email_type',
+        columnNames: ['email_type'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_status', ['status'])
+      new TableIndex({
+        name: 'IDX_email_logs_status',
+        columnNames: ['status'],
+      })
     );
 
     await queryRunner.createIndex(
       'email_logs',
-      new Index('IDX_email_logs_sent_at', ['sent_at'])
+      new TableIndex({
+        name: 'IDX_email_logs_sent_at',
+        columnNames: ['sent_at'],
+      })
     );
 
     // Add foreign key constraints (assuming users table exists in main database)

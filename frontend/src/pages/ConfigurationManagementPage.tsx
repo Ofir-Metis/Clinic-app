@@ -68,7 +68,7 @@ import {
   Sync as SyncIcon,
   Restore as RestoreIcon,
 } from '@mui/icons-material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../AuthContext';
 
 interface ConfigOverview {
   totalConfigurations: number;

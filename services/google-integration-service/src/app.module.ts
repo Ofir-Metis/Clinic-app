@@ -7,6 +7,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CommonModule } from '@clinic/common';
 
 // Entities
 import { GoogleAccount } from './entities/google-account.entity';
@@ -33,45 +34,23 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
   imports: [
-    // Configuration
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
-    }),
+    // Use CommonModule for consistent database and configuration setup
+    CommonModule,
 
-    // JWT Configuration
+    // JWT Configuration for Google Integration
     JwtModule.registerAsync({
-      imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('JWT_SECRET') || 'google-integration-fallback-2024',
         signOptions: {
           expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
+          issuer: 'clinic-google-integration',
+          audience: 'clinic-users'
         },
       }),
       inject: [ConfigService],
     }),
 
-    // Database Configuration
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DATABASE_HOST', 'localhost'),
-        port: configService.get<number>('DATABASE_PORT', 5432),
-        username: configService.get<string>('DATABASE_USER', 'postgres'),
-        password: configService.get<string>('DATABASE_PASSWORD'),
-        database: configService.get<string>('DATABASE_NAME', 'clinic_db'),
-        entities: [GoogleAccount, CalendarSyncLog, EmailLog],
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
-        logging: configService.get<string>('NODE_ENV') === 'development',
-        ssl: configService.get<string>('NODE_ENV') === 'production' ? {
-          rejectUnauthorized: false,
-        } : false,
-      }),
-      inject: [ConfigService],
-    }),
-
-    // TypeORM Feature Modules
+    // Register Google Integration specific entities via forFeature
     TypeOrmModule.forFeature([
       GoogleAccount,
       CalendarSyncLog,

@@ -1,0 +1,9 @@
+{
+  "completedAt": "2025-09-18T17:54:48.447Z",
+  "testSuite": "Comprehensive Clinic System Tests",
+  "environment": {
+    "nodeVersion": "v22.18.0",
+    "platform": "win32",
+    "workingDirectory": "C:\\Users\\Ofir\\Clinic-app\\tests"
+  }
+}

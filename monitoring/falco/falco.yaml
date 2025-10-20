@@ -1,0 +1,5 @@
+json_output: true
+stdout_output:
+  enabled: true
+log_level: info
+priority: debug

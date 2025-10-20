@@ -6,10 +6,11 @@ import { Patient } from './patient.entity';
 import { SessionNote } from './session-note.entity';
 import { Invoice } from './invoice.entity';
 import { NotifierService } from './notifier.service';
+import { MockJwtService } from '../mock-jwt.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Patient, SessionNote, Invoice])],
   controllers: [PatientsController],
-  providers: [PatientsService, NotifierService],
+  providers: [PatientsService, NotifierService, MockJwtService],
 })
 export class PatientsModule {}

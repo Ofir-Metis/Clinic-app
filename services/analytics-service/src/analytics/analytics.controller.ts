@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { JwtAuthGuard, RolesGuard, Roles, CurrentUser } from '@clinic/common';
+import { JwtAuthGuard, RolesGuard, Roles, CurrentUser, UserRole } from '@clinic/common';
 import { AnalyticsService } from './analytics.service';
 import { CreateReportDto, ReportFiltersDto } from './dto/analytics.dto';
 
@@ -14,7 +14,7 @@ export class AnalyticsController {
   @Get('dashboard')
   @ApiOperation({ summary: 'Get dashboard analytics overview' })
   @ApiResponse({ status: 200, description: 'Dashboard analytics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getDashboardAnalytics(
     @CurrentUser() user: any,
     @Query('period') period?: string,
@@ -31,7 +31,7 @@ export class AnalyticsController {
   @Get('appointments')
   @ApiOperation({ summary: 'Get appointment analytics' })
   @ApiResponse({ status: 200, description: 'Appointment analytics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getAppointmentAnalytics(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -47,7 +47,7 @@ export class AnalyticsController {
   @Get('clients')
   @ApiOperation({ summary: 'Get client analytics' })
   @ApiResponse({ status: 200, description: 'Client analytics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getClientAnalytics(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -63,7 +63,7 @@ export class AnalyticsController {
   @Get('revenue')
   @ApiOperation({ summary: 'Get revenue analytics' })
   @ApiResponse({ status: 200, description: 'Revenue analytics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getRevenueAnalytics(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -79,7 +79,7 @@ export class AnalyticsController {
   @Get('performance')
   @ApiOperation({ summary: 'Get performance metrics' })
   @ApiResponse({ status: 200, description: 'Performance metrics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getPerformanceMetrics(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -95,7 +95,7 @@ export class AnalyticsController {
   @Get('trends')
   @ApiOperation({ summary: 'Get trend analysis' })
   @ApiResponse({ status: 200, description: 'Trend analysis retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getTrendAnalysis(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -111,7 +111,7 @@ export class AnalyticsController {
   @Get('reports')
   @ApiOperation({ summary: 'Get available reports' })
   @ApiResponse({ status: 200, description: 'Available reports retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getAvailableReports(@CurrentUser() user: any) {
     return this.analyticsService.getAvailableReports(user.id, user.role);
   }
@@ -119,7 +119,7 @@ export class AnalyticsController {
   @Post('reports')
   @ApiOperation({ summary: 'Generate custom report' })
   @ApiResponse({ status: 201, description: 'Custom report generated successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async generateReport(
     @CurrentUser() user: any,
     @Body() createReportDto: CreateReportDto,
@@ -131,7 +131,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get specific report by ID' })
   @ApiParam({ name: 'reportId', description: 'Report ID' })
   @ApiResponse({ status: 200, description: 'Report retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getReport(
     @CurrentUser() user: any,
     @Param('reportId') reportId: string,
@@ -144,7 +144,7 @@ export class AnalyticsController {
   @ApiParam({ name: 'reportId', description: 'Report ID' })
   @ApiQuery({ name: 'format', enum: ['pdf', 'excel', 'csv'], description: 'Export format' })
   @ApiResponse({ status: 200, description: 'Report exported successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async exportReport(
     @CurrentUser() user: any,
     @Param('reportId') reportId: string,
@@ -156,7 +156,7 @@ export class AnalyticsController {
   @Get('insights')
   @ApiOperation({ summary: 'Get AI-powered insights' })
   @ApiResponse({ status: 200, description: 'AI insights retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getAIInsights(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,
@@ -172,7 +172,7 @@ export class AnalyticsController {
   @Get('benchmarks')
   @ApiOperation({ summary: 'Get industry benchmarks' })
   @ApiResponse({ status: 200, description: 'Industry benchmarks retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getIndustryBenchmarks(
     @CurrentUser() user: any,
     @Query('category') category?: string,
@@ -183,7 +183,7 @@ export class AnalyticsController {
   @Get('cohort-analysis')
   @ApiOperation({ summary: 'Get cohort analysis' })
   @ApiResponse({ status: 200, description: 'Cohort analysis retrieved successfully' })
-  @Roles('admin')
+  @Roles(UserRole.ADMIN)
   async getCohortAnalysis(
     @Query() filters: ReportFiltersDto,
   ) {
@@ -193,7 +193,7 @@ export class AnalyticsController {
   @Get('predictive')
   @ApiOperation({ summary: 'Get predictive analytics' })
   @ApiResponse({ status: 200, description: 'Predictive analytics retrieved successfully' })
-  @Roles('coach', 'admin')
+  @Roles(UserRole.COACH, UserRole.ADMIN)
   async getPredictiveAnalytics(
     @CurrentUser() user: any,
     @Query() filters: ReportFiltersDto,

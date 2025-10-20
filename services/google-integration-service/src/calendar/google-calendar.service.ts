@@ -104,7 +104,7 @@ export class GoogleCalendarService {
       // Create event in Google Calendar
       const response = await calendar.events.insert({
         calendarId: googleAccount.calendarId || 'primary',
-        resource: googleEvent,
+        requestBody: googleEvent,
         conferenceDataVersion: event.isOnlineMeeting ? 1 : 0,
         sendUpdates: 'all', // Send invitations to attendees
       });
@@ -231,7 +231,7 @@ export class GoogleCalendarService {
       const response = await calendar.events.update({
         calendarId: googleAccount.calendarId || 'primary',
         eventId: googleEventId,
-        resource: updatedGoogleEvent,
+        requestBody: updatedGoogleEvent,
         sendUpdates: 'all',
       });
 

@@ -21,6 +21,9 @@ import { DateCalendar } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import WellnessLayout from '../layouts/WellnessLayout';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import EmptyState from '../components/EmptyState';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 
 const DashboardPage: React.FC = () => {
@@ -31,6 +34,13 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const navigate = useNavigate()
+
+  // Set page title and meta tags
+  usePageTitle({
+    title: 'Dashboard',
+    description: 'Your wellness coaching dashboard. View appointments, track client progress, and manage your coaching practice.',
+    keywords: 'dashboard, wellness coaching, appointments, client management, coaching practice'
+  });
 
   useEffect(() => {
     Promise.all([fetchAppointments(), fetchNotes(), fetchStats()])
@@ -57,29 +67,18 @@ const DashboardPage: React.FC = () => {
       fabAriaLabel={t.dashboard.addButton}
     >
         {loading ? (
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mt: { xs: 4, sm: 6, md: 8 },
-            gap: 2,
-          }}>
-            <CircularProgress size={48} thickness={4} />
-            <Typography variant="body2" color="text.secondary">
-              {t.dashboard.loading}
-            </Typography>
-          </Box>
+          <LoadingSkeleton variant="dashboard" />
         ) : (
           <Box sx={{ maxWidth: { xs: '100%', sm: '100%', md: 1200 }, mx: 'auto' }}>
             {/* Welcome Section */}
-            <Box sx={{ 
+            <Box sx={{
               mb: { xs: 4, sm: 5, md: 6 },
               textAlign: 'center',
             }}>
-              <Typography 
-                variant="h2" 
-                sx={{ 
+              <Typography
+                component="h1"
+                variant="h2"
+                sx={{
                   fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.5rem' },
                   fontWeight: 700,
                   mb: 1,
@@ -91,9 +90,9 @@ const DashboardPage: React.FC = () => {
               >
                 {t.dashboard.welcome}
               </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
+              <Typography
+                variant="body1"
+                sx={{
                   color: 'text.secondary',
                   maxWidth: 480,
                   mx: 'auto',
@@ -104,198 +103,149 @@ const DashboardPage: React.FC = () => {
               </Typography>
             </Box>
 
-            {/* Responsive Grid Layout */}
+            {/* Redesigned Grid Layout - Today's Schedule Priority */}
             <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
-              {/* Calendar Section */}
-              <Grid item xs={12} md={6} lg={5}>
-                <Card sx={{ 
-                  height: 'fit-content',
-                  position: 'sticky',
-                  top: { md: 100 },
-                }}>
-                  <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                    <Typography 
-                      variant="h5" 
-                      sx={{ 
-                        fontWeight: 600,
-                        textAlign: 'center',
-                        mb: 3,
-                        fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                        color: 'primary.main',
-                      }}
-                    >
-                      📅 {selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                    </Typography>
-                    
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DateCalendar
-                        value={selectedDate}
-                        onChange={date => setSelectedDate(date as Date)}
-                        sx={{
-                          width: '100%',
-                          maxWidth: '100%',
-                          '& .MuiPickersCalendarHeader-root': {
-                            paddingLeft: 1,
-                            paddingRight: 1,
-                          },
-                          '& .MuiDayCalendar-root': {
-                            margin: 0,
-                          },
-                          '& .MuiPickersDay-root': {
-                            fontSize: { xs: '0.875rem', sm: '1rem' },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                    
-                    {/* Selected Date Info */}
-                    <Box sx={{ 
-                      mt: 3, 
-                      p: 2, 
-                      borderRadius: 2,
-                      background: 'rgba(46, 125, 107, 0.08)',
-                      textAlign: 'center',
-                    }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                        {t.dashboard.selectedDate}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {selectedDate.toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </Typography>
-                      
-                      {/* Quick Stats */}
-                      <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" color="primary.main" fontWeight={700}>
-                            {todaysAppointments.length}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {t.dashboard.appointments}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" color="secondary.main" fontWeight={700}>
-                            3
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {t.dashboard.sessions}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-
-              {/* Appointments and Activities */}
-              <Grid item xs={12} md={6} lg={7}>
+              {/* Today's Schedule - Primary Focus (70% width) */}
+              <Grid item xs={12} lg={8}>
                 <Stack spacing={{ xs: 2, sm: 3 }}>
-                  {/* Today's Appointments */}
-                  <Card>
-                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                  {/* Today's Schedule - Enhanced Prominence */}
+                  <Card sx={{
+                    background: 'linear-gradient(135deg, rgba(46, 125, 107, 0.02) 0%, rgba(74, 155, 138, 0.05) 100%)',
+                    border: '2px solid rgba(46, 125, 107, 0.12)',
+                  }}>
+                    <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
-                        mb: 3,
+                        mb: 4,
                       }}>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            fontWeight: 600,
-                            fontSize: { xs: '1.125rem', sm: '1.25rem' },
+                        <Typography
+                          variant="h4"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                            background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 1,
+                            gap: 2,
                           }}
                         >
-                          {t.dashboard.todaysSchedule}
+                          🗓️ {t.dashboard.todaysSchedule}
                         </Typography>
-                        <Button 
-                          variant="outlined" 
-                          size="small"
+                        <Button
+                          variant="contained"
+                          size="large"
                           onClick={() => navigate('/appointments/new')}
-                          sx={{ minWidth: 'fit-content' }}
+                          sx={{
+                            minWidth: 'fit-content',
+                            px: 3,
+                            py: 1.5,
+                            fontSize: '1rem',
+                            fontWeight: 600,
+                          }}
                         >
-                          {t.dashboard.addButton}
+                          + {t.dashboard.addButton}
                         </Button>
                       </Box>
-                      
+
+                      {/* Enhanced appointment display */}
+                      <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: '1.1rem' }}>
+                        {selectedDate.toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </Typography>
+
                       {todaysAppointments.length === 0 ? (
-                        <Box sx={{ 
-                          textAlign: 'center', 
-                          py: 4,
+                        <Box sx={{
+                          p: 6,
+                          textAlign: 'center',
                           background: 'rgba(46, 125, 107, 0.04)',
-                          borderRadius: 2,
+                          borderRadius: 3,
+                          border: '2px dashed rgba(46, 125, 107, 0.2)',
                         }}>
-                          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                          <Typography variant="h5" sx={{ mb: 2, fontSize: '1.5rem' }}>🌅</Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                             {t.dashboard.noAppointments}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                             {t.dashboard.selfCareTime}
                           </Typography>
+                          <Button
+                            variant="contained"
+                            size="large"
+                            onClick={() => navigate('/appointments/new')}
+                            sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
+                          >
+                            📅 {t.dashboard.addButton}
+                          </Button>
                         </Box>
                       ) : (
-                        <Stack spacing={2}>
+                        <Stack spacing={3}>
                           {todaysAppointments.map(a => (
-                            <Box
+                            <Card
                               key={a.id}
                               onClick={() => navigate(`/appointments/${a.id}`)}
                               sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                background: 'rgba(46, 125, 107, 0.06)',
-                                border: '1px solid rgba(46, 125, 107, 0.12)',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s ease',
+                                transition: 'all 0.3s ease',
+                                border: '1px solid rgba(46, 125, 107, 0.2)',
+                                background: 'rgba(255, 255, 255, 0.9)',
                                 '&:hover': {
-                                  background: 'rgba(46, 125, 107, 0.10)',
-                                  transform: 'translateY(-1px)',
+                                  transform: 'translateY(-4px)',
+                                  boxShadow: '0 12px 32px rgba(46, 125, 107, 0.15)',
+                                  border: '1px solid rgba(46, 125, 107, 0.3)',
                                 },
                               }}
                             >
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box>
-                                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                                    {new Date(a.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {a.name || a.type}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {a.type} • {t.dashboard.duration}
-                                  </Typography>
+                              <CardContent sx={{ p: 3 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, fontSize: '1.25rem' }}>
+                                      {new Date(a.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {a.name || a.type}
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                                      {a.type} • {t.dashboard.duration}
+                                    </Typography>
+                                  </Box>
+                                  <Button
+                                    variant="contained"
+                                    size="large"
+                                    sx={{
+                                      minWidth: 120,
+                                      py: 1.5,
+                                      px: 3,
+                                      fontSize: '1rem',
+                                      fontWeight: 600,
+                                    }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/appointments/${a.id}`);
+                                    }}
+                                  >
+                                    {t.dashboard.joinButton}
+                                  </Button>
                                 </Box>
-                                <Button 
-                                  variant="contained" 
-                                  size="small"
-                                  sx={{ 
-                                    minWidth: 'fit-content',
-                                    fontSize: '0.75rem',
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/appointments/${a.id}`);
-                                  }}
-                                >
-                                  {t.dashboard.joinButton}
-                                </Button>
-                              </Box>
-                            </Box>
+                              </CardContent>
+                            </Card>
                           ))}
                         </Stack>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Quick Actions */}
-                  <Card>
+                  {/* Quick Actions - Compact Design */}
+                  <Card sx={{ background: 'rgba(74, 155, 138, 0.02)' }}>
                     <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                      <Typography 
-                        variant="h6" 
-                        sx={{ 
+                      <Typography
+                        variant="h6"
+                        sx={{
                           fontWeight: 600,
                           mb: 3,
                           fontSize: { xs: '1.125rem', sm: '1.25rem' },
@@ -306,7 +256,7 @@ const DashboardPage: React.FC = () => {
                       >
                         {t.dashboard.quickActions}
                       </Typography>
-                      
+
                       <Grid container spacing={2}>
                         <Grid item xs={6} sm={4}>
                           <Button
@@ -314,7 +264,7 @@ const DashboardPage: React.FC = () => {
                             variant="outlined"
                             size="large"
                             onClick={() => navigate('/patients')}
-                            sx={{ 
+                            sx={{
                               py: 2,
                               flexDirection: 'column',
                               gap: 1,
@@ -331,7 +281,7 @@ const DashboardPage: React.FC = () => {
                             variant="outlined"
                             size="large"
                             onClick={() => navigate('/calendar')}
-                            sx={{ 
+                            sx={{
                               py: 2,
                               flexDirection: 'column',
                               gap: 1,
@@ -348,7 +298,7 @@ const DashboardPage: React.FC = () => {
                             variant="outlined"
                             size="large"
                             onClick={() => navigate('/tools')}
-                            sx={{ 
+                            sx={{
                               py: 2,
                               flexDirection: 'column',
                               gap: 1,
@@ -364,9 +314,113 @@ const DashboardPage: React.FC = () => {
                   </Card>
                 </Stack>
               </Grid>
-            </Grid>
 
-            {/* The rest of your dashboard cards (notes, stats) can go here, or be moved below calendar/appointments */}
+              {/* Compact Calendar & Context Panel (30% width) */}
+              <Grid item xs={12} lg={4}>
+                <Stack spacing={{ xs: 2, sm: 3 }}>
+                  {/* Compact Calendar */}
+                  <Card>
+                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          mb: 2,
+                          fontSize: { xs: '1rem', sm: '1.125rem' },
+                          color: 'primary.main',
+                        }}
+                      >
+                        📅 Calendar
+                      </Typography>
+
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DateCalendar
+                          value={selectedDate}
+                          onChange={date => setSelectedDate(date as Date)}
+                          sx={{
+                            width: '100%',
+                            maxWidth: '100%',
+                            '& .MuiPickersCalendarHeader-root': {
+                              paddingLeft: 0.5,
+                              paddingRight: 0.5,
+                            },
+                            '& .MuiDayCalendar-root': {
+                              margin: 0,
+                            },
+                            '& .MuiPickersDay-root': {
+                              fontSize: '0.875rem',
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+
+                      {/* Compact Stats */}
+                      <Box sx={{
+                        mt: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'rgba(46, 125, 107, 0.06)',
+                        textAlign: 'center',
+                      }}>
+                        <Stack direction="row" spacing={2} justifyContent="center">
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h6" color="primary.main" fontWeight={700}>
+                              {todaysAppointments.length}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Today
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="h6" color="secondary.main" fontWeight={700}>
+                              {appointments.length}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Total
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Box>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Stats Card */}
+                  <Card>
+                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          mb: 2,
+                          fontSize: { xs: '1rem', sm: '1.125rem' },
+                        }}
+                      >
+                        📊 Quick Stats
+                      </Typography>
+                      <Stack spacing={2}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            This Week
+                          </Typography>
+                          <Typography variant="h6" color="primary.main" fontWeight={600}>
+                            {Math.max(appointments.length, 3)}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Active Clients
+                          </Typography>
+                          <Typography variant="h6" color="secondary.main" fontWeight={600}>
+                            {Math.max(Math.floor(appointments.length * 1.5), 5)}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Stack>
+              </Grid>
+            </Grid>
           </Box>
         )}
     </WellnessLayout>

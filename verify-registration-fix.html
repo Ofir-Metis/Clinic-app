@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Fix Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test-result { padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #b8daff; }
+        .test-button { background: #2E7D6B; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; }
+        .test-button:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Registration Fix Verification</h1>
+    
+    <div class="info">
+        <h3>What was Fixed:</h3>
+        <ul>
+            <li>✅ CORS configuration updated to include IP address: <code>http://10.100.102.17:5173</code></li>
+            <li>✅ API Gateway container recreated with new environment variables</li>
+            <li>✅ Preflight OPTIONS requests now return proper <code>Access-Control-Allow-Origin</code> header</li>
+        </ul>
+    </div>
+    
+    <h3>Test Results:</h3>
+    <div id="results"></div>
+    
+    <button class="test-button" onclick="testCORSPreflight()">Test CORS Preflight</button>
+    <button class="test-button" onclick="testRegistrationAPI()">Test Registration API</button>
+    <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+    
+    <div style="margin-top: 30px;">
+        <h3>Next Steps:</h3>
+        <ol>
+            <li>Go to the actual frontend: <a href="http://10.100.102.17:5173/register" target="_blank">http://10.100.102.17:5173/register</a></li>
+            <li>Fill out the registration form</li>
+            <li>Click "Register" - the button text should NOT disappear permanently</li>
+            <li>Registration should complete successfully</li>
+        </ol>
+    </div>
+    
+    <script>
+        const API_URL = 'http://10.100.102.17:4000';
+        const resultsDiv = document.getElementById('results');
+        
+        function addResult(title, message, type) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${title}:</strong> ${message}`;
+            resultsDiv.appendChild(div);
+        }
+        
+        async function testCORSPreflight() {
+            try {
+                addResult('CORS Preflight Test', 'Testing...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://10.100.102.17:5173',
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'content-type'
+                    }
+                });
+                
+                const corsOrigin = response.headers.get('Access-Control-Allow-Origin');
+                const expectedOrigin = 'http://10.100.102.17:5173';
+                
+                if (corsOrigin === expectedOrigin) {
+                    addResult('CORS Preflight Test', `✅ SUCCESS - Received correct CORS header: ${corsOrigin}`, 'success');
+                    return true;
+                } else {
+                    addResult('CORS Preflight Test', `❌ FAILED - Expected: ${expectedOrigin}, Got: ${corsOrigin}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addResult('CORS Preflight Test', `❌ ERROR - ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testRegistrationAPI() {
+            try {
+                addResult('Registration API Test', 'Testing...', 'info');
+                
+                const testData = {
+                    name: 'API Test User',
+                    email: `apitest${Date.now()}@test.com`,
+                    password: 'testpass123',
+                    confirmPassword: 'testpass123',
+                    role: 'therapist'
+                };
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://10.100.102.17:5173'
+                    },
+                    body: JSON.stringify(testData),
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const corsOrigin = response.headers.get('Access-Control-Allow-Origin');
+                    
+                    if (data.access_token && corsOrigin === 'http://10.100.102.17:5173') {
+                        addResult('Registration API Test', `✅ SUCCESS - Registration completed, token received, CORS OK`, 'success');
+                        return true;
+                    } else {
+                        addResult('Registration API Test', `⚠️ PARTIAL - Response OK but missing token or CORS header`, 'error');
+                        return false;
+                    }
+                } else {
+                    const errorData = await response.json();
+                    addResult('Registration API Test', `❌ FAILED - Status: ${response.status}, Error: ${JSON.stringify(errorData)}`, 'error');
+                    return false;
+                }
+            } catch (error) {
+                addResult('Registration API Test', `❌ ERROR - ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function runAllTests() {
+            resultsDiv.innerHTML = '';
+            addResult('Test Suite', 'Running comprehensive tests...', 'info');
+            
+            const corsResult = await testCORSPreflight();
+            const apiResult = await testRegistrationAPI();
+            
+            if (corsResult && apiResult) {
+                addResult('Overall Result', '🎉 ALL TESTS PASSED - Registration should work in frontend!', 'success');
+                addResult('Confirmation', 'The button text disappearing issue should now be resolved. Test on the actual frontend page.', 'success');
+            } else {
+                addResult('Overall Result', '❌ Some tests failed - Issue may not be fully resolved', 'error');
+            }
+        }
+        
+        // Auto-run tests on page load
+        window.onload = () => {
+            setTimeout(runAllTests, 1000);
+        };
+    </script>
+</body>
+</html>

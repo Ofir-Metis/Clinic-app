@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../contexts/LanguageContext';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 interface RegistrationFormData {
   // Step 1: Basic Info
@@ -105,6 +106,7 @@ const ClientRegisterPage: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
 
   const steps = ['Basic Information', 'Personal Details', 'Your Journey'];
 
@@ -116,6 +118,10 @@ const ClientRegisterPage: React.FC = () => {
       [field]: event.target.value
     }));
     if (error) setError(null);
+    // Clear field error when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleGoalToggle = (goal: string) => {
@@ -127,8 +133,26 @@ const ClientRegisterPage: React.FC = () => {
     }));
   };
 
+  const validateCurrentStep = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (activeStep === 0) {
+      if (!formData.firstName.trim()) errors.firstName = 'First name is required';
+      if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
+      if (!validateEmail(formData.email)) errors.email = 'Please enter a valid email address';
+      if (!validatePassword(formData.password)) errors.password = 'Password must be at least 8 characters with letters and numbers';
+      if (formData.password !== formData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+    } else if (activeStep === 1) {
+      if (!validatePhone(formData.phone)) errors.phone = 'Please enter a valid phone number';
+      if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleNext = () => {
-    if (activeStep < steps.length - 1) {
+    if (validateCurrentStep() && activeStep < steps.length - 1) {
       setActiveStep(prev => prev + 1);
     }
   };
@@ -142,6 +166,11 @@ const ClientRegisterPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
+    // Final validation before submission
+    if (!validateCurrentStep()) {
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -149,6 +178,11 @@ const ClientRegisterPage: React.FC = () => {
 
     if (!formData.agreedToTerms) {
       setError('Please agree to the terms and conditions');
+      return;
+    }
+    
+    if (formData.primaryGoals.length === 0) {
+      setError('Please select at least one primary goal');
       return;
     }
 
@@ -176,8 +210,29 @@ const ClientRegisterPage: React.FC = () => {
     }
   };
 
-  const isStep1Valid = formData.firstName && formData.lastName && formData.email && formData.password && formData.confirmPassword;
-  const isStep2Valid = formData.phone && formData.dateOfBirth;
+  // Enhanced validation logic
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 8 && /[A-Za-z]/.test(password) && /[0-9]/.test(password);
+  };
+
+  const validatePhone = (phone: string) => {
+    const phoneRegex = /^[\+]?[1-9][\d]{0,3}[-\s]?[\(]?[0-9]{1,4}[\)]?[-\s]?[0-9]{1,4}[-\s]?[0-9]{1,9}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
+  const isStep1Valid = formData.firstName.trim() && 
+                     formData.lastName.trim() && 
+                     validateEmail(formData.email) && 
+                     validatePassword(formData.password) && 
+                     formData.confirmPassword && 
+                     formData.password === formData.confirmPassword;
+                     
+  const isStep2Valid = validatePhone(formData.phone) && formData.dateOfBirth;
   const isStep3Valid = formData.primaryGoals.length > 0 && formData.coachingStyle && formData.sessionPreference && formData.agreedToTerms;
 
   const getStepContent = (step: number) => {
@@ -192,6 +247,9 @@ const ClientRegisterPage: React.FC = () => {
                 value={formData.firstName}
                 onChange={handleInputChange('firstName')}
                 placeholder="Sarah"
+                autoComplete="given-name"
+                error={Boolean(fieldErrors.firstName)}
+                helperText={fieldErrors.firstName}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
               />
               <TextField
@@ -200,6 +258,9 @@ const ClientRegisterPage: React.FC = () => {
                 value={formData.lastName}
                 onChange={handleInputChange('lastName')}
                 placeholder="Johnson"
+                autoComplete="family-name"
+                error={Boolean(fieldErrors.lastName)}
+                helperText={fieldErrors.lastName}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
               />
             </Box>
@@ -211,6 +272,9 @@ const ClientRegisterPage: React.FC = () => {
               value={formData.email}
               onChange={handleInputChange('email')}
               placeholder="sarah.johnson@example.com"
+              autoComplete="email"
+              error={Boolean(fieldErrors.email)}
+              helperText={fieldErrors.email}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
             
@@ -221,6 +285,9 @@ const ClientRegisterPage: React.FC = () => {
               value={formData.password}
               onChange={handleInputChange('password')}
               placeholder="Choose a strong password"
+              autoComplete="new-password"
+              error={Boolean(fieldErrors.password)}
+              helperText={fieldErrors.password}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
             
@@ -231,6 +298,9 @@ const ClientRegisterPage: React.FC = () => {
               value={formData.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
               placeholder="Confirm your password"
+              autoComplete="new-password"
+              error={Boolean(fieldErrors.confirmPassword)}
+              helperText={fieldErrors.confirmPassword}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
           </Stack>
@@ -245,6 +315,9 @@ const ClientRegisterPage: React.FC = () => {
               value={formData.phone}
               onChange={handleInputChange('phone')}
               placeholder="+1 (555) 123-4567"
+              autoComplete="tel"
+              error={Boolean(fieldErrors.phone)}
+              helperText={fieldErrors.phone}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
             
@@ -255,6 +328,9 @@ const ClientRegisterPage: React.FC = () => {
               value={formData.dateOfBirth}
               onChange={handleInputChange('dateOfBirth')}
               InputLabelProps={{ shrink: true }}
+              autoComplete="bday"
+              error={Boolean(fieldErrors.dateOfBirth)}
+              helperText={fieldErrors.dateOfBirth}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
             
@@ -379,6 +455,12 @@ const ClientRegisterPage: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 6 }}>
+          <LoadingOverlay 
+            loading={isLoading} 
+            message="Creating your account..."
+            variant="overlay"
+            backdrop
+          >
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Avatar
@@ -544,6 +626,7 @@ const ClientRegisterPage: React.FC = () => {
               Your transformation begins with a single step 🌱
             </Typography>
           </Box>
+          </LoadingOverlay>
         </CardContent>
       </Card>
     </Box>

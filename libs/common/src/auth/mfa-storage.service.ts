@@ -455,7 +455,7 @@ export class MFAStorageService {
     // This is a simple example - use AES-256-GCM in production
     const crypto = require('crypto');
     const key = process.env.MFA_ENCRYPTION_KEY || 'default-key-change-in-production';
-    const cipher = crypto.createCipher('aes-256-cbc', key);
+    const cipher = crypto.createCipheriv('aes-256-cbc', key);
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return encrypted;
@@ -465,7 +465,7 @@ export class MFAStorageService {
     // In production, use proper decryption with the same secure key
     const crypto = require('crypto');
     const key = process.env.MFA_ENCRYPTION_KEY || 'default-key-change-in-production';
-    const decipher = crypto.createDecipher('aes-256-cbc', key);
+    const decipher = crypto.createDecipheriv('aes-256-cbc', key);
     let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

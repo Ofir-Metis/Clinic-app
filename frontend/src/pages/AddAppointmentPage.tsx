@@ -21,7 +21,7 @@ import {
 } from '@mui/icons-material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { scheduleAppointment } from '../api/appointments';
 import WellnessLayout from '../layouts/WellnessLayout';
 
@@ -74,9 +74,10 @@ const AddAppointmentPage: React.FC = () => {
         }}>
           <EventIcon sx={{ fontSize: 40 }} />
         </Avatar>
-        <Typography 
-          variant="h4" 
-          sx={{ 
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{
             fontWeight: 700,
             mb: 1,
             background: 'linear-gradient(135deg, #8B5A87 0%, #A67B9A 100%)',

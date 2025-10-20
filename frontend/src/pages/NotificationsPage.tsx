@@ -22,13 +22,13 @@ import {
   CheckCircle as CheckCircleIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { theme } from '../theme';
 import { fetchNotifications, Notification } from '../api/notifications';
 import WellnessLayout from '../layouts/WellnessLayout';
 
 const NotificationsPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Notification[]>([]);
   const [error, setError] = useState('');
@@ -45,7 +45,7 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <WellnessLayout
-        title="Notifications"
+        title={t.nav.notifications}
         showFab={false}
       >
         {/* Header Section */}
@@ -61,7 +61,7 @@ const NotificationsPage: React.FC = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            🔔 Notifications
+            🔔 {t.nav.notifications}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Stay updated with your wellness journey and client interactions
@@ -74,7 +74,7 @@ const NotificationsPage: React.FC = () => {
         ) : error ? (
           <Card>
             <CardContent>
-              <Typography color="error" textAlign="center">{error}</Typography>
+              <Typography color="error" textAlign="center">{t.status.error}</Typography>
             </CardContent>
           </Card>
         ) : items.length === 0 ? (
@@ -82,7 +82,7 @@ const NotificationsPage: React.FC = () => {
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                No notifications yet
+                {t.status.empty}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 You're all caught up! New notifications will appear here.

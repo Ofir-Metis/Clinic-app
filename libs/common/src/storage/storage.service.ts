@@ -83,15 +83,12 @@ class StorageService {
       pathStyle: this.configService.get('S3_PATH_STYLE', 'true') === 'true', // MinIO requires path style
     };
 
-    // Configure AWS SDK
-    AWS.config.update({
-      accessKeyId: this.config.accessKeyId,
-      secretAccessKey: this.config.secretAccessKey,
-      region: this.config.region,
-    });
-
+    // Configure AWS SDK v2 Client
     this.s3 = new AWS.S3({
       endpoint: this.config.endpoint,
+      region: this.config.region,
+      accessKeyId: this.config.accessKeyId,
+      secretAccessKey: this.config.secretAccessKey,
       s3ForcePathStyle: this.config.pathStyle,
       sslEnabled: this.config.useSSL,
       signatureVersion: 'v4',
@@ -122,7 +119,7 @@ class StorageService {
     try {
       await this.s3.headBucket({ Bucket: bucketName }).promise();
     } catch (error) {
-      if (error.statusCode === 404) {
+      if (error.statusCode === 404 || error.code === 'NoSuchBucket') {
         this.logger.log(`Creating bucket: ${bucketName}`);
         await this.s3.createBucket({ Bucket: bucketName }).promise();
       } else {
@@ -164,17 +161,17 @@ class StorageService {
           Rules: [
             {
               ID: 'RecordingRetentionRule',
-              Status: 'Enabled',
+              Status: 'Enabled' as const,
               Filter: { Prefix: 'recordings/' },
               Expiration: { Days: retentionDays },
               Transitions: [
                 {
                   Days: 30,
-                  StorageClass: 'STANDARD_IA', // Move to Infrequent Access after 30 days
+                  StorageClass: 'STANDARD_IA' as const, // Move to Infrequent Access after 30 days
                 },
                 {
                   Days: 90,
-                  StorageClass: 'GLACIER', // Move to Glacier after 90 days
+                  StorageClass: 'GLACIER' as const, // Move to Glacier after 90 days
                 },
               ],
             },

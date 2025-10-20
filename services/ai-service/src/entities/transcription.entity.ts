@@ -46,36 +46,32 @@ interface TranscriptionMetadata {
 @Index(['createdAt'])
 export class Transcription {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'appointment_id' })
-  @Index()
-  appointmentId: string;
+  appointmentId!: string;
 
   @Column({ name: 'recording_id' })
-  @Index()
-  recordingId: string;
+  recordingId!: string;
 
   @Column({ name: 'coach_id' })
-  @Index()
-  coachId: string;
+  coachId!: string;
 
   @Column({ name: 'client_id' })
-  @Index()
-  clientId: string;
+  clientId!: string;
 
   // File Information
   @Column({ name: 'original_filename' })
-  originalFilename: string;
+  originalFilename!: string;
 
   @Column({ name: 'file_path' })
-  filePath: string;
+  filePath!: string;
 
   @Column({ name: 'file_size' })
-  fileSize: number; // in bytes
+  fileSize!: number; // in bytes
 
   @Column({ name: 'duration_seconds', type: 'decimal', precision: 10, scale: 2 })
-  durationSeconds: number;
+  durationSeconds!: number;
 
   // Transcription Status
   @Column({
@@ -83,7 +79,7 @@ export class Transcription {
     enum: ['pending', 'processing', 'completed', 'failed'],
     default: 'pending'
   })
-  status: TranscriptionStatus;
+  status!: TranscriptionStatus;
 
   @Column('text', { name: 'full_text', nullable: true })
   fullText?: string;
@@ -117,7 +113,7 @@ export class Transcription {
   speakerCount?: number;
 
   @Column({ name: 'has_speaker_labels', default: false })
-  hasSpeakerLabels: boolean;
+  hasSpeakerLabels!: boolean;
 
   // Processing Information
   @Column('jsonb', { nullable: true })
@@ -137,10 +133,10 @@ export class Transcription {
 
   // Preprocessing
   @Column({ name: 'noise_reduced', default: false })
-  noiseReduced: boolean;
+  noiseReduced!: boolean;
 
   @Column({ name: 'audio_enhanced', default: false })
-  audioEnhanced: boolean;
+  audioEnhanced!: boolean;
 
   @Column('jsonb', { nullable: true, name: 'preprocessing_config' })
   preprocessingConfig?: {
@@ -166,13 +162,13 @@ export class Transcription {
 
   // Privacy and Access
   @Column({ name: 'contains_sensitive_data', default: false })
-  containsSensitiveData: boolean;
+  containsSensitiveData!: boolean;
 
   @Column('text', { array: true, nullable: true, name: 'redacted_phrases' })
   redactedPhrases?: string[];
 
   @Column({ name: 'client_access_allowed', default: true })
-  clientAccessAllowed: boolean;
+  clientAccessAllowed!: boolean;
 
   // Relationship to Summary
   @OneToOne(() => SessionSummary, { nullable: true })
@@ -183,10 +179,10 @@ export class Transcription {
   sessionSummaryId?: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Computed Properties
   get isComplete(): boolean {

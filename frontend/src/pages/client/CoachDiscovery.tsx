@@ -409,6 +409,10 @@ const CoachDiscovery: React.FC = () => {
   };
 
   const handleViewProfile = (coach: Coach) => {
+    if (!coach) {
+      console.error('Cannot view profile: coach data is missing');
+      return;
+    }
     setSelectedCoach(coach);
     setShowProfileDialog(true);
   };
@@ -664,12 +668,12 @@ const CoachDiscovery: React.FC = () => {
                           background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                         }}
                       >
-                        {coach.firstName[0]}{coach.lastName[0]}
+                        {coach.firstName?.[0] || 'U'}{coach.lastName?.[0] || 'U'}
                       </Avatar>
                       <Box sx={{ flex: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                            {coach.firstName} {coach.lastName}
+                            {coach.firstName || 'Unknown'} {coach.lastName || 'User'}
                           </Typography>
                           {coach.isVerified && (
                             <Tooltip title="Verified Coach">
@@ -843,8 +847,11 @@ const CoachDiscovery: React.FC = () => {
 
         {/* Coach Profile Dialog */}
         <Dialog
-          open={showProfileDialog}
-          onClose={() => setShowProfileDialog(false)}
+          open={showProfileDialog && selectedCoach !== null}
+          onClose={() => {
+            setShowProfileDialog(false);
+            setSelectedCoach(null);
+          }}
           maxWidth="md"
           fullWidth
         >
@@ -859,18 +866,21 @@ const CoachDiscovery: React.FC = () => {
                       background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                     }}
                   >
-                    {selectedCoach.firstName[0]}{selectedCoach.lastName[0]}
+                    {selectedCoach.firstName?.[0] || 'U'}{selectedCoach.lastName?.[0] || 'U'}
                   </Avatar>
                   <Box>
                     <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                      {selectedCoach.firstName} {selectedCoach.lastName}
+                      {selectedCoach.firstName || 'Unknown'} {selectedCoach.lastName || 'User'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {selectedCoach.professionalTitle}
+                      {selectedCoach.professionalTitle || 'Coach'}
                     </Typography>
                   </Box>
                   <Box sx={{ ml: 'auto' }}>
-                    <IconButton onClick={() => setShowProfileDialog(false)}>
+                    <IconButton onClick={() => {
+                      setShowProfileDialog(false);
+                      setSelectedCoach(null);
+                    }}>
                       <CloseIcon />
                     </IconButton>
                   </Box>
@@ -879,7 +889,7 @@ const CoachDiscovery: React.FC = () => {
               
               <DialogContent sx={{ pt: 0 }}>
                 {/* Detailed coach profile content would go here */}
-                <Typography paragraph>{selectedCoach.bio}</Typography>
+                <Typography paragraph>{selectedCoach.bio || 'No bio available.'}</Typography>
                 
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                   Specializations
@@ -910,7 +920,10 @@ const CoachDiscovery: React.FC = () => {
               </DialogContent>
               
               <DialogActions>
-                <Button onClick={() => setShowProfileDialog(false)}>
+                <Button onClick={() => {
+                  setShowProfileDialog(false);
+                  setSelectedCoach(null);
+                }}>
                   Close
                 </Button>
                 <Button

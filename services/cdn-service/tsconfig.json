@@ -17,6 +17,10 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "strict": false,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@clinic/common": ["../../libs/common/src/index.ts"],
       "@clinic/common/*": ["../../libs/common/src/*"]

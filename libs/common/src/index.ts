@@ -1,5 +1,6 @@
-export * from './logging.interceptor';
-export * from './logging.middleware';
+// Core module
+export { CommonModule } from './common.module';
+
 export * from './http-exception.filter';
 export * from './storage';
 export * from './auth';
@@ -21,6 +22,7 @@ export * from './database/safe-query.service';
 export * from './database/secure-repository.decorator';
 export * from './database/base-secure.repository';
 export * from './database/database-security.module';
+export * from './database/enterprise-database.module';
 export * from './backup/backup.service';
 export * from './backup/backup.controller';
 export * from './backup/backup.module';

@@ -24,14 +24,19 @@ import {
 } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { addPatient } from '../api/patients';
 import { logger } from '../logger';
 import WellnessLayout from '../layouts/WellnessLayout';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import ErrorAlert from '../components/ErrorAlert';
+import LoadingButton from '../components/LoadingButton';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 }) => {
   const { t, i18n } = useTranslation();
   const [snack, setSnack] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
+  const { error, handleError, clearError, setRetryAction } = useErrorHandler();
 
   const formik = useFormik({
     initialValues: {
@@ -51,16 +56,24 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       logger.debug('add patient submit', values);
-      try {
-        await addPatient({ ...values, therapistId });
-        setSnack({ message: t('patientSaved'), severity: 'success' });
-        resetForm();
-      } catch (e) {
-        logger.error('add patient error', e);
-        setSnack({ message: t('saveFailed'), severity: 'error' });
-      } finally {
-        setSubmitting(false);
-      }
+      clearError();
+      
+      const attemptAddPatient = async () => {
+        try {
+          await addPatient({ ...values, therapistId });
+          setSnack({ message: t('patientSaved'), severity: 'success' });
+          resetForm();
+        } catch (e) {
+          logger.error('add patient error', e);
+          setSnack({ message: t('saveFailed'), severity: 'error' });
+          handleError(e, 'Failed to add patient. Please try again.');
+        } finally {
+          setSubmitting(false);
+        }
+      };
+      
+      setRetryAction(attemptAddPatient);
+      await attemptAddPatient();
     },
   });
 
@@ -80,9 +93,10 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
         }}>
           <PersonAddIcon sx={{ fontSize: 40 }} />
         </Avatar>
-        <Typography 
-          variant="h4" 
-          sx={{ 
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{
             fontWeight: 700,
             mb: 1,
             background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
@@ -209,31 +223,17 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                 </Grid>
                 
                 <Grid item xs={12}>
-                  <Box sx={{ position: 'relative' }}>
-                    <Button 
-                      type="submit" 
-                      variant="contained" 
-                      size="large"
-                      fullWidth 
-                      disabled={formik.isSubmitting}
-                      startIcon={<PersonAddIcon />}
-                      sx={{ height: 56 }}
-                    >
-                      {t('savePatient', 'Add Client')}
-                    </Button>
-                    {formik.isSubmitting && (
-                      <CircularProgress 
-                        size={24} 
-                        sx={{ 
-                          position: 'absolute', 
-                          top: '50%', 
-                          left: '50%', 
-                          mt: -1.5, 
-                          ml: -1.5 
-                        }} 
-                      />
-                    )}
-                  </Box>
+                  <LoadingButton 
+                    type="submit" 
+                    variant="contained" 
+                    size="large"
+                    fullWidth 
+                    loading={formik.isSubmitting}
+                    startIcon={<PersonAddIcon />}
+                    sx={{ height: 56 }}
+                  >
+                    {t('savePatient', 'Add Client')}
+                  </LoadingButton>
                 </Grid>
               </Grid>
             </form>
@@ -247,6 +247,8 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
         onClose={() => setSnack(null)}
         message={snack?.message}
       />
+      {error && <ErrorAlert error={error} onRetry={error.retryAction} />}
+      {formik.isSubmitting && <LoadingOverlay />}
     </WellnessLayout>
   );
 };

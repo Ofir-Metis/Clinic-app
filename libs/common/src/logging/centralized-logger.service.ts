@@ -24,19 +24,61 @@ export interface LogContext {
 }
 
 export interface HealthcareLogContext extends LogContext {
+  // Healthcare entities
   patientId?: string;
   providerId?: string;
+  clientId?: string;
+  coachId?: string;
+  appointmentId?: string;
+  
+  // Session context
   sessionType?: 'coaching' | 'therapy' | 'consultation';
   dataType?: 'phi' | 'pii' | 'general' | 'system';
   hipaaCompliant?: boolean;
+  hipaaRelevant?: boolean;
   auditRequired?: boolean;
   sensitiveData?: boolean;
+  
+  // Authentication & security
+  userEmail?: string;
+  endpoint?: string;
+  alertLevel?: 'low' | 'medium' | 'high' | 'critical';
+  alertId?: string;
+  ruleId?: string;
+  ruleCount?: number;
+  threatLevel?: string;
+  scanId?: string;
+  vulnerabilitiesFound?: number;
+  
+  // MFA context
+  backupCodeCount?: number;
+  remainingBackupCodes?: number;
+  disabledBy?: string;
+  expiresAt?: string | Date;
+  isValid?: boolean;
+  
+  // Cache context
+  cacheType?: string;
+  cacheKey?: string;
+  cacheHit?: boolean;
+  severity?: string;
+  
+  // Performance & monitoring
+  durationMs?: number;
+  outcome?: 'success' | 'failure' | 'timeout';
+  success?: boolean;
+  responseTime?: number;
+  
+  // Compliance context
   complianceContext?: {
     regulation: 'HIPAA' | 'GDPR' | 'SOC2';
     dataClassification: 'restricted' | 'confidential' | 'internal' | 'public';
     retentionPeriod?: string;
     encryptionRequired?: boolean;
   };
+  
+  // Additional metadata
+  [key: string]: any;
 }
 
 @Injectable()
@@ -106,7 +148,7 @@ export class CentralizedLoggerService implements LoggerService {
 
         // Add compliance metadata
         if (context.complianceContext) {
-          logEntry.compliance = context.complianceContext;
+          (logEntry as any).compliance = context.complianceContext;
         }
 
         return JSON.stringify(logEntry);
@@ -195,9 +237,7 @@ export class CentralizedLoggerService implements LoggerService {
               username: this.configService.get<string>('ELASTICSEARCH_USERNAME', ''),
               password: this.configService.get<string>('ELASTICSEARCH_PASSWORD', '')
             },
-            ssl: {
-              rejectUnauthorized: this.environment === 'production'
-            }
+            // SSL configuration handled by Elasticsearch client internally
           },
           index: `clinic-logs-${this.environment}`,
           indexTemplate: {

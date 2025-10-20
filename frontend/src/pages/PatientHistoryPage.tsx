@@ -26,7 +26,7 @@ import {
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { DateRangePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '../logger';

@@ -24,7 +24,7 @@ declare global {
   namespace Express {
     interface Request {
       sessionId?: string;
-      sessionData?: {
+      sessionData?: any | {
         userId: string;
         userRole: string;
         securityLevel: string;

@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY libs/ libs/
 COPY services/billing-service/package.json services/billing-service/
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install
 
 # Copy billing service source
 COPY services/billing-service/ services/billing-service/

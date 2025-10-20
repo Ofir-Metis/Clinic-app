@@ -161,8 +161,8 @@ describe('ResilienceService', () => {
   describe('updatePattern', () => {
     it('should update existing pattern configuration', () => {
       const newConfig = {
-        timeout: { timeoutMs: 45000 },
-        bulkhead: { maxConcurrentCalls: 25 },
+        timeout: { enabled: true, timeoutMs: 45000 },
+        bulkhead: { enabled: true, maxConcurrentCalls: 25 },
       };
 
       service.updatePattern('database', newConfig);
@@ -174,7 +174,7 @@ describe('ResilienceService', () => {
 
     it('should throw error when updating non-existent pattern', () => {
       expect(() => {
-        service.updatePattern('nonexistent', { timeout: { timeoutMs: 1000 } });
+        service.updatePattern('nonexistent', { timeout: { enabled: true, timeoutMs: 1000 } });
       }).toThrow("Pattern 'nonexistent' not found");
     });
   });

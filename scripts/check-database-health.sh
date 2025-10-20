@@ -3,17 +3,10 @@
 
 source .env
 
-# Database connection parameters
-DB_HOST=${DATABASE_HOST:-localhost}
-DB_PORT=${DATABASE_PORT:-5432}
-DB_NAME=${DATABASE_NAME:-clinic}
-DB_USER=${DATABASE_USER:-postgres}
-DB_PASSWORD=${DATABASE_PASSWORD:-postgres}
-
 echo "❤️ Checking database health..."
 
 # Check database connection
-PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "SELECT 1;" > /dev/null 2>&1
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT 1;" > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
     echo "✅ Database connection: OK"
@@ -24,7 +17,7 @@ fi
 
 # Check table sizes and row counts
 echo "📊 Database statistics:"
-PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "
 SELECT 
     schemaname,
     tablename,
@@ -41,7 +34,7 @@ LIMIT 20;
 
 # Check for long-running queries
 echo "🔍 Long-running queries:"
-PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "
 SELECT 
     pid,
     now() - pg_stat_activity.query_start AS duration,
@@ -53,7 +46,7 @@ WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes'
 
 # Check database size
 echo "💾 Database size:"
-PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c "
 SELECT 
     pg_database.datname,
     pg_size_pretty(pg_database_size(pg_database.datname)) AS size

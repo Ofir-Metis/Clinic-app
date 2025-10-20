@@ -6,6 +6,7 @@ import { AppointmentsController } from './appointments.controller';
 import { Appointment } from './appointment.entity';
 import { MeetingManagerService } from '../meetings/meeting-manager.service';
 import { RecordingOrchestratorService } from '../recording/recording-orchestrator.service';
+import { MockJwtService } from '../mock-jwt.service';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { RecordingOrchestratorService } from '../recording/recording-orchestrato
   providers: [
     AppointmentsService,
     MeetingManagerService,
-    RecordingOrchestratorService
+    RecordingOrchestratorService,
+    MockJwtService
   ],
   controllers: [AppointmentsController],
   exports: [

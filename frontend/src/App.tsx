@@ -1,48 +1,65 @@
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
 import { AuthProvider } from './AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { theme } from './theme';
-import DashboardPage from './pages/DashboardPage';
-import AddPatientPage from './pages/AddPatientPage';
-import AddAppointmentPage from './pages/AddAppointmentPage';
-import AppointmentPage from './pages/AppointmentPage';
-import PatientHistoryPage from './pages/PatientHistoryPage';
-import PatientDetailPage from './pages/PatientDetailPage';
-import SettingsPage from './pages/SettingsPage';
-import LoginPage from './pages/LoginPage';
-import RegistrationPage from './pages/RegistrationPage';
-import ResetRequestPage from './pages/ResetRequestPage';
-import ResetConfirmPage from './pages/ResetConfirmPage';
-import NotificationsPage from './pages/NotificationsPage';
 import { useParams } from 'react-router-dom';
-import CalendarPage from './pages/CalendarPage';
-import ToolsPage from './pages/ToolsPage';
-import AuthPage from './pages/AuthPage';
+import { useAuth } from './AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import ClientPrivateRoute from './components/ClientPrivateRoute';
-import PatientListPage from './pages/PatientListPage';
-import TreatmentHistoryPage from './pages/TreatmentHistoryPage';
-import PatientLoginPage from './pages/PatientLoginPage';
-import TherapistProfilePage from './pages/TherapistProfilePage';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSkeleton from './components/LoadingSkeleton';
+import AuthGuard from './components/AuthGuard';
+
+// Critical pages loaded immediately (no lazy loading for initial user experience)
+import LoginPage from './pages/LoginPage';
 import ClientLoginPage from './pages/client/ClientLoginPage';
-import ClientRegisterPage from './pages/client/ClientRegisterPage';
-import ClientOnboardingPage from './pages/client/ClientOnboardingPage';
-import ClientDashboard from './pages/client/ClientDashboard';
-import ClientAppointments from './pages/client/ClientAppointments';
-import CoachDiscovery from './pages/client/CoachDiscovery';
-import ClientGoals from './pages/client/ClientGoals';
-import ClientInvitations from './pages/client/ClientInvitations';
-import ClientBookingSystem from './pages/client/ClientBookingSystem';
-import ClientProgressSharing from './pages/client/ClientProgressSharing';
-import ClientAchievements from './pages/client/ClientAchievements';
-import CoachGoalPlanningPage from './pages/CoachGoalPlanningPage';
-import InvitationManagementPage from './pages/InvitationManagementPage';
-import RecordingDemoPage from './pages/RecordingDemoPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import ApiManagementPage from './pages/ApiManagementPage';
-import SubscriptionManagementPage from './pages/admin/SubscriptionManagementPage';
-import TherapistBillingPage from './pages/TherapistBillingPage';
+import RootRedirect from './components/RootRedirect';
+
+// Lazy load all other pages to reduce initial bundle size
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const AddPatientPage = React.lazy(() => import('./pages/AddPatientPage'));
+const AddAppointmentPage = React.lazy(() => import('./pages/AddAppointmentPage'));
+const AppointmentPage = React.lazy(() => import('./pages/AppointmentPage'));
+const PatientHistoryPage = React.lazy(() => import('./pages/PatientHistoryPage'));
+const PatientDetailPage = React.lazy(() => import('./pages/PatientDetailPage'));
+const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
+const RegistrationPage = React.lazy(() => import('./pages/RegistrationPage'));
+const ResetRequestPage = React.lazy(() => import('./pages/ResetRequestPage'));
+const ResetConfirmPage = React.lazy(() => import('./pages/ResetConfirmPage'));
+const NotificationsPage = React.lazy(() => import('./pages/NotificationsPage'));
+const CalendarPage = React.lazy(() => import('./pages/CalendarPage'));
+const ToolsPage = React.lazy(() => import('./pages/ToolsPage'));
+const AuthPage = React.lazy(() => import('./pages/AuthPage'));
+const PatientListPage = React.lazy(() => import('./pages/PatientListPage'));
+const TreatmentHistoryPage = React.lazy(() => import('./pages/TreatmentHistoryPage'));
+const PatientLoginPage = React.lazy(() => import('./pages/PatientLoginPage'));
+const TherapistProfilePage = React.lazy(() => import('./pages/TherapistProfilePage'));
+
+// Client portal pages
+const ClientRegisterPage = React.lazy(() => import('./pages/client/ClientRegisterPage'));
+const ClientOnboardingPage = React.lazy(() => import('./pages/client/ClientOnboardingPage'));
+const ClientDashboard = React.lazy(() => import('./pages/client/ClientDashboard'));
+const ClientAppointments = React.lazy(() => import('./pages/client/ClientAppointments'));
+const CoachDiscovery = React.lazy(() => import('./pages/client/CoachDiscovery'));
+const ClientGoals = React.lazy(() => import('./pages/client/ClientGoals'));
+const ClientInvitations = React.lazy(() => import('./pages/client/ClientInvitations'));
+const ClientBookingSystem = React.lazy(() => import('./pages/client/ClientBookingSystem'));
+const ClientProgressSharing = React.lazy(() => import('./pages/client/ClientProgressSharing'));
+const ClientAchievements = React.lazy(() => import('./pages/client/ClientAchievements'));
+
+// Coach and admin pages
+const CoachGoalPlanningPage = React.lazy(() => import('./pages/CoachGoalPlanningPage'));
+const InvitationManagementPage = React.lazy(() => import('./pages/InvitationManagementPage'));
+const RecordingDemoPage = React.lazy(() => import('./pages/RecordingDemoPage'));
+const AdminDashboardPage = React.lazy(() => import('./pages/AdminDashboardPage'));
+const ApiManagementPage = React.lazy(() => import('./pages/ApiManagementPage'));
+const SubscriptionManagementPage = React.lazy(() => import('./pages/admin/SubscriptionManagementPage'));
+const TherapistBillingPage = React.lazy(() => import('./pages/TherapistBillingPage'));
+
+// Loading component for suspense fallback
+const LoadingSpinner = () => <LoadingSkeleton variant="default" />;
 
 const PatientDetailRoute = () => {
   const { id } = useParams();
@@ -50,19 +67,17 @@ const PatientDetailRoute = () => {
 };
 
 function App() {
-  const token = localStorage.getItem('token');
-  console.log('DEBUG: token in App.tsx:', token);
   return (
-    <LanguageProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <AuthProvider>
-          <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={<Navigate to={token ? '/dashboard' : '/login'} replace />}
-          />
+    <ErrorBoundary>
+      <LanguageProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AuthProvider>
+            <BrowserRouter>
+              <AuthGuard>
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/register" element={<RegistrationPage />} />
@@ -116,11 +131,14 @@ function App() {
           <Route path="/client/booking" element={<ClientPrivateRoute><ClientBookingSystem /></ClientPrivateRoute>} />
           <Route path="/client/progress" element={<ClientPrivateRoute><ClientProgressSharing /></ClientPrivateRoute>} />
           <Route path="/client/achievements" element={<ClientPrivateRoute><ClientAchievements /></ClientPrivateRoute>} />
-        </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
-    </LanguageProvider>
+                  </Routes>
+                </Suspense>
+              </AuthGuard>
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }
 

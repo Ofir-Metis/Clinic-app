@@ -1,0 +1,71 @@
+{
+  "mcpServers": {
+    "browser-qa": {
+      "type": "stdio",
+      "command": "python",
+      "args": [
+        "-u",
+        "C:\\Users\\Ofir\\OneDrive\\Documents\\Web page interaction MCP\\server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    "advanced-browser-mcp": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["server.py"],
+      "workingDirectory": "C:\\Users\\Ofir\\OneDrive\\Documents\\Advanced-Browser-MCP",
+      "env": {
+        "PYTHONPATH": "C:\\Users\\Ofir\\OneDrive\\Documents\\Advanced-Browser-MCP\\src",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "disabled": false,
+      "alwaysAllow": [
+        "compare_screenshots",
+        "detect_layout_shifts",
+        "recognize_elements",
+        "generate_selectors",
+        "manage_baseline"
+      ]
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git"],
+      "env": {}
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://netbox:J5brHrAXFLQSif0K@localhost:5432/netbox"
+      }
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"],
+      "env": {}
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite"],
+      "env": {}
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {}
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {}
+    }
+  }
+}

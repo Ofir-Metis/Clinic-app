@@ -1,0 +1,56 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy the built application and libs
+COPY services/google-integration-service/dist ./dist
+COPY libs/common/dist ./libs/common/dist
+
+# Create a minimal package.json for production dependencies
+RUN echo '{"name": "google-integration-service", "version": "1.0.0", "main": "dist/main.js"}' > package.json
+
+# Install production dependencies including @clinic/common requirements
+RUN npm install --only=production \
+    @nestjs/common@^10.0.0 \
+    @nestjs/core@^10.0.0 \
+    @nestjs/config@^4.0.2 \
+    @nestjs/typeorm@^10.0.0 \
+    @nestjs/jwt@^10.2.0 \
+    @nestjs/swagger@^7.4.2 \
+    @nestjs/platform-express@^10.0.0 \
+    @nestjs/throttler@^6.3.1 \
+    @nestjs/axios@^3.1.3 \
+    @nestjs/passport@^10.0.3 \
+    @nestjs/schedule@^4.0.0 \
+    @nestjs/microservices@^10.0.0 \
+    googleapis@^131.0.0 \
+    google-auth-library@^9.6.3 \
+    typeorm@^0.3.17 \
+    pg@^8.11.1 \
+    reflect-metadata@^0.1.13 \
+    rxjs@^7.8.1 \
+    class-validator@^0.14.0 \
+    class-transformer@^0.5.1 \
+    swagger-ui-express@^5.0.1 \
+    uuid@^9.0.1 \
+    axios@^1.6.0 \
+    ioredis@^5.3.2 \
+    jsonwebtoken@^9.0.2 \
+    passport@^0.7.0 \
+    passport-jwt@^4.0.1 \
+    qrcode@^1.5.3 \
+    sharp@^0.34.3 \
+    speakeasy@^2.0.0 \
+    winston@^3.17.0 \
+    winston-daily-rotate-file@^5.0.0 \
+    winston-elasticsearch@^0.19.0 \
+    @aws-sdk/client-s3@^3.645.0 \
+    @aws-sdk/s3-request-presigner@^3.645.0 \
+    aws-sdk@^2.1692.0
+
+# Setup @clinic/common
+RUN mkdir -p node_modules/@clinic/common && \
+    cp -r libs/common/dist/* node_modules/@clinic/common/
+
+# Expose port and start
+EXPOSE 3009
+CMD ["node", "dist/main.js"]

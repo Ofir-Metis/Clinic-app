@@ -26,13 +26,13 @@ describe('TherapistsService', () => {
   });
 
   it('returns null when profile missing', async () => {
-    const res = await service.getProfile(1);
+    const res = await service.getProfile('1');
     expect(res).toBeUndefined();
     expect(repo.findOne).toHaveBeenCalled();
   });
 
   it('saves profile', async () => {
-    const profile = await service.updateProfile(1, { name: 'Dr', title: 'T', bio: 'bio' });
+    const profile = await service.updateProfile('1', { name: 'Dr', title: 'T', bio: 'bio' });
     expect(profile).toHaveProperty('id');
     expect(repo.save).toHaveBeenCalled();
   });

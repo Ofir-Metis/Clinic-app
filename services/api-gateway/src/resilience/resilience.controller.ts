@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
 import { ResilienceService, ResilienceConfig, ResiliencePattern } from './resilience.service';
 import { CircuitBreakerService } from './circuit-breaker.service';
 import { RetryService } from './retry.service';
@@ -21,23 +21,23 @@ import { BulkheadService } from './bulkhead.service';
 
 class UpdatePatternConfigDto {
   circuitBreaker?: {
-    enabled?: boolean;
+    enabled: boolean;
     failureThreshold?: number;
     recoveryTimeout?: number;
     successThreshold?: number;
   };
   retry?: {
-    enabled?: boolean;
+    enabled: boolean;
     maxRetries?: number;
     initialDelay?: number;
     backoffMultiplier?: number;
   };
   timeout?: {
-    enabled?: boolean;
+    enabled: boolean;
     timeoutMs?: number;
   };
   bulkhead?: {
-    enabled?: boolean;
+    enabled: boolean;
     maxConcurrentCalls?: number;
     maxWaitingCalls?: number;
   };

@@ -263,11 +263,11 @@ export class GoogleCalendarController {
     try {
       this.logger.log(`Finding Google account for user ${request.userId}`);
 
-      const accounts = await this.googleOAuthService.getConnectedAccounts(request.userId);
+      const accounts = await this.googleOAuthService.getUserGoogleAccounts(request.userId);
       
       // Filter accounts based on criteria
       const filteredAccounts = accounts.filter(account => {
-        if (request.active !== undefined && account.isActive !== request.active) {
+        if (request.active !== undefined && (account.syncStatus === 'active') !== request.active) {
           return false;
         }
         if (request.calendarSyncEnabled !== undefined && account.calendarSyncEnabled !== request.calendarSyncEnabled) {

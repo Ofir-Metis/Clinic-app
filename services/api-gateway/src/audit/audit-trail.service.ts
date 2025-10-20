@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Request } from 'express';
 import { AuditEvent } from './entities/audit-event.entity';
 import { AuditEventType, AuditCategory, AuditSeverity } from './enums/audit.enums';
@@ -60,7 +60,7 @@ export class AuditTrailService {
       category: AuditCategory.AUTHENTICATION,
       severity: eventType === AuditEventType.LOGIN_FAILED ? AuditSeverity.MEDIUM : AuditSeverity.LOW,
       userId,
-      userRole: request.user?.role,
+      userRole: (request.user as any)?.role,
       description: this.getAuthEventDescription(eventType),
       ipAddress: this.getClientIpAddress(request),
       userAgent: request.get('User-Agent'),
@@ -93,7 +93,7 @@ export class AuditTrailService {
       severity: AuditSeverity.HIGH,
       userId,
       patientId,
-      userRole: request.user?.role,
+      userRole: (request.user as any)?.role,
       description: `Patient data ${eventType.toLowerCase()} - ${resourceType}`,
       ipAddress: this.getClientIpAddress(request),
       userAgent: request.get('User-Agent'),
@@ -127,7 +127,7 @@ export class AuditTrailService {
       severity: AuditSeverity.MEDIUM,
       userId,
       targetUserId,
-      userRole: request.user?.role,
+      userRole: (request.user as any)?.role,
       description: this.getAdminEventDescription(eventType, targetUserId),
       ipAddress: this.getClientIpAddress(request),
       userAgent: request.get('User-Agent'),
@@ -156,8 +156,8 @@ export class AuditTrailService {
       eventType,
       category: AuditCategory.SECURITY,
       severity,
-      userId: request.user?.id,
-      userRole: request.user?.role,
+      userId: (request.user as any)?.id,
+      userRole: (request.user as any)?.role,
       description: this.getSecurityEventDescription(eventType),
       ipAddress: this.getClientIpAddress(request),
       userAgent: request.get('User-Agent'),
@@ -689,10 +689,7 @@ export class AuditTrailService {
 
   // Private helper methods for new functionality
   private createBetweenCondition(from: Date, to: Date) {
-    return {
-      $gte: from,
-      $lte: to,
-    };
+    return Between(from, to);
   }
 
   private generateComplianceRecommendations(statistics: any, violations: any[]): string[] {

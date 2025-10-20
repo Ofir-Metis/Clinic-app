@@ -46,7 +46,7 @@ export class LoggingInterceptor implements NestInterceptor {
       url: request.url,
       userAgent: request.get('User-Agent'),
       ipAddress: this.getClientIp(request),
-      userId: request.user?.id || request.user?.sub,
+      userId: (request.user as any)?.id || (request.user as any)?.sub,
       sessionId: request.sessionID || request.headers['x-session-id'] as string,
       service: process.env.SERVICE_NAME || 'clinic-app',
       module: controller.name,
@@ -156,7 +156,7 @@ export class LoggingInterceptor implements NestInterceptor {
                 ...logContext,
                 statusCode,
                 duration,
-                outcome: 'error',
+                outcome: 'failure',
                 errorMessage: error.message
               }
             );

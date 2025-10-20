@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { CommonModule } from '@clinic/common';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AnalyticsModule],
+  imports: [
+    // Enterprise CommonModule provides centralized config, logging, database, and security
+    CommonModule,
+    AnalyticsModule
+  ],
   controllers: [HealthController],
 })
 export class AppModule {}
