@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ClientTherapistPayment } from '../entities/client-therapist-payment.entity';
-import { TherapistPricing } from '../entities/therapist-pricing.entity';
+import { ClientCoachPayment } from '../entities/client-coach-payment.entity';
+import { CoachPricing } from '../entities/coach-pricing.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ClientTherapistPayment, TherapistPricing])],
+  imports: [TypeOrmModule.forFeature([ClientCoachPayment, CoachPricing])],
   providers: [],
   exports: [],
 })

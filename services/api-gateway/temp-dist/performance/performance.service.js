@@ -224,7 +224,7 @@ let PerformanceService = (() => {
                 slowQueries: [
                     {
                         id: 'query_1',
-                        query: 'SELECT * FROM appointments WHERE date >= ? AND therapist_id = ?',
+                        query: 'SELECT * FROM appointments WHERE date >= ? AND coach_id = ?',
                         duration: 2450,
                         executionCount: 125,
                         avgDuration: 1200,
@@ -255,7 +255,7 @@ let PerformanceService = (() => {
                         type: 'database',
                         priority: 'high',
                         title: 'Add Index for Appointment Queries',
-                        description: 'Create composite index on (date, therapist_id) for appointments table',
+                        description: 'Create composite index on (date, coach_id) for appointments table',
                         impact: 'Reduce query time by 60-80%',
                         effort: 'Low (5 minutes)',
                         estimatedImprovement: '1.5s → 0.3s avg query time',
@@ -349,7 +349,7 @@ let PerformanceService = (() => {
                 queryPerformance: [
                     {
                         id: 'query_1',
-                        query: 'SELECT * FROM appointments WHERE date >= ? AND therapist_id = ?',
+                        query: 'SELECT * FROM appointments WHERE date >= ? AND coach_id = ?',
                         table: 'appointments',
                         avgDuration: 1200,
                         executionCount: 1250,
@@ -357,7 +357,7 @@ let PerformanceService = (() => {
                         slowestExecution: 2450,
                         indexUsage: false,
                         optimizationSuggestions: [
-                            'Add composite index on (date, therapist_id)',
+                            'Add composite index on (date, coach_id)',
                             'Consider partitioning by date',
                             'Use LIMIT clause if not all results needed',
                         ],
@@ -381,7 +381,7 @@ let PerformanceService = (() => {
                 indexAnalysis: [
                     {
                         table: 'appointments',
-                        index: 'idx_therapist_id',
+                        index: 'idx_coach_id',
                         usage: 85,
                         size: '2.5MB',
                         effectiveness: 'high',
@@ -530,7 +530,7 @@ let PerformanceService = (() => {
             };
             switch (optimizeRequest.optimizationType) {
                 case 'index':
-                    optimization.actions.push('Creating composite index on (date, therapist_id)');
+                    optimization.actions.push('Creating composite index on (date, coach_id)');
                     optimization.actions.push('Analyzing index usage patterns');
                     break;
                 case 'rewrite':

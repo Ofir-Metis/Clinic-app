@@ -28,7 +28,7 @@ import { fetchNotifications, Notification } from '../api/notifications';
 import WellnessLayout from '../layouts/WellnessLayout';
 
 const NotificationsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Notification[]>([]);
   const [error, setError] = useState('');
@@ -50,9 +50,9 @@ const NotificationsPage: React.FC = () => {
       >
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
+          <Typography
+            variant="h4"
+            sx={{
               fontWeight: 700,
               mb: 1,
               background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
@@ -61,10 +61,10 @@ const NotificationsPage: React.FC = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            🔔 {t.nav.notifications}
+            {t.notificationsPage.title}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Stay updated with your wellness journey and client interactions
+            {t.notificationsPage.subtitle}
           </Typography>
         </Box>
         {loading ? (
@@ -82,10 +82,10 @@ const NotificationsPage: React.FC = () => {
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <NotificationsIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                {t.status.empty}
+                {t.notificationsPage.noNotifications}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                You're all caught up! New notifications will appear here.
+                {t.notificationsPage.allCaughtUp}
               </Typography>
             </CardContent>
           </Card>
@@ -117,9 +117,9 @@ const NotificationsPage: React.FC = () => {
                           {n.message}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip 
-                            label="New" 
-                            color="primary" 
+                          <Chip
+                            label={t.notificationsPage.new}
+                            color="primary"
                             size="small"
                             sx={{ height: 20, fontSize: '0.7rem' }}
                           />

@@ -4,6 +4,9 @@
  */
 
 export const he = {
+  // App Name
+  appName: "מרכז הרווחה 🌟",
+
   // Navigation & Layout (RTL friendly)
   nav: {
     dashboard: "מרכז הצמיחה שלי",
@@ -14,7 +17,8 @@ export const he = {
     tools: "ערכת הטרנספורמציה",
     settings: "מרכז הפיקוד",
     profile: "האני המדהים שלי",
-    logout: "נתראה בעגלגל הבא 👋"
+    logout: "נתראה בעגלגל הבא 👋",
+    more: "עוד ➕"
   },
 
   // Common Actions
@@ -68,6 +72,7 @@ export const he = {
       noAccount: "חדש בהרפתקה הזאת?",
       signUp: "להתחיל את המסע כאן! 🚀",
       rememberMe: "לזכור את האני המדהים שלי 💭",
+      or: "או",
       errors: {
         invalidCredentials: "המ, היקום לא מכיר את הפרטים האלה 🤔",
         required: "השדה הזה סובל מחרדת נטישה - בבקשה למלא! 😢",
@@ -102,16 +107,39 @@ export const he = {
     title: "מרכז הפיקוד לצמיחה אישית 🎯",
     subtitle: "כאן הטרנספורמציה פוגשת ארגון",
     welcome: "ברוכים השבים, לוחם הצמיחה! 💪",
-    quickStats: "המדהימות שלכם במבט חטוף",
+    journeySubtitle: "המסע שלכם לבריאות הנפש וצמיחה אישית ממשיך כאן",
+    loading: "טוען את לוח הרווחה שלכם...",
+    quickStats: "סטטיסטיקות מהירות 📊",
     recentActivity: "ההתפתחויות האחרונות בעלילה 📖",
     upcomingEvents: "הרפתקאות באופק 🔮",
+    selectedDate: "תאריך נבחר",
+    todaysSchedule: "לוח הזמנים של היום",
+    quickActions: "פעולות מהירות",
+    noAppointments: "אין פגישות מתוזמנות להיום",
+    selfCareTime: "קחו זמן לטיפול עצמי או תכנון",
+    addButton: "הוסיפו",
+    joinButton: "הצטרפו",
+    duration: "משך: 50 דקות",
+    appointments: "פגישות",
+    sessions: "מפגשים",
+    calendar: "לוח שנה 📅",
+    thisWeek: "השבוע",
+    activeClients: "חניכים פעילים",
+    totalToday: "סה\"כ היום",
+    today: "היום",
+    total: "סה\"כ",
+    navigation: {
+      clients: "חניכים",
+      calendar: "לוח שנה",
+      aiTools: "כלי AI"
+    },
     goals: {
       title: "בקרת משימות 🎯",
       active: "משימות פעילות",
       completed: "ניצחונות שהושגו",
       progress: "התקדמות המסע"
     },
-    sessions: {
+    wellness: {
       title: "מפגשי צמיחה 🌱",
       thisWeek: "הרפתקאות השבוע",
       nextSession: "מפגש הטרנספורמציה הבא",
@@ -175,6 +203,18 @@ export const he = {
       coaching: "להזכיר לי על מפגשי קואצ'ינג 🎯",
       goals: "לדחוף אותי לכיוון החלומות שלי 🌟",
       milestones: "לחגוג את הניצחונות שלי 🎉"
+    },
+    profile: {
+      information: "מידע פרופיל",
+      fullName: "שם מלא",
+      email: "כתובת אימייל",
+      phone: "מספר טלפון",
+      professionalTitle: "תואר מקצועי",
+      specialization: "התמחות",
+      location: "מיקום",
+      bioSection: "ביוגרפיה ותיאור",
+      professionalBio: "ביוגרפיה מקצועית",
+      bioPlaceholder: "שתפו את פילוסופיית הקואצ'ינג והגישה שלכם..."
     }
   },
 
@@ -298,5 +338,135 @@ export const he = {
     message: "לשתף את המחשבות שלכם עם היקום...",
     goal: "איזה הר אתם רוצים לטפס?",
     note: "ללכוד את המחשבות הגאוניות שלכם..."
+  },
+
+  // Clients/Patients Page
+  clientsPage: {
+    title: "חניכי הנסיעה 👥",
+    subtitle: "לנהל את קשרי החניכה ולעקוב אחר מסע הרווחה שלהם",
+    searchPlaceholder: "חיפוש חניכים לפי שם, אימייל או תחום התמקדות...",
+    filterAll: "הכל",
+    filterActive: "פעילים",
+    filterOnHold: "בהמתנה",
+    noClients: "אין חניכים עדיין",
+    noClientsMessage: "התחילו לבנות את בסיס החניכים שלכם על ידי הוספת החניך הראשון שלכם",
+    addFirstClient: "הוסיפו את החניך הראשון שלכם",
+    addClient: "הוסיפו חניך",
+    addNewClient: "הוסיפו חניך חדש",
+    clientDetails: "פרטי חניך",
+    focusArea: "תחום התמקדות",
+    lastSession: "מפגש אחרון",
+    nextSession: "מפגש הבא",
+    next: "הבא:",
+    totalSessions: "סה\"כ מפגשים",
+    progress: "התקדמות",
+    schedule: "תזמנו",
+    call: "התקשרו",
+    viewProfile: "צפו בפרופיל",
+    editDetails: "ערכו פרטים",
+    scheduleSession: "תזמנו מפגש",
+    removeClient: "הסירו חניך",
+    removeClientTitle: "הסרת חניך",
+    removeClientConfirm: "האם אתם בטוחים שברצונכם להסיר את {name} מרשימת החניכים שלכם? פעולה זו אינה ניתנת לביטול.",
+    cancel: "ביטול",
+    remove: "הסרה",
+    noClientsFound: "לא נמצאו חניכים",
+    adjustSearchCriteria: "נסו להתאים את קריטריוני החיפוש"
+  },
+
+  // Calendar Page
+  calendarPage: {
+    title: "לוח הזמנים שלכם 📅",
+    subtitle: "נהלו את מפגשי הטיפול ופגישות החניכים שלכם בקלות",
+    yourSchedule: "לוח הזמנים שלכם",
+    appointmentsFor: "פגישות ל",
+    selectedDate: "תאריך נבחר:",
+    today: "היום",
+    week: "שבוע",
+    month: "חודש",
+    monthView: "תצוגת חודש",
+    weekView: "תצוגת שבוע",
+    dayView: "תצוגת יום",
+    appointments: "פגישות",
+    upcoming: "קרובות",
+    addAppointment: "הוסיפו פגישה",
+    add: "הוסיפו",
+    viewClient: "צפו בחניך",
+    joinSession: "הצטרפו למפגש",
+    join: "הצטרפו",
+    upcomingThisWeek: "קרובות השבוע",
+    noAppointments: "🌿 אין פגישות מתוזמנות בתאריך זה",
+    clickAddToSchedule: "לחצו על 'הוסיפו' כדי לתזמן מפגש חדש",
+    noUpcomingAppointments: "אין פגישות קרובות השבוע",
+    scheduleFirst: "תזמנו את המפגש הראשון שלכם",
+    scheduleNewAppointment: "תזמנו פגישה חדשה",
+    editAppointment: "ערכו פגישה",
+    calendar: "לוח שנה",
+    client: "חניך",
+    sessionType: "סוג מפגש",
+    individualTherapy: "טיפול אישי",
+    groupTherapy: "טיפול קבוצתי",
+    familyTherapy: "טיפול משפחתי",
+    consultation: "ייעוץ",
+    startTime: "שעת התחלה",
+    endTime: "שעת סיום",
+    sessionNotes: "הערות מפגש",
+    sessionNotesPlaceholder: "הוסיפו הערות או הוראות מיוחדות למפגש זה...",
+    cancel: "ביטול",
+    update: "עדכון",
+    schedule: "תזמנו"
+  },
+
+  // AI Tools Page
+  toolsPage: {
+    title: "כלי ה-AI שלכם 🧠",
+    subtitle: "שפרו את הפרקטיקה שלכם עם כלי אינטליגנטיים שתוכננו עבור אנשי מקצוע בבריאות הנפש",
+    aiPoweredTools: "כלים מופעלי AI",
+    comingSoon: "בקרוב",
+    notifyMe: "הודיעו לי",
+    launchTool: "הפעילו כלי",
+    poweredByAI: "🌟 מופעל על ידי AI מתקדם",
+    aiDescription: "כלי ה-AI שלנו תוכננו במיוחד עבור אנשי מקצוע בבריאות הנפש, מאומנים על פרקטיקות מבוססות ראיות והנחיות אתיות כדי לתמוך בקבלת ההחלטות הקליניות שלכם תוך שמירה על הסטנדרטים הגבוהים ביותר של טיפול בחניכים.",
+    treatmentRecs: {
+      title: "המלצות טיפול",
+      description: "הצעות טיפול מבוססות ראיות המותאמות לצרכי החניכים"
+    },
+    progressAnalysis: {
+      title: "ניתוח התקדמות",
+      description: "תובנות מופעלות AI לגבי התקדמות החניכים ואפקטיביות הטיפול"
+    },
+    sessionNotes: {
+      title: "הערות מפגש AI",
+      description: "צרו סיכומי מפגש מקיפים והערות טיפול"
+    },
+    therapyAssistant: {
+      title: "עוזר טיפול",
+      description: "עוזר אינטליגנטי לתכנון מפגש טיפול ונהול"
+    },
+    assessmentTools: {
+      title: "כלי הערכה",
+      description: "הערכות פסיכולוגיות מופעלות AI וכלי סקר"
+    },
+    wellnessInsights: {
+      title: "תובנות רווחה",
+      description: "ניתוח מקיף של דפוסי רווחה ומגמות של החניכים"
+    }
+  },
+
+  // Notifications Page
+  notificationsPage: {
+    title: "עדכונים קוסמיים 🔔",
+    subtitle: "הישארו מעודכנים עם מסע הרווחה ואינטראקציות החניכים שלכם",
+    noNotifications: "אין התראות מחכות כרגע 🌟",
+    allCaughtUp: "אתם מעודכנים! התראות חדשות יופיעו כאן.",
+    stayTuned: "נשאר מחכה!",
+    new: "חדש",
+    markAllRead: "סמנו הכל כנקרא",
+    filter: "סינון",
+    all: "הכל",
+    unread: "לא נקרא",
+    appointments: "פגישות",
+    messages: "הודעות",
+    system: "מערכת"
   }
 };

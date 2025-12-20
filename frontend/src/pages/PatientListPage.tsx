@@ -64,7 +64,7 @@ interface Patient {
 // Removed mock data - will fetch from API instead
 
 const PatientListPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -275,7 +275,7 @@ const PatientListPage: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Total Sessions
+                      {t.clientsPage.totalSessions}
                     </Typography>
                     <Typography variant="h6" color="primary.main" fontWeight={700}>
                       {patient.totalSessions}
@@ -285,7 +285,7 @@ const PatientListPage: React.FC = () => {
                   {patient.lastSession && (
                     <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="caption" color="text.secondary">
-                        Last Session
+                        {t.clientsPage.lastSession}
                       </Typography>
                       <Typography variant="body2" fontWeight={500}>
                         {patient.lastSession.toLocaleDateString()}
@@ -305,7 +305,7 @@ const PatientListPage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <EventIcon fontSize="small" color="primary" />
                       <Typography variant="body2" fontWeight={500}>
-                        Next: {patient.upcomingAppointment.toLocaleDateString()}
+                        {t.clientsPage.next} {patient.upcomingAppointment.toLocaleDateString()}
                       </Typography>
                     </Box>
                   </Box>
@@ -324,7 +324,7 @@ const PatientListPage: React.FC = () => {
                   }}
                   sx={{ flex: 1 }}
                 >
-                  Schedule
+                  {t.clientsPage.schedule}
                 </Button>
                 <Button
                   variant="outlined"
@@ -336,7 +336,7 @@ const PatientListPage: React.FC = () => {
                   }}
                   sx={{ flex: 1 }}
                 >
-                  Call
+                  {t.clientsPage.call}
                 </Button>
               </Box>
             </CardContent>
@@ -353,7 +353,7 @@ const PatientListPage: React.FC = () => {
         showFab={true}
         fabIcon={<AddIcon />}
         fabAction={handleAddPatient}
-        fabAriaLabel="Add new client"
+        fabAriaLabel={t.clientsPage.addNewClient}
       >
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
@@ -372,19 +372,19 @@ const PatientListPage: React.FC = () => {
             👥 {t.nav.patients}
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Manage your client relationships and track their wellness journey
+            {t.clientsPage.subtitle}
           </Typography>
 
           {/* Search and Filter Controls */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2, 
+          <Box sx={{
+            display: 'flex',
+            gap: 2,
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { sm: 'center' },
             mb: 3,
           }}>
             <TextField
-              placeholder="Search clients by name, email, or focus area..."
+              placeholder={t.clientsPage.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
@@ -396,28 +396,28 @@ const PatientListPage: React.FC = () => {
               }}
               sx={{ flex: 1, maxWidth: { sm: 400 } }}
             />
-            
+
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant={statusFilter === 'all' ? 'contained' : 'outlined'}
                 size="small"
                 onClick={() => setStatusFilter('all')}
               >
-                All ({patients.length})
+                {t.clientsPage.filterAll} ({patients.length})
               </Button>
               <Button
                 variant={statusFilter === 'active' ? 'contained' : 'outlined'}
                 size="small"
                 onClick={() => setStatusFilter('active')}
               >
-                Active ({patients.filter(p => p.status === 'active').length})
+                {t.clientsPage.filterActive} ({patients.filter(p => p.status === 'active').length})
               </Button>
               <Button
                 variant={statusFilter === 'on-hold' ? 'contained' : 'outlined'}
                 size="small"
                 onClick={() => setStatusFilter('on-hold')}
               >
-                On Hold ({patients.filter(p => p.status === 'on-hold').length})
+                {t.clientsPage.filterOnHold} ({patients.filter(p => p.status === 'on-hold').length})
               </Button>
             </Box>
           </Box>
@@ -436,12 +436,12 @@ const PatientListPage: React.FC = () => {
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <PersonIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                {searchQuery ? 'No clients found' : 'No clients yet'}
+                {searchQuery ? t.clientsPage.noClientsFound : t.clientsPage.noClients}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {searchQuery 
-                  ? 'Try adjusting your search criteria'
-                  : 'Start building your client base by adding your first client'
+                {searchQuery
+                  ? t.clientsPage.adjustSearchCriteria
+                  : t.clientsPage.noClientsMessage
                 }
               </Typography>
               {!searchQuery && (
@@ -450,7 +450,7 @@ const PatientListPage: React.FC = () => {
                   startIcon={<AddIcon />}
                   onClick={handleAddPatient}
                 >
-                  Add Your First Client
+                  {t.clientsPage.addFirstClient}
                 </Button>
               )}
             </CardContent>
@@ -480,24 +480,24 @@ const PatientListPage: React.FC = () => {
             handlePatientMenuClose();
           }}>
             <PersonIcon sx={{ mr: 1 }} fontSize="small" />
-            View Profile
+            {t.clientsPage.viewProfile}
           </MenuItem>
           <MenuItem onClick={() => {
             navigate(`/patients/${selectedPatient?.id}/edit`);
             handlePatientMenuClose();
           }}>
             <EditIcon sx={{ mr: 1 }} fontSize="small" />
-            Edit Details
+            {t.clientsPage.editDetails}
           </MenuItem>
           <MenuItem onClick={() => {
             handleScheduleSession(selectedPatient?.id || '');
             handlePatientMenuClose();
           }}>
             <EventIcon sx={{ mr: 1 }} fontSize="small" />
-            Schedule Session
+            {t.clientsPage.scheduleSession}
           </MenuItem>
           <Divider />
-          <MenuItem 
+          <MenuItem
             onClick={() => {
               setOpenDeleteDialog(true);
               handlePatientMenuClose();
@@ -505,7 +505,7 @@ const PatientListPage: React.FC = () => {
             sx={{ color: 'error.main' }}
           >
             <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
-            Remove Client
+            {t.clientsPage.removeClient}
           </MenuItem>
         </Menu>
 
@@ -515,17 +515,17 @@ const PatientListPage: React.FC = () => {
           onClose={() => setOpenDeleteDialog(false)}
           maxWidth="sm"
         >
-          <DialogTitle>Remove Client</DialogTitle>
+          <DialogTitle>{t.clientsPage.removeClientTitle}</DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to remove {selectedPatient?.firstName} {selectedPatient?.lastName} from your client list?
-              This action cannot be undone.
+              {t.clientsPage.removeClientConfirm
+                .replace('{name}', `${selectedPatient?.firstName} ${selectedPatient?.lastName}`)}
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+            <Button onClick={() => setOpenDeleteDialog(false)}>{t.clientsPage.cancel}</Button>
             <Button onClick={handleDeletePatient} color="error" variant="contained">
-              Remove
+              {t.clientsPage.remove}
             </Button>
           </DialogActions>
         </Dialog>

@@ -28,7 +28,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   maxItems = 4,
   className
 }) => {
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const location = useLocation();
   const theme = useTheme();
 
@@ -93,19 +93,19 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           label = t.common.edit;
           break;
         case 'goals':
-          label = t.clientPortal.goals.title;
+          label = t.clientPortal?.goals?.title || 'Goals';
           break;
         case 'discovery':
-          label = t.clientPortal.discovery.title;
+          label = t.clientPortal?.discovery?.title || 'Discovery';
           break;
         case 'register':
-          label = t.auth.register.title;
+          label = t.auth?.register?.title || 'Register';
           break;
         case 'login':
-          label = t.auth.login.title;
+          label = t.auth?.login?.title || 'Login';
           break;
         case 'reset':
-          label = t.auth.reset.title;
+          label = t.auth?.resetPassword?.title || 'Reset Password';
           break;
         default:
           // For dynamic segments (IDs), try to get a more meaningful label

@@ -93,9 +93,9 @@ export class AuditAccessGuard implements CanActivate {
       return true;
     }
 
-    // Therapists can only access audit logs for their assigned patients
+    // Coachs can only access audit logs for their assigned patients
     if (user.role === 'THERAPIST') {
-      // This would typically check a database to see if the therapist is assigned to this patient
+      // This would typically check a database to see if the coach is assigned to this patient
       // For now, we'll allow if the user has patient assignments
       return user.assignedPatients?.includes(patientId) || false;
     }

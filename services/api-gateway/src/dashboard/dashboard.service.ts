@@ -11,7 +11,7 @@ interface Patient {
   lastName: string;
   email: string;
   phone?: string;
-  therapistId: number;
+  coachId: number;
   createdAt: Date;
   preferences?: any;
 }
@@ -29,7 +29,7 @@ interface Appointment {
 interface SessionNote {
   id: number;
   patientId: number;
-  therapistId: number;
+  coachId: number;
   type: string;
   note: string;
   date: Date;

@@ -13,6 +13,7 @@ import { PaymentProcessingModule } from './payment-processing/payment-processing
 import { ReportingModule } from './reporting/reporting.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -22,9 +23,9 @@ import { BillingService } from './billing.service';
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT) || 6379,
-        password: process.env.REDIS_PASSWORD || undefined,
-        db: parseInt(process.env.REDIS_DB_BILLING) || 1,
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+        password: process.env.REDIS_PASSWORD,
+        db: parseInt(process.env.REDIS_DB_BILLING || '1', 10),
       },
     }),
     
@@ -38,6 +39,7 @@ import { BillingService } from './billing.service';
     TaxComplianceModule,
     PaymentProcessingModule,
     ReportingModule,
+    HealthModule,
   ],
   controllers: [BillingController],
   providers: [BillingService],

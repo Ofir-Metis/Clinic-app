@@ -200,6 +200,12 @@ services:
       HTTP_PASSWORD: ${REDIS_COMMANDER_PASSWORD:-admin}
     networks:
       - clinic-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8081/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     deploy:
       resources:
         limits:

@@ -38,30 +38,30 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TherapistsModule = void 0;
+exports.CoachesModule = void 0;
 const common_1 = require("@nestjs/common");
 const axios_1 = require("@nestjs/axios");
-const therapists_controller_1 = require("./therapists.controller");
-const therapists_service_1 = require("./therapists.service");
-let TherapistsModule = (() => {
+const coachs_controller_1 = require("./coaches.controller");
+const coachs_service_1 = require("./coaches.service");
+let CoachesModule = (() => {
     let _classDecorators = [(0, common_1.Module)({
             imports: [axios_1.HttpModule],
-            controllers: [therapists_controller_1.TherapistsController],
-            providers: [therapists_service_1.TherapistsService],
+            controllers: [coachs_controller_1.CoachesController],
+            providers: [coachs_service_1.CoachesService],
         })];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;
-    var TherapistsModule = _classThis = class {
+    var CoachesModule = _classThis = class {
     };
-    __setFunctionName(_classThis, "TherapistsModule");
+    __setFunctionName(_classThis, "CoachesModule");
     (() => {
         const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-        TherapistsModule = _classThis = _classDescriptor.value;
+        CoachesModule = _classThis = _classDescriptor.value;
         if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         __runInitializers(_classThis, _classExtraInitializers);
     })();
-    return TherapistsModule = _classThis;
+    return CoachesModule = _classThis;
 })();
-exports.TherapistsModule = TherapistsModule;
+exports.CoachesModule = CoachesModule;

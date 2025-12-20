@@ -1,8 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    preserveSymlinks: false,
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['@mui/x-date-pickers', '@mui/x-date-pickers-pro'],
+  },
   build: {
     sourcemap: true, // Enable source maps for debugging
     minify: 'terser', // Use terser for minification

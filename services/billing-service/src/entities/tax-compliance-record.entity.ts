@@ -6,64 +6,64 @@ export type ComplianceStatus = 'pending' | 'compliant' | 'non_compliant' | 'unde
 @Entity('tax_compliance_records')
 export class TaxComplianceRecord {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @Column({ 
-    type: 'varchar', 
+  @Column({
+    type: 'varchar',
     length: 50,
     name: 'entity_type',
     enum: ['subscription_invoice', 'client_payment', 'therapist_payout']
   })
-  entityType: EntityType;
+  entityType!: EntityType;
 
   @Column({ type: 'uuid', name: 'entity_id' })
-  entityId: string;
+  entityId!: string;
 
   // CTC Information
   @Column({ type: 'boolean', name: 'requires_ctc' })
-  requiresCTC: boolean;
+  requiresCTC!: boolean;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 20000, name: 'ctc_threshold_nis' })
-  ctcThresholdNis: number;
+  ctcThresholdNis!: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'allocation_number' })
-  allocationNumber: string;
+  allocationNumber!: string;
 
   @Column({ type: 'timestamp', nullable: true, name: 'submission_timestamp' })
-  submissionTimestamp: Date;
+  submissionTimestamp!: Date;
 
   @Column({ type: 'jsonb', nullable: true, name: 'ita_response' })
-  itaResponse: Record<string, any>;
+  itaResponse!: Record<string, any>;
 
   // VAT Information
   @Column({ type: 'decimal', precision: 5, scale: 4, name: 'vat_rate' })
-  vatRate: number;
+  vatRate!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'vat_amount_nis' })
-  vatAmountNis: number;
+  vatAmountNis!: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'vat_exemption_reason' })
-  vatExemptionReason: string;
+  vatExemptionReason!: string;
 
   // Audit Trail
-  @Column({ 
-    type: 'varchar', 
-    length: 50, 
+  @Column({
+    type: 'varchar',
+    length: 50,
     default: 'pending',
     name: 'compliance_status',
     enum: ['pending', 'compliant', 'non_compliant', 'under_review']
   })
-  complianceStatus: ComplianceStatus;
+  complianceStatus!: ComplianceStatus;
 
   @Column({ type: 'timestamp', nullable: true, name: 'last_verification_date' })
-  lastVerificationDate: Date;
+  lastVerificationDate!: Date;
 
   @Column({ type: 'text', nullable: true, name: 'verification_notes' })
-  verificationNotes: string;
+  verificationNotes!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -4,35 +4,35 @@ import { CoachSubscription } from './coach-subscription.entity';
 @Entity('subscription_plans')
 export class SubscriptionPlan {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'price_monthly_nis' })
-  priceMonthlyNis: number;
+  priceMonthlyNis!: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'price_monthly_usd' })
-  priceMonthlyUsd: number;
+  priceMonthlyUsd!: number;
 
   @Column({ type: 'jsonb' })
-  features: Record<string, any>;
+  features!: Record<string, any>;
 
   @Column({ type: 'integer', name: 'max_clients', nullable: true })
-  maxClients: number;
+  maxClients!: number;
 
   @Column({ type: 'boolean', default: true, name: 'is_active' })
-  isActive: boolean;
+  isActive!: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @OneToMany(() => CoachSubscription, subscription => subscription.plan)
-  subscriptions: CoachSubscription[];
+  subscriptions!: CoachSubscription[];
 }

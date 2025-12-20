@@ -419,14 +419,14 @@ export class SecurityService {
         {
           sessionId: 'sess_user_001',
           userId: 'user_5678',
-          email: 'therapist@clinic.com',
+          email: 'coach@clinic.com',
           ipAddress: '203.0.113.45',
           userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
           location: 'Remote Location',
           createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
           lastActivity: new Date(Date.now() - 10 * 60 * 1000),
           isActive: true,
-          deviceFingerprint: 'fp_therapist_mac'
+          deviceFingerprint: 'fp_coach_mac'
         }
       ];
 
@@ -552,7 +552,7 @@ export class SecurityService {
           type: 'mfa_failure',
           severity: 'low',
           userId: 'user_456',
-          email: 'therapist@clinic.com',
+          email: 'coach@clinic.com',
           ipAddress: '192.168.1.50',
           userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
           description: 'MFA verification failed - incorrect code',

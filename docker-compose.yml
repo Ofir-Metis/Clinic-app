@@ -10,9 +10,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: postgres
   nats:
-    image: nats:2
+    image: nats:alpine
     ports:
       - '4222:4222'
+      - '8222:8222'  # Monitoring port for healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8222/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
   maildev:
     image: maildev/maildev
     ports:
@@ -111,8 +118,10 @@ services:
       context: .
       dockerfile: services/ai-service/Dockerfile
     depends_on:
-      - postgres
-      - nats
+      postgres:
+        condition: service_started
+      nats:
+        condition: service_healthy
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
@@ -203,10 +212,12 @@ services:
     ports:
       - '6379:6379'
     command: redis-server --appendonly yes
-  therapists-service:
+    networks:
+      - clinic-network
+  coaches-service:
     build:
       context: .
-      dockerfile: services/therapists-service/Dockerfile
+      dockerfile: services/coaches-service/Dockerfile
     depends_on:
       - postgres
       - nats
@@ -227,8 +238,10 @@ services:
       context: .
       dockerfile: services/client-relationships-service/Dockerfile
     depends_on:
-      - postgres
-      - nats
+      postgres:
+        condition: service_started
+      nats:
+        condition: service_healthy
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: 3014
@@ -252,13 +265,13 @@ services:
       - analytics-service
       - settings-service
       - billing-service
-      - therapists-service
+      - coaches-service
       - client-relationships-service
       - nats
       - postgres
       - redis
     environment:
-      PORT: ${PORT}
+      PORT: ${PORT:-3000}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
       SETTINGS_URL: ${SETTINGS_URL}
@@ -292,14 +305,14 @@ services:
       FILES_URL: http://files-service:3000
       NOTIFICATIONS_URL: http://notifications-service:3000
       BILLING_URL: http://billing-service:3009
-      THERAPISTS_URL: http://therapists-service:3013
+      COACHES_URL: http://coaches-service:3013
       CLIENT_RELATIONSHIPS_URL: http://client-relationships-service:3014
     ports:
-      - '4000:3000'
+      - '4001:3000' # Temporarily using 4001 due to phantom port binding on 4000
   google-integration-service:
     build:
       context: .
-      dockerfile: services/google-integration-service/Dockerfile.simple
+      dockerfile: services/google-integration-service/Dockerfile
     depends_on:
       - postgres
       - nats
@@ -317,18 +330,18 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
     ports:
-      - '3012:3009'
+      - '3012:3012'
   frontend:
     build:
       context: .
-      dockerfile: frontend/Dockerfile
+      dockerfile: frontend/Dockerfile.build
     depends_on:
       - api-gateway
       - auth-service
     environment:
       # API endpoints
-      REACT_APP_API_URL: http://localhost:4000
-      REACT_APP_WS_URL: http://localhost:4000
+      REACT_APP_API_URL: http://localhost:4001
+      REACT_APP_WS_URL: http://localhost:4001
       # Recording configuration
       REACT_APP_MAX_FILE_SIZE: 500
       REACT_APP_SUPPORTED_FORMATS: "mp4,mov,avi,mp3,wav,m4a,webm"

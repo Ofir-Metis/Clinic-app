@@ -78,6 +78,7 @@ export const en = {
       noAccount: "New to this adventure?",
       signUp: "Start Your Journey Here! 🚀",
       rememberMe: "Remember my awesome self 💭",
+      or: "or",
       errors: {
         invalidCredentials: "Hmm, the universe doesn't recognize these credentials 🤔",
         required: "This field is having separation anxiety - please fill it! 😢",

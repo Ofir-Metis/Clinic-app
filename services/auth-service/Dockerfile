@@ -1,6 +1,6 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ vips-dev
 COPY package.json yarn.lock ./
 COPY tsconfig.base.json ./
 COPY tsconfig.json ./
@@ -9,6 +9,7 @@ COPY libs ./libs
 COPY frontend ./frontend
 RUN yarn config set registry https://registry.yarnpkg.com
 RUN yarn config set network-timeout 600000 -g
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN yarn install
 RUN yarn workspaces run build
 

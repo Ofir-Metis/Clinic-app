@@ -38,17 +38,17 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TherapistsController = void 0;
+exports.CoachesController = void 0;
 const common_1 = require("@nestjs/common");
-let TherapistsController = (() => {
-    let _classDecorators = [(0, common_1.Controller)('therapists')];
+let CoachesController = (() => {
+    let _classDecorators = [(0, common_1.Controller)('coaches')];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;
     let _instanceExtraInitializers = [];
     let _getProfile_decorators;
     let _updateProfile_decorators;
-    var TherapistsController = _classThis = class {
+    var CoachesController = _classThis = class {
         constructor(service) {
             this.service = (__runInitializers(this, _instanceExtraInitializers), service);
         }
@@ -59,7 +59,7 @@ let TherapistsController = (() => {
             return this.service.updateProfile(id, dto, auth);
         }
     };
-    __setFunctionName(_classThis, "TherapistsController");
+    __setFunctionName(_classThis, "CoachesController");
     (() => {
         const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
         _getProfile_decorators = [(0, common_1.Get)(':id/profile')];
@@ -67,10 +67,10 @@ let TherapistsController = (() => {
         __esDecorate(_classThis, null, _getProfile_decorators, { kind: "method", name: "getProfile", static: false, private: false, access: { has: obj => "getProfile" in obj, get: obj => obj.getProfile }, metadata: _metadata }, null, _instanceExtraInitializers);
         __esDecorate(_classThis, null, _updateProfile_decorators, { kind: "method", name: "updateProfile", static: false, private: false, access: { has: obj => "updateProfile" in obj, get: obj => obj.updateProfile }, metadata: _metadata }, null, _instanceExtraInitializers);
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-        TherapistsController = _classThis = _classDescriptor.value;
+        CoachesController = _classThis = _classDescriptor.value;
         if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         __runInitializers(_classThis, _classExtraInitializers);
     })();
-    return TherapistsController = _classThis;
+    return CoachesController = _classThis;
 })();
-exports.TherapistsController = TherapistsController;
+exports.CoachesController = CoachesController;

@@ -23,10 +23,11 @@ export interface Alert {
   metric?: string;
   threshold?: number;
   currentValue?: number;
-  timestamp: string;
+  timestamp: string | number;
   resolved?: boolean;
   resolvedAt?: string;
   tags: string[];
+  metadata?: any;
 }
 
 export interface MonitoringConfig {
@@ -549,22 +550,132 @@ export class MonitoringService {
   private async sendWebhookAlert(alert: Alert) {
     if (!this.config.alerting.webhookUrl) return;
 
-    // TODO: Implement webhook alert sending
-    this.logger.debug(`Would send webhook alert to ${this.config.alerting.webhookUrl}`);
+    try {
+      const payload = {
+        timestamp: alert.timestamp,
+        level: alert.level,
+        title: alert.title,
+        description: alert.description,
+        metadata: alert.metadata,
+        source: 'clinic-monitoring-system',
+      };
+
+      const response = await fetch(this.config.alerting.webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Clinic-Monitoring/1.0',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook responded with status ${response.status}`);
+      }
+
+      this.logger.debug(`Webhook alert sent successfully to ${this.config.alerting.webhookUrl}`);
+    } catch (error) {
+      this.logger.error(`Failed to send webhook alert: ${error.message}`, error.stack);
+    }
   }
 
   private async sendEmailAlert(alert: Alert) {
     if (!this.config.alerting.emailRecipients?.length) return;
 
-    // TODO: Implement email alert sending
-    this.logger.debug(`Would send email alert to ${this.config.alerting.emailRecipients.join(', ')}`);
+    try {
+      const emoji = alert.level === 'critical' ? '🚨' : alert.level === 'warning' ? '⚠️' : 'ℹ️';
+      const subject = `${emoji} ${alert.level.toUpperCase()}: ${alert.title}`;
+      const body = `
+        <h2>${emoji} Alert Notification</h2>
+        <p><strong>Level:</strong> ${alert.level.toUpperCase()}</p>
+        <p><strong>Title:</strong> ${alert.title}</p>
+        <p><strong>Description:</strong> ${alert.description}</p>
+        <p><strong>Timestamp:</strong> ${new Date(alert.timestamp).toLocaleString()}</p>
+        ${alert.metadata ? `<p><strong>Details:</strong> <pre>${JSON.stringify(alert.metadata, null, 2)}</pre></p>` : ''}
+        <hr>
+        <p><em>Sent by Clinic Monitoring System</em></p>
+      `;
+
+      // Email sending would integrate with your configured email service
+      // For now, log the intent - actual SMTP integration depends on environment setup
+      this.logger.log({
+        action: 'email_alert_prepared',
+        recipients: this.config.alerting.emailRecipients,
+        subject,
+        htmlBody: body,
+      });
+
+      this.logger.debug(`Email alert prepared for: ${this.config.alerting.emailRecipients.join(', ')}`);
+
+      // TODO: Integrate with actual SMTP service (nodemailer, SendGrid, etc.) when email service is configured
+      // Example:
+      // await this.emailService.sendMail({
+      //   to: this.config.alerting.emailRecipients,
+      //   subject,
+      //   html: body,
+      // });
+    } catch (error) {
+      this.logger.error(`Failed to send email alert: ${error.message}`, error.stack);
+    }
   }
 
   private async sendSlackAlert(alert: Alert) {
     if (!this.config.alerting.slackWebhook) return;
 
-    // TODO: Implement Slack alert sending
-    this.logger.debug(`Would send Slack alert`);
+    try {
+      const emoji = alert.level === 'critical' ? ':rotating_light:' : alert.level === 'warning' ? ':warning:' : ':information_source:';
+      const color = alert.level === 'critical' ? 'danger' : alert.level === 'warning' ? 'warning' : 'good';
+
+      const payload = {
+        text: `${emoji} *${alert.level.toUpperCase()} Alert*`,
+        attachments: [
+          {
+            color,
+            title: alert.title,
+            text: alert.description,
+            fields: [
+              {
+                title: 'Timestamp',
+                value: new Date(alert.timestamp).toLocaleString(),
+                short: true,
+              },
+              {
+                title: 'Level',
+                value: alert.level.toUpperCase(),
+                short: true,
+              },
+            ],
+            footer: 'Clinic Monitoring System',
+            footer_icon: 'https://platform.slack-edge.com/img/default_application_icon.png',
+            ts: Math.floor(Number(alert.timestamp) / 1000),
+          },
+        ],
+      };
+
+      if (alert.metadata) {
+        payload.attachments[0].fields.push({
+          title: 'Details',
+          value: `\`\`\`${JSON.stringify(alert.metadata, null, 2)}\`\`\``,
+          short: false,
+        });
+      }
+
+      const response = await fetch(this.config.alerting.slackWebhook, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Slack webhook responded with status ${response.status}`);
+      }
+
+      this.logger.debug('Slack alert sent successfully');
+    } catch (error) {
+      this.logger.error(`Failed to send Slack alert: ${error.message}`, error.stack);
+    }
   }
 
   /**

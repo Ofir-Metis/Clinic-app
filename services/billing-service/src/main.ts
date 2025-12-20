@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter, LoggingInterceptor, LoggingMiddleware, CentralizedLoggerService } from '@clinic/common';
+import { AllExceptionsFilter, LoggingInterceptor, CentralizedLoggerService } from '@clinic/common';
 
 async function bootstrap() {
   const logger = new Logger('Billing-Service');

@@ -3,7 +3,7 @@
  * Transforms existing appointments table to support flexible meeting management
  */
 
-import { MigrationInterface, QueryRunner, TableColumn, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, TableColumn} from 'typeorm';
 
 export class EnhanceAppointmentsSchema1704067300000 implements MigrationInterface {
   name = 'EnhanceAppointmentsSchema1704067300000';
@@ -277,9 +277,10 @@ export class EnhanceAppointmentsSchema1704067300000 implements MigrationInterfac
     for (const query of indexQueries) {
       try {
         await queryRunner.query(query);
-      } catch (error) {
+      } catch (error: unknown) {
         // Index might already exist, continue
-        console.log(`Index creation failed, might already exist: ${error.message}`);
+        const err = error as Error;
+        console.log(`Index creation failed, might already exist: ${err.message}`);
       }
     }
 
@@ -310,7 +311,7 @@ export class EnhanceAppointmentsSchema1704067300000 implements MigrationInterfac
     for (const indexName of indexes) {
       try {
         await queryRunner.dropIndex('appointments', indexName);
-      } catch (error) {
+      } catch (error: unknown) {
         // Index might not exist, continue
         console.log(`Index ${indexName} might not exist: ${error}`);
       }
@@ -331,7 +332,7 @@ export class EnhanceAppointmentsSchema1704067300000 implements MigrationInterfac
         if (hasColumn) {
           await queryRunner.dropColumn('appointments', columnName);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.log(`Could not drop column ${columnName}: ${error}`);
       }
     }

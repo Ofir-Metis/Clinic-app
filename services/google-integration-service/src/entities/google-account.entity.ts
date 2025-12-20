@@ -15,7 +15,6 @@ export class GoogleAccount {
   id!: string;
 
   @Column({ name: 'user_id', type: 'uuid' })
-  @Index()
   userId!: string;
 
   @Column({ name: 'google_user_id', length: 255, unique: true })

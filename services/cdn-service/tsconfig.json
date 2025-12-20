@@ -25,5 +25,7 @@
       "@clinic/common": ["../../libs/common/src/index.ts"],
       "@clinic/common/*": ["../../libs/common/src/*"]
     }
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

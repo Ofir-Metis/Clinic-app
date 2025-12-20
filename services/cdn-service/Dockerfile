@@ -1,6 +1,6 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ vips-dev
 COPY package.json yarn.lock ./
 COPY tsconfig.base.json ./
 COPY tsconfig.json ./
@@ -14,7 +14,7 @@ RUN yarn workspaces run build
 
 FROM node:20-alpine AS build
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ vips-dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/services/cdn-service ./services/cdn-service
 COPY --from=deps /app/libs ./libs
@@ -24,6 +24,7 @@ ENV PATH="../../node_modules/.bin:$PATH"
 RUN yarn build
 
 FROM node:20-alpine
+RUN apk add --no-cache vips vips-cpp curl
 WORKDIR /app
 COPY --from=build /app/services/cdn-service/dist ./dist
 COPY --from=build /app/services/cdn-service/package.json ./package.json
@@ -32,4 +33,4 @@ COPY --from=build /app/libs/common/dist ./libs/common/dist
 RUN rm -rf ./node_modules/@clinic/common && \
     mkdir -p ./node_modules/@clinic/common && \
     cp -r ./libs/common/dist/* ./node_modules/@clinic/common/
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/services/cdn-service/src/main.js"]

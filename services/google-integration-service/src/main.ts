@@ -30,7 +30,7 @@ async function bootstrap() {
     
     // Apply logging middleware with proper context binding
     const loggingMiddleware = new LoggingMiddleware(loggerService);
-    app.use((req, res, next) => loggingMiddleware.use(req, res, next));
+    app.use(loggingMiddleware.use.bind(loggingMiddleware));
     
     logger.log('✅ Enterprise logging initialized');
 
@@ -82,7 +82,7 @@ async function bootstrap() {
     }
 
     // Health check endpoint
-    app.getHttpAdapter().get('/health', (req, res) => {
+    app.getHttpAdapter().get('/health', (_req, res) => {
       res.json({
         status: 'ok',
         service: 'google-integration-service',

@@ -16,7 +16,7 @@ export interface HealthcareMetrics {
   // User Activity Metrics
   activeUsers: {
     clients: number;
-    therapists: number;
+    coaches: number;
     admins: number;
     total: number;
   };
@@ -63,7 +63,7 @@ export interface HealthcareMetrics {
   performance: {
     pageLoadTimes: {
       client: number;
-      therapist: number;
+      coach: number;
       admin: number;
     };
     apiEndpointMetrics: Record<string, {
@@ -106,7 +106,7 @@ export class CustomMetricsService {
     // this.sessionCounter = this.prometheus.createCounter({
     //   name: 'clinic_sessions_total',
     //   help: 'Total number of sessions by status',
-    //   labelNames: ['status', 'therapist_id', 'client_id']
+    //   labelNames: ['status', 'coach_id', 'client_id']
     // });
     // 
     // this.systemHealthGauge = this.prometheus.createGauge({
@@ -194,7 +194,7 @@ export class CustomMetricsService {
     // Mock data - replace with actual database queries
     const activeUsers = {
       clients: 89,
-      therapists: 15,
+      coaches: 15,
       admins: 3,
       total: 107
     };
@@ -281,7 +281,7 @@ export class CustomMetricsService {
     const performance = {
       pageLoadTimes: {
         client: 1.8, // seconds
-        therapist: 2.1,
+        coach: 2.1,
         admin: 2.3
       },
       apiEndpointMetrics: await this.getApiEndpointMetrics()
@@ -296,7 +296,7 @@ export class CustomMetricsService {
   private async updatePrometheusMetrics(metrics: HealthcareMetrics) {
     // Update active users
     this.activeUsersGauge.set({ role: 'client', time_period: 'current' }, metrics.activeUsers.clients);
-    this.activeUsersGauge.set({ role: 'therapist', time_period: 'current' }, metrics.activeUsers.therapists);
+    this.activeUsersGauge.set({ role: 'coach', time_period: 'current' }, metrics.activeUsers.coaches);
     this.activeUsersGauge.set({ role: 'admin', time_period: 'current' }, metrics.activeUsers.admins);
     this.activeUsersGauge.set({ role: 'total', time_period: 'current' }, metrics.activeUsers.total);
     
@@ -325,7 +325,7 @@ export class CustomMetricsService {
     
     // Update performance metrics
     this.performanceHistogram.observe({ operation_type: 'page_load', user_role: 'client' }, metrics.performance.pageLoadTimes.client);
-    this.performanceHistogram.observe({ operation_type: 'page_load', user_role: 'therapist' }, metrics.performance.pageLoadTimes.therapist);
+    this.performanceHistogram.observe({ operation_type: 'page_load', user_role: 'coach' }, metrics.performance.pageLoadTimes.coach);
     this.performanceHistogram.observe({ operation_type: 'page_load', user_role: 'admin' }, metrics.performance.pageLoadTimes.admin);
   }
   

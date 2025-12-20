@@ -21,18 +21,18 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard, RolesGuard, Roles, UserRole } from '@clinic/common';
 import {
-  HIPAAComplianceService,
   PHIDataHandlerService,
   ComplianceAuditService,
-  ComplianceAssessment,
-  HIPAAViolation,
   AuditEvent,
   AuditQuery,
   AuditReport,
   ComplianceMetrics,
   PHIAuditEntry,
   ConsentManagement,
-  AuditEventType
+  AuditEventType,
+  HIPAAComplianceService,
+  ComplianceAssessment,
+  HIPAAViolation
 } from '@clinic/common';
 import { IsString, IsOptional, IsEnum, IsArray, IsBoolean, IsDateString } from 'class-validator';
 

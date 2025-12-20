@@ -29,11 +29,6 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-interface ConnectGoogleRequest {
-  userId: string;
-  returnUrl?: string;
-}
-
 interface CallbackQuery {
   code?: string;
   state?: string;
@@ -57,7 +52,6 @@ export class OAuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async initiateConnection(
-    @Query('returnUrl') returnUrl: string,
     @Req() req: AuthenticatedRequest
   ) {
     try {

@@ -26,7 +26,7 @@ import { ApiManagementService } from '../api-management/api-management.service';
 import { PerformanceController } from '../performance/performance.controller';
 import { PerformanceService } from '../performance/performance.service';
 import { AdminDatabaseService } from './admin-database.service';
-import { JwtService } from '@clinic/common';
+import { JwtService, HIPAAComplianceService } from '@clinic/common';
 
 @Module({
   imports: [
@@ -35,7 +35,7 @@ import { JwtService } from '@clinic/common';
     ComplianceModule.register({ isGlobal: false }), // Add compliance services for admin features
   ],
   controllers: [AdminController, AdminSetupController, SecurityController, BackupController, MonitoringController, ConfigController, ComplianceController, ApiManagementController, PerformanceController],
-  providers: [AdminService, AdminUtilsService, AdminSetupService, SecurityService, BackupService, MonitoringService, ConfigService, ComplianceService, ApiManagementService, PerformanceService, AdminDatabaseService, JwtService],
+  providers: [AdminService, AdminUtilsService, AdminSetupService, SecurityService, BackupService, MonitoringService, ConfigService, ComplianceService, ApiManagementService, PerformanceService, AdminDatabaseService, JwtService, HIPAAComplianceService],
   exports: [AdminService, AdminUtilsService, AdminSetupService, SecurityService, BackupService, MonitoringService, ConfigService, ComplianceService, ApiManagementService, PerformanceService, AdminDatabaseService, DatabaseModule],
 })
 export class AdminModule {}

@@ -13,7 +13,7 @@ export enum TimeRange {
 
 export enum DashboardView {
   CLIENT = 'client',
-  THERAPIST = 'therapist',
+  THERAPIST = 'coach',
   ADMIN = 'admin'
 }
 
@@ -99,10 +99,10 @@ export class AppointmentSummaryDto {
   patientName: string;
 
   @ApiProperty({
-    description: 'Therapist full name',
+    description: 'Coach full name',
     example: 'Dr. Sarah Johnson'
   })
-  therapistName: string;
+  coachName: string;
 
   @ApiProperty({
     description: 'Scheduled appointment date and time',

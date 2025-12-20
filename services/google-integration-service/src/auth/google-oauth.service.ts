@@ -37,7 +37,7 @@ export interface OAuthTokens {
 @Injectable()
 export class GoogleOAuthService {
   private readonly logger = new Logger(GoogleOAuthService.name);
-  private oauth2Client: OAuth2Client;
+  private oauth2Client!: OAuth2Client;
 
   // Required Google API scopes
   private readonly SCOPES = [
@@ -116,7 +116,7 @@ export class GoogleOAuthService {
       this.oauth2Client.setCredentials(tokens);
 
       // Get user information
-      const userInfo = await this.getUserInfo(tokens.access_token);
+      const userInfo = await this.getUserInfo();
 
       // Check if account already exists
       let googleAccount = await this.googleAccountRepository.findOne({
@@ -143,7 +143,7 @@ export class GoogleOAuthService {
   /**
    * Get user information from Google
    */
-  private async getUserInfo(accessToken: string): Promise<GoogleUserInfo> {
+  private async getUserInfo(): Promise<GoogleUserInfo> {
     try {
       const oauth2 = google.oauth2({ version: 'v2', auth: this.oauth2Client });
       const response = await oauth2.userinfo.get();
@@ -206,7 +206,7 @@ export class GoogleOAuthService {
     googleAccount.tokenExpiresAt = expiryDate;
     googleAccount.tokenScope = tokens.scope || this.SCOPES.join(' ');
     googleAccount.syncStatus = 'active';
-    googleAccount.syncError = null;
+    googleAccount.syncError = undefined;
 
     return await this.googleAccountRepository.save(googleAccount);
   }
@@ -240,7 +240,7 @@ export class GoogleOAuthService {
       googleAccount.accessToken = await this.tokenManager.encryptToken(credentials.access_token);
       googleAccount.tokenExpiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
       googleAccount.syncStatus = 'active';
-      googleAccount.syncError = null;
+      googleAccount.syncError = undefined;
 
       if (credentials.refresh_token) {
         googleAccount.refreshToken = await this.tokenManager.encryptToken(credentials.refresh_token);

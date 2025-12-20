@@ -391,7 +391,7 @@ export class AdminService {
       const stats = {
         totalUsers: mockUsers.length,
         activeUsers: mockUsers.filter(u => u.status === 'active').length,
-        therapists: mockUsers.filter(u => u.role === 'coach').length,
+        coaches: mockUsers.filter(u => u.role === 'coach').length,
         clients: mockUsers.filter(u => u.role === 'client').length,
         admins: mockUsers.filter(u => u.role === 'admin').length,
       };
@@ -593,7 +593,7 @@ export class AdminService {
         twoFactorAuthEnabled: false,
       },
       limits: {
-        maxUsersPerTherapist: 50,
+        maxUsersPerCoach: 50,
         maxSessionsPerDay: 10,
         fileUploadSizeMB: 10,
         apiRateLimit: 1000,

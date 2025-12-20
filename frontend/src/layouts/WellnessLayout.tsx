@@ -37,7 +37,7 @@ import {
   MoreHoriz as MoreIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import { useAuth } from '../AuthContext';
 import CommandPalette from '../components/CommandPalette';
 import useCommandPalette from '../hooks/useCommandPalette';
@@ -53,76 +53,6 @@ interface NavigationItem {
   value: string;
   showInBottomNav?: boolean;
 }
-
-const navigationItems: NavigationItem[] = [
-  {
-    label: 'Dashboard',
-    icon: <DashboardIcon />,
-    path: '/dashboard',
-    value: 'dashboard',
-    showInBottomNav: true,
-  },
-  {
-    label: 'Clients',
-    icon: <PeopleIcon />,
-    path: '/patients',
-    value: 'patients',
-    showInBottomNav: true,
-  },
-  {
-    label: 'Calendar',
-    icon: <CalendarIcon />,
-    path: '/calendar',
-    value: 'calendar',
-    showInBottomNav: true,
-  },
-  {
-    label: 'AI Tools',
-    icon: <ToolsIcon />,
-    path: '/tools',
-    value: 'tools',
-    showInBottomNav: false, // Moved to More menu
-  },
-  {
-    label: 'Notifications',
-    icon: <NotificationsIcon />,
-    path: '/notifications',
-    value: 'notifications',
-    showInBottomNav: false, // Moved to More menu
-  },
-  {
-    label: 'Settings',
-    icon: <SettingsIcon />,
-    path: '/settings',
-    value: 'settings',
-    showInBottomNav: false,
-  },
-];
-
-// Additional items for the "More" menu
-const moreMenuItems: NavigationItem[] = [
-  {
-    label: 'AI Tools',
-    icon: <ToolsIcon />,
-    path: '/tools',
-    value: 'tools',
-    showInBottomNav: false,
-  },
-  {
-    label: 'Notifications',
-    icon: <NotificationsIcon />,
-    path: '/notifications',
-    value: 'notifications',
-    showInBottomNav: false,
-  },
-  {
-    label: 'Settings',
-    icon: <SettingsIcon />,
-    path: '/settings',
-    value: 'settings',
-    showInBottomNav: false,
-  },
-];
 
 interface WellnessLayoutProps {
   children: React.ReactNode;
@@ -151,7 +81,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { translations: t, isRTL } = useTranslation();
   const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
@@ -161,6 +91,77 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
   const [profileMenuAnchorEl, setProfileMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const [moreMenuAnchorEl, setMoreMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const commandPalette = useCommandPalette();
+
+  // Navigation items - moved inside component to access translations
+  const navigationItems: NavigationItem[] = [
+    {
+      label: t.nav?.dashboard || 'Dashboard',
+      icon: <DashboardIcon />,
+      path: '/dashboard',
+      value: 'dashboard',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.patients || 'Clients',
+      icon: <PeopleIcon />,
+      path: '/patients',
+      value: 'patients',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.calendar || 'Calendar',
+      icon: <CalendarIcon />,
+      path: '/calendar',
+      value: 'calendar',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.tools || 'AI Tools',
+      icon: <ToolsIcon />,
+      path: '/tools',
+      value: 'tools',
+      showInBottomNav: false, // Moved to More menu
+    },
+    {
+      label: t.nav?.notifications || 'Notifications',
+      icon: <NotificationsIcon />,
+      path: '/notifications',
+      value: 'notifications',
+      showInBottomNav: false, // Moved to More menu
+    },
+    {
+      label: t.nav?.settings || 'Settings',
+      icon: <SettingsIcon />,
+      path: '/settings',
+      value: 'settings',
+      showInBottomNav: false,
+    },
+  ];
+
+  // Additional items for the "More" menu
+  const moreMenuItems: NavigationItem[] = [
+    {
+      label: t.nav?.tools || 'AI Tools',
+      icon: <ToolsIcon />,
+      path: '/tools',
+      value: 'tools',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.notifications || 'Notifications',
+      icon: <NotificationsIcon />,
+      path: '/notifications',
+      value: 'notifications',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.settings || 'Settings',
+      icon: <SettingsIcon />,
+      path: '/settings',
+      value: 'settings',
+      showInBottomNav: false,
+    },
+  ];
 
   // Focus order verification in development
   React.useEffect(() => {
@@ -237,9 +238,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header with close button for mobile */}
       <Toolbar sx={{ px: 3, justifyContent: 'space-between' }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             fontWeight: 700,
             background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
             backgroundClip: 'text',
@@ -247,7 +248,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
             WebkitTextFillColor: 'transparent',
           }}
         >
-          Wellness Clinic
+          {t.appName || 'Wellness Clinic'}
         </Typography>
         {isMobile && (
           <IconButton
@@ -286,13 +287,13 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
                 '&::before': {
                   content: '""',
                   position: 'absolute',
-                  left: 0,
+                  ...(isRTL ? { right: 0 } : { left: 0 }),
                   top: '50%',
                   transform: 'translateY(-50%)',
                   width: 4,
                   height: '60%',
                   backgroundColor: theme.palette.primary.main,
-                  borderRadius: '0 2px 2px 0',
+                  borderRadius: isRTL ? '2px 0 0 2px' : '0 2px 2px 0',
                 },
               },
               '&:hover': {
@@ -313,9 +314,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
                 item.icon
               )}
             </ListItemIcon>
-            <ListItemText 
-              primary={t(item.label.toLowerCase(), item.label)} 
-              sx={{ 
+            <ListItemText
+              primary={item.label}
+              sx={{
                 '& .MuiListItemText-primary': {
                   fontWeight: currentValue === item.value ? 600 : 400,
                   color: currentValue === item.value ? 'primary.main' : 'text.primary',
@@ -334,11 +335,12 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
       {showAppBar && (
         <AppBar
           component="header"
-          role="banner" 
-          position="fixed" 
-          sx={{ 
+          role="banner"
+          position="fixed"
+          sx={{
             zIndex: (theme) => theme.zIndex.drawer + 1,
-            ...(isDesktop && { ml: `${drawerWidth}px`, width: `calc(100% - ${drawerWidth}px)` }),
+            ...(isDesktop && isRTL && { mr: `${drawerWidth}px`, width: `calc(100% - ${drawerWidth}px)` }),
+            ...(isDesktop && !isRTL && { ml: `${drawerWidth}px`, width: `calc(100% - ${drawerWidth}px)` }),
           }}
         >
           <Toolbar>
@@ -460,6 +462,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
           role="navigation"
           aria-label="Main navigation"
           variant="permanent"
+          anchor={isRTL ? 'right' : 'left'}
           sx={{
             width: drawerWidth,
             flexShrink: 0,
@@ -480,6 +483,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
           role="navigation"
           aria-label="Main navigation"
           variant="temporary"
+          anchor={isRTL ? 'right' : 'left'}
           open={mobileOpen}
           onOpen={() => setMobileOpen(true)}
           onClose={() => setMobileOpen(false)}
@@ -510,8 +514,9 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
           sx={{
             position: 'fixed',
             top: 64, // Below AppBar
-            left: isDesktop ? drawerWidth : 0,
-            right: 0,
+            ...(isDesktop && isRTL && { right: drawerWidth, left: 0 }),
+            ...(isDesktop && !isRTL && { left: drawerWidth, right: 0 }),
+            ...(!isDesktop && { left: 0, right: 0 }),
             zIndex: (theme) => theme.zIndex.drawer - 1,
           }}
         >
@@ -642,7 +647,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
               .map((item) => (
                 <BottomNavigationAction
                   key={item.value}
-                  label={t(item.label.toLowerCase(), item.label)}
+                  label={item.label}
                   value={item.value}
                   icon={item.icon}
                 />
@@ -650,7 +655,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
 
             {/* More menu button */}
             <BottomNavigationAction
-              label="More"
+              label={t.nav?.more || 'More'}
               value="more"
               icon={
                 moreMenuItems.some(item =>
@@ -766,7 +771,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
                       color: currentValue === item.value ? 'primary.main' : 'text.primary',
                     }}
                   >
-                    {t(item.label.toLowerCase(), item.label)}
+                    {item.label}
                   </Typography>
                 </Box>
               </MenuItem>

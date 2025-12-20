@@ -5,7 +5,7 @@
 
 import { Controller, Logger } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { GoogleCalendarService, CalendarEvent, SyncResult } from './google-calendar.service';
+import { GoogleCalendarService, CalendarEvent } from './google-calendar.service';
 import { GoogleOAuthService } from '../auth/google-oauth.service';
 
 interface CreateEventRequest {

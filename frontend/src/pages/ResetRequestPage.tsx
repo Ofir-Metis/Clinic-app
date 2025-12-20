@@ -10,6 +10,8 @@ import {
   Link,
   useTheme,
   alpha,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { ArrowBack as BackIcon, Email as EmailIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
@@ -20,14 +22,14 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { theme } from '../theme';
 
 const ResetRequestPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
   const [sent, setSent] = useState(false);
   const theme = useTheme();
 
   const formik = useFormik({
     initialValues: { email: '' },
     validationSchema: Yup.object({
-      email: Yup.string().email(t('required')).required(t('required')),
+      email: Yup.string().email(translations.auth.login.errors.emailFormat).required(translations.auth.login.errors.required),
     }),
     onSubmit: async (values) => {
       await axios.post(`/api/auth/reset/request`, values);
@@ -46,7 +48,37 @@ const ResetRequestPage: React.FC = () => {
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 50%, ${theme.palette.background.default} 100%)`,
         px: { xs: 2, sm: 3, md: 4 },
         py: { xs: 3, sm: 4 },
+        position: 'relative',
       }}>
+        {/* Language Selector */}
+        <Box sx={{
+          position: 'absolute',
+          top: { xs: 16, sm: 24 },
+          right: { xs: 16, sm: 24 },
+          zIndex: 10,
+        }}>
+          <Select
+            value={i18n.language}
+            onChange={(e) => {
+              const newLang = e.target.value as 'en' | 'es' | 'he';
+              i18n.changeLanguage(newLang);
+            }}
+            size="small"
+            aria-label="language switcher"
+            sx={{
+              minWidth: 120,
+              '& .MuiSelect-select': {
+                py: 1,
+                fontSize: '0.875rem',
+              },
+            }}
+          >
+            <MenuItem value="en">🇺🇸 English</MenuItem>
+            <MenuItem value="es">🇪🇸 Español</MenuItem>
+            <MenuItem value="he">🇮🇱 עברית</MenuItem>
+          </Select>
+        </Box>
+
         <Box component="form" onSubmit={formik.handleSubmit} sx={{
           p: { xs: 3, sm: 4, md: 5 },
           background: alpha(theme.palette.background.paper, 0.95),
@@ -68,9 +100,9 @@ const ResetRequestPage: React.FC = () => {
               color: theme.palette.primary.main, 
               mb: 2 
             }} />
-            <Typography 
-              variant="h4" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              sx={{
                 fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                 fontWeight: 700,
                 mb: 1,
@@ -80,33 +112,30 @@ const ResetRequestPage: React.FC = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              Reset Your Password
+              {translations.auth.resetPassword.title}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: 'text.secondary',
                 fontSize: { xs: '0.875rem', sm: '1rem' },
                 maxWidth: 300,
                 mx: 'auto',
               }}
             >
-              Enter your email address and we'll send you a link to reset your password.
+              {translations.auth.resetPassword.subtitle}
             </Typography>
           </Box>
 
           {sent ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography 
-                variant="h6" 
-                color="primary" 
+              <Typography
+                variant="h6"
+                color="primary"
                 data-testid="reset-sent"
                 sx={{ mb: 2, fontWeight: 600 }}
               >
-                ✓ Reset Link Sent!
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Check your email for password reset instructions. If you don't see it, check your spam folder.
+                {translations.auth.resetPassword.success}
               </Typography>
               <Button
                 component={RouterLink}
@@ -115,7 +144,7 @@ const ResetRequestPage: React.FC = () => {
                 startIcon={<BackIcon />}
                 sx={{ borderRadius: 3 }}
               >
-                Back to Login
+                {translations.auth.resetPassword.backToLogin}
               </Button>
             </Box>
           ) : (
@@ -125,8 +154,8 @@ const ResetRequestPage: React.FC = () => {
                 fullWidth
                 id="email"
                 name="email"
-                label={t('email')}
-                placeholder="Enter your email address"
+                label={translations.auth.resetPassword.email}
+                placeholder={translations.auth.resetPassword.email}
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 error={formik.touched.email && Boolean(formik.errors.email)}
@@ -134,19 +163,19 @@ const ResetRequestPage: React.FC = () => {
                 aria-label="email"
                 autoComplete="email"
                 size="medium"
-                sx={{ 
+                sx={{
                   mb: 2,
                   '& .MuiOutlinedInput-root': { borderRadius: 3 }
                 }}
               />
-              <Button 
-                color="primary" 
-                variant="contained" 
-                type="submit" 
-                fullWidth 
+              <Button
+                color="primary"
+                variant="contained"
+                type="submit"
+                fullWidth
                 disabled={formik.isSubmitting}
                 size="large"
-                sx={{ 
+                sx={{
                   mb: 3,
                   py: { xs: 1.5, sm: 1.75 },
                   fontSize: { xs: '1rem', sm: '1.125rem' },
@@ -155,19 +184,19 @@ const ResetRequestPage: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                {formik.isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Send Reset Link'}
+                {formik.isSubmitting ? <CircularProgress size={24} color="inherit" /> : translations.auth.resetPassword.sendButton}
               </Button>
               <Button
                 component={RouterLink}
                 to="/login"
                 variant="text"
                 startIcon={<BackIcon />}
-                sx={{ 
+                sx={{
                   color: 'text.secondary',
                   '&:hover': { color: 'primary.main' },
                 }}
               >
-                Back to Login
+                {translations.auth.resetPassword.backToLogin}
               </Button>
             </>
           )}

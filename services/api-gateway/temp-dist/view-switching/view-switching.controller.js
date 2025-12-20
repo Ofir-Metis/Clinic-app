@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ViewSwitchingController - API endpoints for therapist-client view switching
+ * ViewSwitchingController - API endpoints for coach-client view switching
  */
 var __runInitializers = (this && this.__runInitializers) || function (thisArg, initializers, value) {
     var useValue = arguments.length > 2;
@@ -66,13 +66,13 @@ let ViewSwitchingController = (() => {
          */
         async switchToClient(body, req) {
             try {
-                const therapistPayload = req.user;
+                const coachPayload = req.user;
                 const { clientId } = body;
                 if (!clientId) {
                     throw new common_1.HttpException('Client ID is required', common_1.HttpStatus.BAD_REQUEST);
                 }
-                // Verify therapist can access this client
-                const canAccess = await this.viewSwitchingService.canTherapistAccessClient(therapistPayload.sub, clientId);
+                // Verify coach can access this client
+                const canAccess = await this.viewSwitchingService.canCoachAccessClient(coachPayload.sub, clientId);
                 if (!canAccess) {
                     throw new common_1.HttpException('You do not have access to this client', common_1.HttpStatus.FORBIDDEN);
                 }
@@ -82,8 +82,8 @@ let ViewSwitchingController = (() => {
                     throw new common_1.HttpException('Client not found', common_1.HttpStatus.NOT_FOUND);
                 }
                 // Generate impersonation token
-                const tokens = await this.viewSwitchingService.switchToClientView(therapistPayload, clientId, clientInfo.email);
-                this.logger.log(`🎭 Therapist ${therapistPayload.sub} switched to client view for ${clientId}`);
+                const tokens = await this.viewSwitchingService.switchToClientView(coachPayload, clientId, clientInfo.email);
+                this.logger.log(`🎭 Coach ${coachPayload.sub} switched to client view for ${clientId}`);
                 return {
                     success: true,
                     tokens,
@@ -92,7 +92,7 @@ let ViewSwitchingController = (() => {
                         email: clientInfo.email,
                         role: 'client',
                         isImpersonating: true,
-                        originalUserId: therapistPayload.sub,
+                        originalUserId: coachPayload.sub,
                         viewingAsClientId: clientId,
                     },
                     message: `Switched to client view for ${clientInfo.name}`,
@@ -107,7 +107,7 @@ let ViewSwitchingController = (() => {
             }
         }
         /**
-         * Return to therapist view
+         * Return to coach view
          */
         async exitImpersonation(req) {
             try {
@@ -116,19 +116,19 @@ let ViewSwitchingController = (() => {
                     throw new common_1.HttpException('Not currently in client view', common_1.HttpStatus.BAD_REQUEST);
                 }
                 const tokens = await this.viewSwitchingService.exitClientView(req.headers.authorization.replace('Bearer ', ''));
-                // Get therapist information
-                const therapistInfo = await this.viewSwitchingService.getTherapistInfo(currentPayload.originalUserId);
-                this.logger.log(`🎭 Therapist ${currentPayload.originalUserId} exited client view for ${currentPayload.viewingAsClientId}`);
+                // Get coach information
+                const coachInfo = await this.viewSwitchingService.getCoachInfo(currentPayload.originalUserId);
+                this.logger.log(`🎭 Coach ${currentPayload.originalUserId} exited client view for ${currentPayload.viewingAsClientId}`);
                 return {
                     success: true,
                     tokens,
                     user: {
                         id: currentPayload.originalUserId,
-                        email: therapistInfo.email,
+                        email: coachInfo.email,
                         role: 'coach',
                         isImpersonating: false,
                     },
-                    message: 'Returned to therapist view',
+                    message: 'Returned to coach view',
                 };
             }
             catch (error) {
@@ -157,7 +157,7 @@ let ViewSwitchingController = (() => {
                 },
                 message: viewSwitching.isImpersonating
                     ? `Viewing as client ${viewSwitching.viewingAsClientId}`
-                    : 'In normal therapist view',
+                    : 'In normal coach view',
             };
         }
         /**
@@ -165,8 +165,8 @@ let ViewSwitchingController = (() => {
          */
         async getAccessibleClients(req) {
             try {
-                const therapistPayload = req.user;
-                const clients = await this.viewSwitchingService.getTherapistClients(therapistPayload.sub);
+                const coachPayload = req.user;
+                const clients = await this.viewSwitchingService.getCoachClients(coachPayload.sub);
                 return {
                     success: true,
                     clients: clients.map(client => ({
@@ -185,13 +185,13 @@ let ViewSwitchingController = (() => {
             }
         }
         /**
-         * Get client info by ID (for therapists)
+         * Get client info by ID (for coaches)
          */
         async getClientInfo(clientId, req) {
             try {
-                const therapistPayload = req.user;
+                const coachPayload = req.user;
                 // Verify access
-                const canAccess = await this.viewSwitchingService.canTherapistAccessClient(therapistPayload.sub, clientId);
+                const canAccess = await this.viewSwitchingService.canCoachAccessClient(coachPayload.sub, clientId);
                 if (!canAccess) {
                     throw new common_1.HttpException('You do not have access to this client', common_1.HttpStatus.FORBIDDEN);
                 }

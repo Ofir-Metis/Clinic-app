@@ -20,11 +20,11 @@ export class CreateDatabaseIndexes1704067200000 implements MigrationInterface {
     // APPOINTMENTS TABLE OPTIMIZATIONS
     // ========================================
     
-    // High-priority index for therapist schedule queries
-    // Usage: Finding all appointments for a therapist within a date range
+    // High-priority index for coach schedule queries
+    // Usage: Finding all appointments for a coach within a date range
     await queryRunner.query(`
-      CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_appointments_therapist_start_time 
-      ON appointments(therapist_id, start_time)
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_appointments_coach_start_time 
+      ON appointments(coach_id, start_time)
     `);
 
     // Client appointment lookups with status filtering
@@ -103,9 +103,9 @@ export class CreateDatabaseIndexes1704067200000 implements MigrationInterface {
       WHERE client_id IS NOT NULL
     `);
 
-    // Therapist notes access patterns
+    // Coach notes access patterns
     await queryRunner.query(`
-      CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notes_therapist_created 
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_notes_coach_created 
       ON notes(created_by, created_at DESC)
     `);
 
@@ -256,7 +256,7 @@ export class CreateDatabaseIndexes1704067200000 implements MigrationInterface {
       'idx_audit_logs_service_timestamp',
       'idx_audit_logs_user_timestamp',
       'idx_notes_content_gin',
-      'idx_notes_therapist_created',
+      'idx_notes_coach_created',
       'idx_notes_client_created',
       'idx_users_created_updated',
       'idx_users_roles_gin',
@@ -266,7 +266,7 @@ export class CreateDatabaseIndexes1704067200000 implements MigrationInterface {
       'idx_appointments_google_sync',
       'idx_appointments_status_start_time',
       'idx_appointments_client_status',
-      'idx_appointments_therapist_start_time'
+      'idx_appointments_coach_start_time'
     ];
 
     for (const indexName of indexesToDrop) {

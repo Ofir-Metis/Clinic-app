@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { API_URL } from '../env';
 
 interface PrivateRouteProps {
   children: JSX.Element;
@@ -38,7 +39,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, requiredRole }) =
         // Second check: Validate token with server (when endpoint is available)
         let serverValidated = true; // Default to true for backward compatibility
         try {
-          const response = await fetch('/auth/verify', {
+          const response = await fetch(`${API_URL}/auth/verify`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`,

@@ -20,6 +20,7 @@ import { useTranslation } from '../contexts/LanguageContext'
 import { DateCalendar } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { he } from 'date-fns/locale';
 import WellnessLayout from '../layouts/WellnessLayout';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import EmptyState from '../components/EmptyState';
@@ -27,7 +28,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 
 
 const DashboardPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, translations } = useTranslation();
   const [appointments, setAppointments] = useState<any[]>([])
   const [notes, setNotes] = useState<any[]>([])
   const [stats, setStats] = useState<any | null>(null)
@@ -60,11 +61,11 @@ const DashboardPage: React.FC = () => {
 
   return (
     <WellnessLayout
-      title={t.nav.dashboard}
+      title={translations.nav.dashboard}
       showFab={true}
       fabIcon={<AddIcon />}
       fabAction={() => navigate('/appointments/new')}
-      fabAriaLabel={t.dashboard.addButton}
+      fabAriaLabel={translations.dashboard.addButton}
     >
         {loading ? (
           <LoadingSkeleton variant="dashboard" />
@@ -88,7 +89,7 @@ const DashboardPage: React.FC = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {t.dashboard.welcome}
+                {translations.dashboard.welcome}
               </Typography>
               <Typography
                 variant="body1"
@@ -99,7 +100,7 @@ const DashboardPage: React.FC = () => {
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                 }}
               >
-                {t.dashboard.journeySubtitle}
+                {translations.dashboard.journeySubtitle}
               </Typography>
             </Box>
 
@@ -134,7 +135,7 @@ const DashboardPage: React.FC = () => {
                             gap: 2,
                           }}
                         >
-                          🗓️ {t.dashboard.todaysSchedule}
+                          🗓️ {translations.dashboard.todaysSchedule}
                         </Typography>
                         <Button
                           variant="contained"
@@ -148,7 +149,7 @@ const DashboardPage: React.FC = () => {
                             fontWeight: 600,
                           }}
                         >
-                          + {t.dashboard.addButton}
+                          + {translations.dashboard.addButton}
                         </Button>
                       </Box>
 
@@ -172,10 +173,10 @@ const DashboardPage: React.FC = () => {
                         }}>
                           <Typography variant="h5" sx={{ mb: 2, fontSize: '1.5rem' }}>🌅</Typography>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                            {t.dashboard.noAppointments}
+                            {translations.dashboard.noAppointments}
                           </Typography>
                           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                            {t.dashboard.selfCareTime}
+                            {translations.dashboard.selfCareTime}
                           </Typography>
                           <Button
                             variant="contained"
@@ -183,7 +184,7 @@ const DashboardPage: React.FC = () => {
                             onClick={() => navigate('/appointments/new')}
                             sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
                           >
-                            📅 {t.dashboard.addButton}
+                            📅 {translations.dashboard.addButton}
                           </Button>
                         </Box>
                       ) : (
@@ -211,7 +212,7 @@ const DashboardPage: React.FC = () => {
                                       {new Date(a.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {a.name || a.type}
                                     </Typography>
                                     <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                                      {a.type} • {t.dashboard.duration}
+                                      {a.type} • {translations.dashboard.duration}
                                     </Typography>
                                   </Box>
                                   <Button
@@ -229,7 +230,7 @@ const DashboardPage: React.FC = () => {
                                       navigate(`/appointments/${a.id}`);
                                     }}
                                   >
-                                    {t.dashboard.joinButton}
+                                    {translations.dashboard.joinButton}
                                   </Button>
                                 </Box>
                               </CardContent>
@@ -254,7 +255,7 @@ const DashboardPage: React.FC = () => {
                           gap: 1,
                         }}
                       >
-                        {t.dashboard.quickActions}
+                        {translations.dashboard.quickActions}
                       </Typography>
 
                       <Grid container spacing={2}>
@@ -272,7 +273,7 @@ const DashboardPage: React.FC = () => {
                             }}
                           >
                             👥
-                            <Typography variant="caption">{t.dashboard.navigation.clients}</Typography>
+                            <Typography variant="caption">{translations?.dashboard?.navigation?.clients || 'Clients'}</Typography>
                           </Button>
                         </Grid>
                         <Grid item xs={6} sm={4}>
@@ -289,7 +290,7 @@ const DashboardPage: React.FC = () => {
                             }}
                           >
                             📋
-                            <Typography variant="caption">{t.dashboard.navigation.calendar}</Typography>
+                            <Typography variant="caption">{translations?.dashboard?.navigation?.calendar || 'Calendar'}</Typography>
                           </Button>
                         </Grid>
                         <Grid item xs={6} sm={4}>
@@ -306,7 +307,7 @@ const DashboardPage: React.FC = () => {
                             }}
                           >
                             🧠
-                            <Typography variant="caption">{t.dashboard.navigation.aiTools}</Typography>
+                            <Typography variant="caption">{translations?.dashboard?.navigation?.aiTools || 'AI Tools'}</Typography>
                           </Button>
                         </Grid>
                       </Grid>
@@ -331,10 +332,10 @@ const DashboardPage: React.FC = () => {
                           color: 'primary.main',
                         }}
                       >
-                        📅 Calendar
+                        {translations.dashboard.calendar}
                       </Typography>
 
-                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
                         <DateCalendar
                           value={selectedDate}
                           onChange={date => setSelectedDate(date as Date)}
@@ -369,7 +370,7 @@ const DashboardPage: React.FC = () => {
                               {todaysAppointments.length}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              Today
+                              {translations.dashboard.today}
                             </Typography>
                           </Box>
                           <Box sx={{ textAlign: 'center' }}>
@@ -377,7 +378,7 @@ const DashboardPage: React.FC = () => {
                               {appointments.length}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              Total
+                              {translations.dashboard.total}
                             </Typography>
                           </Box>
                         </Stack>
@@ -396,12 +397,12 @@ const DashboardPage: React.FC = () => {
                           fontSize: { xs: '1rem', sm: '1.125rem' },
                         }}
                       >
-                        📊 Quick Stats
+                        {translations.dashboard.quickStats}
                       </Typography>
                       <Stack spacing={2}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <Typography variant="body2" color="text.secondary">
-                            This Week
+                            {translations.dashboard.thisWeek}
                           </Typography>
                           <Typography variant="h6" color="primary.main" fontWeight={600}>
                             {Math.max(appointments.length, 3)}
@@ -409,7 +410,7 @@ const DashboardPage: React.FC = () => {
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <Typography variant="body2" color="text.secondary">
-                            Active Clients
+                            {translations.dashboard.activeClients}
                           </Typography>
                           <Typography variant="h6" color="secondary.main" fontWeight={600}>
                             {Math.max(Math.floor(appointments.length * 1.5), 5)}

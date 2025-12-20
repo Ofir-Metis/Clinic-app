@@ -8,8 +8,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { join } from 'path';
 import { CommonModule } from '@clinic/common';
 import { DashboardModule } from './dashboard/dashboard.module';
-import { PatientsModule } from './patients/patients.module';
-import { TherapistsModule } from './therapists/therapists.module';
+import { ClientsModule } from './clients/clients.module';
+import { CoachesModule } from './coaches/coaches.module';
 import { SettingsModule } from './settings/settings.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { RecordingsModule } from './recordings/recordings.module';
@@ -34,7 +34,7 @@ import { AppResolver } from './app.resolver';
 import { HealthController } from './health/health.controller';
 import { DashboardService } from './dashboard/dashboard.service';
 import { SettingsService } from './settings/settings.service';
-import { TherapistsService } from './therapists/therapists.service';
+import { CoachesService } from './coaches/coaches.service';
 import { AuthController } from './auth.controller';
 import { TestController } from './test.controller';
 
@@ -72,8 +72,8 @@ import { TestController } from './test.controller';
       persistedQueries: false, // Fix Apollo Server security vulnerability
     }),
     DashboardModule,
-    PatientsModule,
-    // TherapistsModule, // Keep disabled - may have dependencies
+    ClientsModule,
+    // CoachesModule, // Keep disabled - may have dependencies
     SettingsModule,
     WebSocketModule, // Enabled - WebSocket support for real-time features
     // RecordingsModule, // Keep disabled - storage dependencies
@@ -100,7 +100,7 @@ import { TestController } from './test.controller';
   providers: [
     DashboardService,
     SettingsService,
-    // TherapistsService, // Keep disabled - may have circular dependencies
+    // CoachesService, // Keep disabled - may have circular dependencies
     AppResolver,
     {
       provide: APP_GUARD,

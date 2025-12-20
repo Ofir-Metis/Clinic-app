@@ -8,56 +8,56 @@ export type BillingCycle = 'monthly' | 'quarterly' | 'annual';
 @Entity('coach_subscriptions')
 export class CoachSubscription {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'uuid', name: 'coach_id' })
-  coachId: string;
+  coachId!: string;
 
   @Column({ type: 'uuid', name: 'plan_id' })
-  planId: string;
+  planId!: string;
 
-  @Column({ 
-    type: 'varchar', 
-    length: 50, 
+  @Column({
+    type: 'varchar',
+    length: 50,
     default: 'active',
     enum: ['active', 'cancelled', 'suspended', 'past_due']
   })
-  status: SubscriptionStatus;
+  status!: SubscriptionStatus;
 
-  @Column({ 
-    type: 'varchar', 
-    length: 20, 
+  @Column({
+    type: 'varchar',
+    length: 20,
     default: 'monthly',
     name: 'billing_cycle',
     enum: ['monthly', 'quarterly', 'annual']
   })
-  billingCycle: BillingCycle;
+  billingCycle!: BillingCycle;
 
   @Column({ type: 'date', name: 'start_date' })
-  startDate: Date;
+  startDate!: Date;
 
   @Column({ type: 'date', nullable: true, name: 'end_date' })
-  endDate: Date;
+  endDate!: Date;
 
   @Column({ type: 'date', name: 'next_billing_date' })
-  nextBillingDate: Date;
+  nextBillingDate!: Date;
 
   @Column({ type: 'varchar', length: 3, default: 'ILS' })
-  currency: string;
+  currency!: string;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 0, name: 'discount_percentage' })
-  discountPercentage: number;
+  discountPercentage!: number;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   @ManyToOne(() => SubscriptionPlan, plan => plan.subscriptions)
   @JoinColumn({ name: 'plan_id' })
-  plan: SubscriptionPlan;
+  plan!: SubscriptionPlan;
 
   @OneToMany(() => SubscriptionInvoice, invoice => invoice.subscription)
-  invoices: SubscriptionInvoice[];
+  invoices!: SubscriptionInvoice[];
 }

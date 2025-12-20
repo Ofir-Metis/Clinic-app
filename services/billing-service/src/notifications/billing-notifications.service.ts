@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { HttpService } from '@nestjs/axios';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { SubscriptionInvoice } from '../entities/subscription-invoice.entity';
-import { ClientTherapistPayment } from '../entities/client-therapist-payment.entity';
+import { ClientCoachPayment } from '../entities/client-coach-payment.entity';
 import { CoachSubscription } from '../entities/coach-subscription.entity';
 
 interface NotificationTemplate {
@@ -34,11 +33,10 @@ export class BillingNotificationsService {
   constructor(
     @InjectRepository(SubscriptionInvoice)
     private invoiceRepository: Repository<SubscriptionInvoice>,
-    @InjectRepository(ClientTherapistPayment)
-    private paymentRepository: Repository<ClientTherapistPayment>,
+    @InjectRepository(ClientCoachPayment)
+    private paymentRepository: Repository<ClientCoachPayment>,
     @InjectRepository(CoachSubscription)
     private subscriptionRepository: Repository<CoachSubscription>,
-    private httpService: HttpService,
     private configService: ConfigService,
   ) {}
 
@@ -212,7 +210,7 @@ export class BillingNotificationsService {
   /**
    * Send client payment reminder
    */
-  private async sendClientPaymentReminder(payment: ClientTherapistPayment): Promise<void> {
+  private async sendClientPaymentReminder(payment: ClientCoachPayment): Promise<void> {
     try {
       const paymentLink = this.generateClientPaymentLink(payment);
       
@@ -338,7 +336,7 @@ export class BillingNotificationsService {
   /**
    * Generate payment link for client payment
    */
-  private generateClientPaymentLink(payment: ClientTherapistPayment): string {
+  private generateClientPaymentLink(payment: ClientCoachPayment): string {
     const baseUrl = this.configService.get<string>('FRONTEND_URL') || 'https://clinic.example.com';
     return `${baseUrl}/payment/${payment.id}?token=${this.generateSecureToken(payment.id)}`;
   }
@@ -361,14 +359,30 @@ export class BillingNotificationsService {
     const formatCurrency = (amount: number) => 
       new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(amount);
 
-    const subjects = {
-      first: 'תזכורת תשלום - החשבון שלך מגיע בעוד שבוע',
+    const subjects: Record<string, string> = {
+      first: 'תזכורת תשלום - החשבון שלך מגיע בעוד שבועיים',
+      second: 'תזכורת תשלום - החשבון שלך מגיע בעוד שבוע',
       final: 'תזכורת אחרונה - החשבון שלך מגיע בעוד 3 ימים',
       overdue: 'חשבון באיחור - נדרש תשלום מיידי',
     };
 
-    const bodies = {
+    const bodies: Record<string, string> = {
       first: `
+שלום,
+
+זוהי תזכורת ידידותית שהחשבון שלך עבור ${invoice.subscription.plan.name} מגיע לתשלום בעוד שבועיים.
+
+פרטי החשבון:
+• מספר חשבון: ${invoice.invoiceNumber}
+• סכום: ${formatCurrency(reminder.amount)}
+• תאריך פירעון: ${reminder.dueDate.toLocaleDateString('he-IL')}
+
+לתשלום מיידי: ${reminder.paymentLink}
+
+תודה,
+צוות הקליניקה
+      `,
+      second: `
 שלום,
 
 זוהי תזכורת ידידותית שהחשבון שלך עבור ${invoice.subscription.plan.name} מגיע לתשלום בעוד שבוע.
@@ -437,7 +451,7 @@ export class BillingNotificationsService {
    */
   private getClientPaymentReminderTemplate(
     reminder: PaymentReminder,
-    payment: ClientTherapistPayment
+    payment: ClientCoachPayment
   ): NotificationTemplate {
     const formatCurrency = (amount: number) => 
       new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(amount);
@@ -528,7 +542,7 @@ export class BillingNotificationsService {
    * Get payment failure template
    */
   private getPaymentFailureTemplate(
-    type: 'subscription' | 'client_payment',
+    _type: 'subscription' | 'client_payment',
     amount: number,
     reason: string,
     currency: string
@@ -601,7 +615,7 @@ export class BillingNotificationsService {
    * Get payment type in Hebrew
    */
   private getPaymentTypeHebrew(type: string): string {
-    const types = {
+    const types: Record<string, string> = {
       session: 'טיפול בודד',
       package: 'חבילת טיפולים',
       subscription: 'מנוי חודשי',

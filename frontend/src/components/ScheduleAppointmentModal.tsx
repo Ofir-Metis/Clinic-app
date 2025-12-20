@@ -187,7 +187,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
       
       // Prepare enhanced appointment data
       const appointmentData = {
-        therapistId: 'current-user-id', // TODO: Get from auth context
+        therapistId: localStorage.getItem('userId') || 'current-user-id', // Get from localStorage (set during login)
         clientId: selectedPatient.id.toString(),
         startTime: datetime.toISOString(),
         endTime: endTime.toISOString(),
@@ -207,11 +207,12 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
       };
 
       // Use the enhanced appointment creation endpoint
+      const authToken = localStorage.getItem('accessToken') || localStorage.getItem('clinic_access_token');
       const result = await fetch('/api/appointments/enhanced', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // TODO: Add JWT auth header
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
         },
         body: JSON.stringify(appointmentData)
       });

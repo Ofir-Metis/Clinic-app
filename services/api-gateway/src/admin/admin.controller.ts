@@ -70,7 +70,7 @@ export interface UserManagementResponse {
   stats: {
     totalUsers: number;
     activeUsers: number;
-    therapists: number;
+    coaches: number;
     clients: number;
     admins: number;
   };

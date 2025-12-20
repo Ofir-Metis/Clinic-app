@@ -1,7 +1,6 @@
 import { Module, DynamicModule, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { HIPAAComplianceService } from './hipaa-compliance.service';
 import { PHIDataHandlerService } from './phi-data-handler.service';
 import { ComplianceAuditService } from './compliance-audit.service';
 import { CentralizedLoggerService } from '../logging/centralized-logger.service';
@@ -33,13 +32,11 @@ export class ComplianceModule {
           provide: 'COMPLIANCE_OPTIONS',
           useValue: options
         },
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService,
         CentralizedLoggerService
       ],
       exports: [
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService
       ],
@@ -69,19 +66,16 @@ export class ComplianceModule {
           useFactory: options.useFactory || ((configService: ConfigService) => ({
             auditRetentionDays: configService.get<number>('AUDIT_RETENTION_DAYS', 2555), // 7 years
             phiEncryptionKey: configService.get<string>('PHI_ENCRYPTION_KEY'),
-            hipaaEnforcement: configService.get<boolean>('HIPAA_ENFORCEMENT', true),
             automaticReporting: configService.get<boolean>('AUTOMATIC_COMPLIANCE_REPORTING', true),
-            complianceFrameworks: configService.get<string>('COMPLIANCE_FRAMEWORKS', 'HIPAA,SOC2').split(',')
+            complianceFrameworks: configService.get<string>('COMPLIANCE_FRAMEWORKS', 'GDPR,SOC2').split(',')
           })),
           inject: options.inject || [ConfigService]
         },
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService,
         CentralizedLoggerService
       ],
       exports: [
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService
       ],
@@ -106,13 +100,11 @@ export class ComplianceModule {
           provide: 'COMPLIANCE_OPTIONS',
           useValue: options
         },
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService,
         CentralizedLoggerService
       ],
       exports: [
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService,
         CentralizedLoggerService
@@ -129,7 +121,6 @@ export class ComplianceModule {
       module: ComplianceModule,
       providers: [],
       exports: [
-        HIPAAComplianceService,
         PHIDataHandlerService,
         ComplianceAuditService
       ]
@@ -138,22 +129,20 @@ export class ComplianceModule {
 }
 
 /**
- * Healthcare-specific compliance module with HIPAA defaults
+ * Coaching-specific compliance module with GDPR defaults
  */
 @Global()
 @Module({})
-export class HealthcareComplianceModule {
+export class CoachingComplianceModule {
   static forRoot(options: ComplianceModuleOptions = {}): DynamicModule {
-    const healthcareDefaults: ComplianceModuleOptions = {
-      auditRetentionDays: 2555, // 7 years for HIPAA
-      phiEncryptionKey: process.env.HEALTHCARE_PHI_ENCRYPTION_KEY,
-      hipaaEnforcement: true,
+    const coachingDefaults: ComplianceModuleOptions = {
+      auditRetentionDays: 2555, // 7 years for audit compliance
       automaticReporting: true,
-      complianceFrameworks: ['HIPAA', 'HITECH', 'SOC2'],
+      complianceFrameworks: ['GDPR', 'SOC2'],
       ...options
     };
 
-    return ComplianceModule.forRoot(healthcareDefaults);
+    return ComplianceModule.forRoot(coachingDefaults);
   }
 
   static registerAsync(options: {
@@ -163,28 +152,23 @@ export class HealthcareComplianceModule {
     inject?: any[];
   } = {}): DynamicModule {
     const originalFactory = options.useFactory;
-    
+
     return ComplianceModule.registerAsync({
       ...options,
-      useFactory: originalFactory ? 
+      useFactory: originalFactory ?
         async (...args: any[]) => {
           const config = await originalFactory(...args);
           return {
             auditRetentionDays: 2555, // 7 years
-            hipaaEnforcement: true,
             automaticReporting: true,
-            complianceFrameworks: ['HIPAA', 'HITECH', 'SOC2'],
-            ...config,
-            phiEncryptionKey: config.phiEncryptionKey || process.env.HEALTHCARE_PHI_ENCRYPTION_KEY
+            complianceFrameworks: ['GDPR', 'SOC2'],
+            ...config
           };
         } :
         (configService: ConfigService) => ({
           auditRetentionDays: configService.get<number>('AUDIT_RETENTION_DAYS', 2555),
-          phiEncryptionKey: configService.get<string>('HEALTHCARE_PHI_ENCRYPTION_KEY') || 
-                           configService.get<string>('PHI_ENCRYPTION_KEY'),
-          hipaaEnforcement: configService.get<boolean>('HIPAA_ENFORCEMENT', true),
           automaticReporting: configService.get<boolean>('AUTOMATIC_COMPLIANCE_REPORTING', true),
-          complianceFrameworks: ['HIPAA', 'HITECH', 'SOC2']
+          complianceFrameworks: ['GDPR', 'SOC2']
         })
     });
   }

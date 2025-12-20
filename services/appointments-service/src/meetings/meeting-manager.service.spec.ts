@@ -5,16 +5,12 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ClientProxy } from '@nestjs/microservices';
 import { of } from 'rxjs';
 import { MeetingManagerService } from './meeting-manager.service';
 import { Appointment, MeetingType, AppointmentStatus } from '../appointments/appointment.entity';
 
 describe('MeetingManagerService', () => {
   let service: MeetingManagerService;
-  let appointmentRepository: Repository<Appointment>;
-  let googleIntegrationClient: ClientProxy;
 
   const mockAppointment: Partial<Appointment> = {
     id: 'test-appointment-id',
@@ -77,8 +73,6 @@ describe('MeetingManagerService', () => {
     }).compile();
 
     service = module.get<MeetingManagerService>(MeetingManagerService);
-    appointmentRepository = module.get<Repository<Appointment>>(getRepositoryToken(Appointment));
-    googleIntegrationClient = module.get<ClientProxy>('GOOGLE_INTEGRATION_SERVICE');
   });
 
   afterEach(() => {

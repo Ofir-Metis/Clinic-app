@@ -50,7 +50,7 @@ var TimeRange;
 var DashboardView;
 (function (DashboardView) {
     DashboardView["CLIENT"] = "client";
-    DashboardView["THERAPIST"] = "therapist";
+    DashboardView["THERAPIST"] = "coach";
     DashboardView["ADMIN"] = "admin";
 })(DashboardView || (exports.DashboardView = DashboardView = {}));
 let DashboardQueryDto = (() => {
@@ -142,9 +142,9 @@ let AppointmentSummaryDto = (() => {
     let _patientName_decorators;
     let _patientName_initializers = [];
     let _patientName_extraInitializers = [];
-    let _therapistName_decorators;
-    let _therapistName_initializers = [];
-    let _therapistName_extraInitializers = [];
+    let _coachName_decorators;
+    let _coachName_initializers = [];
+    let _coachName_extraInitializers = [];
     let _scheduledAt_decorators;
     let _scheduledAt_initializers = [];
     let _scheduledAt_extraInitializers = [];
@@ -164,8 +164,8 @@ let AppointmentSummaryDto = (() => {
             constructor() {
                 this.id = __runInitializers(this, _id_initializers, void 0);
                 this.patientName = (__runInitializers(this, _id_extraInitializers), __runInitializers(this, _patientName_initializers, void 0));
-                this.therapistName = (__runInitializers(this, _patientName_extraInitializers), __runInitializers(this, _therapistName_initializers, void 0));
-                this.scheduledAt = (__runInitializers(this, _therapistName_extraInitializers), __runInitializers(this, _scheduledAt_initializers, void 0));
+                this.coachName = (__runInitializers(this, _patientName_extraInitializers), __runInitializers(this, _coachName_initializers, void 0));
+                this.scheduledAt = (__runInitializers(this, _coachName_extraInitializers), __runInitializers(this, _scheduledAt_initializers, void 0));
                 this.duration = (__runInitializers(this, _scheduledAt_extraInitializers), __runInitializers(this, _duration_initializers, void 0));
                 this.type = (__runInitializers(this, _duration_extraInitializers), __runInitializers(this, _type_initializers, void 0));
                 this.status = (__runInitializers(this, _type_extraInitializers), __runInitializers(this, _status_initializers, void 0));
@@ -183,8 +183,8 @@ let AppointmentSummaryDto = (() => {
                     description: 'Patient full name',
                     example: 'John Doe'
                 })];
-            _therapistName_decorators = [(0, swagger_1.ApiProperty)({
-                    description: 'Therapist full name',
+            _coachName_decorators = [(0, swagger_1.ApiProperty)({
+                    description: 'Coach full name',
                     example: 'Dr. Sarah Johnson'
                 })];
             _scheduledAt_decorators = [(0, swagger_1.ApiProperty)({
@@ -212,7 +212,7 @@ let AppointmentSummaryDto = (() => {
                 })];
             __esDecorate(null, null, _id_decorators, { kind: "field", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id, set: (obj, value) => { obj.id = value; } }, metadata: _metadata }, _id_initializers, _id_extraInitializers);
             __esDecorate(null, null, _patientName_decorators, { kind: "field", name: "patientName", static: false, private: false, access: { has: obj => "patientName" in obj, get: obj => obj.patientName, set: (obj, value) => { obj.patientName = value; } }, metadata: _metadata }, _patientName_initializers, _patientName_extraInitializers);
-            __esDecorate(null, null, _therapistName_decorators, { kind: "field", name: "therapistName", static: false, private: false, access: { has: obj => "therapistName" in obj, get: obj => obj.therapistName, set: (obj, value) => { obj.therapistName = value; } }, metadata: _metadata }, _therapistName_initializers, _therapistName_extraInitializers);
+            __esDecorate(null, null, _coachName_decorators, { kind: "field", name: "coachName", static: false, private: false, access: { has: obj => "coachName" in obj, get: obj => obj.coachName, set: (obj, value) => { obj.coachName = value; } }, metadata: _metadata }, _coachName_initializers, _coachName_extraInitializers);
             __esDecorate(null, null, _scheduledAt_decorators, { kind: "field", name: "scheduledAt", static: false, private: false, access: { has: obj => "scheduledAt" in obj, get: obj => obj.scheduledAt, set: (obj, value) => { obj.scheduledAt = value; } }, metadata: _metadata }, _scheduledAt_initializers, _scheduledAt_extraInitializers);
             __esDecorate(null, null, _duration_decorators, { kind: "field", name: "duration", static: false, private: false, access: { has: obj => "duration" in obj, get: obj => obj.duration, set: (obj, value) => { obj.duration = value; } }, metadata: _metadata }, _duration_initializers, _duration_extraInitializers);
             __esDecorate(null, null, _type_decorators, { kind: "field", name: "type", static: false, private: false, access: { has: obj => "type" in obj, get: obj => obj.type, set: (obj, value) => { obj.type = value; } }, metadata: _metadata }, _type_initializers, _type_extraInitializers);

@@ -4,19 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🎯 APPLICATION PURPOSE
 
-This is a **self-development coaching platform** designed for personal growth coaches, life coaches, and wellness practitioners. It is **NOT a mental health application** and is not intended for medical or therapeutic use.
+This is a **self-development coaching platform** designed for personal growth coaches, life coaches, and wellness practitioners.
 
-### Target Users
+### Primary Use Case: Self-Development & Life Coaching
 - **Self-development coaches** - Personal growth and empowerment coaching
 - **Life coaches** - Goal setting, achievement tracking, and lifestyle guidance
 - **Wellness practitioners** - Holistic wellness and mindfulness coaching
 - **Business coaches** - Professional development and career guidance
-
-### Important Disclaimers
-- **NOT for mental health therapy** - This platform does not provide medical or psychological treatment
-- **NOT for licensed therapists** - Not designed for clinical mental health services
-- **Coaching focus only** - Emphasizes personal empowerment, growth, and self-improvement
-- **Wellness terminology** - Uses empowerment-based language throughout the application
 
 ## 🏗️ CORE ARCHITECTURE & STANDARDS
 
@@ -100,7 +94,7 @@ cp .env.example .env                       # Configure environment
 - **search-service** (port 3010) - Elasticsearch global search & autocomplete
 - **cdn-service** (port 3011) - Content delivery & image optimization
 - **google-integration-service** (port 3012) - Google OAuth, Calendar & Gmail
-- **therapists-service** (port 3013) - Therapist profiles & specializations
+- **coaches-service** (port 3013) - Coach profiles & specializations
 - **client-relationships-service** (port 3014) - Multi-coach client management
 - **progress-service** (port 3015) - Goal tracking & achievements
 
@@ -144,6 +138,15 @@ tests/             # Playwright E2E and integration test suites
 ```
 
 ### Multi-Environment Support
+
+The platform supports multiple Docker Compose configurations for different deployment needs:
+
+**Environment Options:**
+- **Basic** (18 containers): Core services - API Gateway, microservices, PostgreSQL, NATS, Redis, MinIO, MailDev
+- **Enhanced** (26 containers): Basic + AI service, Search (Elasticsearch), CDN service with advanced features
+- **Full Monitoring** (32 containers): Enhanced + Prometheus, Grafana, Loki, Jaeger for complete observability
+- **Staging**: Production-like environment for pre-deployment testing
+- **Production**: Optimized production deployment with security hardening
 
 **Linux/macOS:**
 ```bash
@@ -217,7 +220,26 @@ psql -h localhost -p 5432 -U postgres -d clinic -f scripts/seed-admin.sql
 - **Audit Logging**: All admin actions logged for compliance
 - **Multi-Factor Authentication**: TOTP with backup codes
 - **Advanced Encryption**: AES-256-GCM at rest, TLS 1.3 in transit
-- **HIPAA Compliance**: PHI data handling, audit logging, 7-year retention
+
+## 🔌 MCP SERVER INTEGRATION
+
+The project includes Model Context Protocol (MCP) servers configured in `.mcp.json` to enhance development capabilities:
+
+### Available MCP Servers
+- **browser-qa** - Web page interaction, automated testing, and QA workflows
+- **advanced-browser-mcp** - Advanced browser automation with visual regression testing
+- **git** - Git repository operations and version control integration
+- **postgres** - Direct PostgreSQL database management and queries
+- **memory** - Knowledge graph and persistent memory management
+- **filesystem** - File system operations and project navigation
+- **fetch** - HTTP request handling and API testing
+- **sqlite** - SQLite database operations (optional)
+
+### Usage Notes
+- MCP servers enhance Claude Code's ability to work with this codebase
+- Browser automation servers are pre-configured for E2E testing workflows
+- Database servers provide direct access to PostgreSQL for debugging
+- All servers are configured with appropriate working directories and environment variables
 
 ## 🧪 TESTING INFRASTRUCTURE
 
@@ -228,6 +250,12 @@ psql -h localhost -p 5432 -U postgres -d clinic -f scripts/seed-admin.sql
 ./scripts/test-e2e.sh --browser firefox    # Specific browser
 ./scripts/test-e2e.sh --headed --debug     # Debug mode
 yarn workspace <service> test              # Individual service tests
+
+# Individual Service Testing
+yarn workspace @clinic/auth-service test --watch               # Test with watch mode
+yarn workspace @clinic/auth-service test --coverage           # Test with coverage
+yarn workspace @clinic/auth-service test src/auth.service.spec.ts  # Run specific test file
+node --inspect-brk node_modules/.bin/jest --runInBand         # Debug tests
 
 # Integration Testing
 cd tests/integration                       # Navigate to integration tests
@@ -241,10 +269,19 @@ node test-runner.ts --verbose --sequential # Debug mode with detailed output
 - **Test Pyramid**: Unit (70%) > Integration (20%) > E2E (10%)
 - **Environment**: `scripts/test.sh` sets up test environment variables
 - **Cross-browser**: Chrome, Firefox, Safari via Playwright
-- **Integration Tests**: Docker-orchestrated environment with healthcare-specific test scenarios
+- **Integration Tests**: Docker-orchestrated environment with comprehensive test scenarios
 - **Performance Testing**: Built-in benchmarking and load testing capabilities
 - **Playwright Config**: Tests run on port 5175, supports desktop and mobile browsers
 - **Jest Config**: Configured for all workspaces with jsdom environment
+
+### Root Directory Test Files
+Many test files exist in the root directory for quick testing during development:
+- `test-*.js` - Various integration and E2E test scripts
+- `debug-*.js` - Debugging utilities for specific features
+- `populate-*.js` - Database seeding scripts for testing
+- `manual-*.js` - Manual testing and QA scripts
+
+**Note**: These are development artifacts for rapid testing and debugging. They should not be committed in production deployments.
 
 ## 🎙️ KEY FEATURES
 
@@ -491,18 +528,18 @@ Key required variables (copy from `.env.example`):
 ## 🚀 PRODUCTION READINESS
 
 ### Enterprise Features
-- **HIPAA Compliance**: PHI data handling, audit logging, 7-year retention
-- **Multi-Factor Authentication**: TOTP with backup codes
+- **Multi-Factor Authentication**: TOTP with backup codes for enhanced security
 - **Advanced Encryption**: AES-256-GCM at rest, TLS 1.3 in transit
 - **Disaster Recovery**: Automated backups, business continuity planning
 - **API Documentation**: Interactive Swagger UI, TypeScript SDK, Postman collections
-- **Database Optimization**: Healthcare workflow-specific indexes
+- **Database Optimization**: Workflow-specific indexes for optimal performance
 - **Security Scanning**: Multi-layer vulnerability management
 - **Performance Profiling**: Real-time monitoring with optimization recommendations
 - **Resilience Patterns**: Circuit breakers, retry logic, timeouts, bulkheads
 - **Advanced Search**: Elasticsearch with global search, autocomplete, faceted filtering
 - **CDN Service**: S3/CloudFront integration, image optimization
 - **Advanced Analytics**: AI insights, predictive analytics, custom reports
+- **Audit Logging**: Comprehensive activity tracking with 7-year retention
 
 ### Monitoring & Observability
 - **Prometheus**: Metrics collection (port 9090)

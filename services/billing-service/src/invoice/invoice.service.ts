@@ -1,18 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubscriptionInvoice } from '../entities/subscription-invoice.entity';
 
 @Injectable()
 export class InvoiceService {
-  private readonly logger = new Logger(InvoiceService.name);
-
   constructor(
     @InjectRepository(SubscriptionInvoice)
     private invoiceRepository: Repository<SubscriptionInvoice>,
   ) {}
 
-  async getInvoice(invoiceId: string): Promise<SubscriptionInvoice> {
+  async getInvoice(invoiceId: string): Promise<SubscriptionInvoice | null> {
     return this.invoiceRepository.findOne({
       where: { id: invoiceId },
       relations: ['subscription', 'subscription.plan'],

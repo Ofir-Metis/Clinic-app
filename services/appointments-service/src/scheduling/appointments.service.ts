@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './appointment.entity';
-import { Patient } from '../patients/patient.entity';
+import { Client } from '../clients/client.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import * as winston from 'winston';
@@ -20,15 +20,15 @@ export class AppointmentsService {
 
   constructor(
     @InjectRepository(Appointment) private readonly repo: Repository<Appointment>,
-    @InjectRepository(Patient) private readonly patients: Repository<Patient>,
+    @InjectRepository(Client) private readonly patients: Repository<Client>,
     private readonly notifications: NotificationsService,
   ) {}
 
   async create(dto: CreateAppointmentDto) {
     const patient = await this.patients.findOne({ where: { id: dto.patientId } });
     if (!patient) {
-      this.logger.error('Patient not found', { patientId: dto.patientId });
-      throw new Error('Patient not found');
+      this.logger.error('Client not found', { patientId: dto.patientId });
+      throw new Error('Client not found');
     }
 
     const entity = this.repo.create({

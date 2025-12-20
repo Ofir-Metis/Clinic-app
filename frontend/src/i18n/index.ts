@@ -57,7 +57,7 @@ export type TranslationKeys = typeof en;
 export const LANGUAGE_STORAGE_KEY = 'clinic-app-language';
 
 // Default language
-export const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
+export const DEFAULT_LANGUAGE: SupportedLanguage = 'he';
 
 // Helper function to get browser language
 export const getBrowserLanguage = (): SupportedLanguage => {
@@ -84,11 +84,11 @@ export const storeLanguage = (language: SupportedLanguage): void => {
 
 // Helper function to get initial language
 export const getInitialLanguage = (): SupportedLanguage => {
-  // Priority: stored preference > browser language > default
+  // Priority: stored preference > default language
   const stored = getStoredLanguage();
-  if (stored !== DEFAULT_LANGUAGE) return stored;
-  
-  return getBrowserLanguage();
+  if (stored && stored !== DEFAULT_LANGUAGE) return stored;
+
+  return DEFAULT_LANGUAGE;
 };
 
 // Helper function to check if language is RTL

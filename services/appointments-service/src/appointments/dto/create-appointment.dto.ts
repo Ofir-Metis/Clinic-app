@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsArray } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, IsArray } from 'class-validator';
 import { MeetingType } from '../appointment.entity';
 
 export class CreateAppointmentDto {

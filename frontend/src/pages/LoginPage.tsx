@@ -35,7 +35,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 const LoginPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -199,10 +199,13 @@ const LoginPage: React.FC = () => {
           }}>
             <Select
               value={i18n.language}
-              onChange={e => i18n.changeLanguage(e.target.value)}
+              onChange={(e) => {
+                const newLang = e.target.value as 'en' | 'es' | 'he';
+                i18n.changeLanguage(newLang);
+              }}
               size="small"
               aria-label="language switcher"
-              sx={{ 
+              sx={{
                 minWidth: 120,
                 '& .MuiSelect-select': {
                   py: 1,
@@ -211,9 +214,8 @@ const LoginPage: React.FC = () => {
               }}
             >
               <MenuItem value="en">🇺🇸 English</MenuItem>
+              <MenuItem value="es">🇪🇸 Español</MenuItem>
               <MenuItem value="he">🇮🇱 עברית</MenuItem>
-              <MenuItem value="ru">🇷🇺 Русский</MenuItem>
-              <MenuItem value="ar">🇸🇦 العربية</MenuItem>
             </Select>
           </Box>
           <LoadingOverlay 
@@ -247,7 +249,7 @@ const LoginPage: React.FC = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                Welcome Back
+                {translations.auth.login.title}
               </Typography>
               <Typography 
                 variant="body2" 
@@ -258,7 +260,7 @@ const LoginPage: React.FC = () => {
                   mx: 'auto',
                 }}
               >
-                Continue your journey in mental wellness and growth
+                {translations.auth.login.subtitle}
               </Typography>
             </Box>
             {error && (
@@ -413,7 +415,7 @@ const LoginPage: React.FC = () => {
             }}>
               <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
               <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
-                or
+                {translations.auth.login.or}
               </Typography>
               <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
             </Box>
@@ -437,7 +439,7 @@ const LoginPage: React.FC = () => {
             {/* Sign Up Button */}
             <Box sx={{ textAlign: 'center', width: '100%' }}>
               <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                Don't have an account?
+                {translations.auth.login.noAccount}
               </Typography>
               <Button 
                 component={RouterLink} 

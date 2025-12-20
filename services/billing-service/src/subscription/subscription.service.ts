@@ -1,12 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
-import { CoachSubscription, SubscriptionStatus, BillingCycle } from '../entities/coach-subscription.entity';
+import { CoachSubscription, BillingCycle } from '../entities/coach-subscription.entity';
 import { SubscriptionInvoice } from '../entities/subscription-invoice.entity';
 import { TaxComplianceService } from '../tax-compliance/tax-compliance.service';
-import { InvoiceService } from '../invoice/invoice.service';
 import { PaymentProcessingService } from '../payment-processing/payment-processing.service';
 import Decimal from 'decimal.js';
 
@@ -40,7 +39,6 @@ export class SubscriptionService {
     @InjectRepository(SubscriptionInvoice)
     private invoiceRepository: Repository<SubscriptionInvoice>,
     private taxComplianceService: TaxComplianceService,
-    private invoiceService: InvoiceService,
     private paymentProcessingService: PaymentProcessingService,
   ) {}
 
@@ -228,9 +226,9 @@ export class SubscriptionService {
         // Update invoice as paid
         invoice.status = 'paid';
         invoice.paymentDate = new Date();
-        invoice.paymentProcessor = paymentResult.processor;
-        invoice.processorTransactionId = paymentResult.transactionId;
-        invoice.processorFeeNis = paymentResult.processingFee;
+        invoice.paymentProcessor = paymentResult.processor || '';
+        invoice.processorTransactionId = paymentResult.transactionId || '';
+        invoice.processorFeeNis = paymentResult.processingFee || 0;
         await this.invoiceRepository.save(invoice);
 
         // Update next billing date
@@ -335,12 +333,10 @@ export class SubscriptionService {
   async getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
     const [
       totalActive,
-      allSubscriptions,
       revenueData,
       planDistribution,
     ] = await Promise.all([
       this.subscriptionRepository.count({ where: { status: 'active' } }),
-      this.subscriptionRepository.find({ relations: ['plan'] }),
       this.calculateMonthlyRecurringRevenue(),
       this.getPlanDistribution(),
     ]);

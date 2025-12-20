@@ -3,11 +3,10 @@
  * Send emails, manage templates, and track delivery
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { google, gmail_v1 } from 'googleapis';
-import { GoogleAccount } from '../entities/google-account.entity';
+import { google } from 'googleapis';
 import { EmailLog } from '../entities/email-log.entity';
 import { GoogleOAuthService } from '../auth/google-oauth.service';
 import { EmailTemplatesService } from './email-templates.service';
@@ -102,11 +101,11 @@ export class GmailService {
         },
       });
 
-      const messageId = response.data.id;
-      const threadId = response.data.threadId;
+      const messageId = response.data.id ?? undefined;
+      const threadId = response.data.threadId ?? undefined;
 
       // Log email
-      const emailLog = await this.logEmail({
+      await this.logEmail({
         googleAccountId,
         appointmentId,
         recipientEmail: emailOptions.to,

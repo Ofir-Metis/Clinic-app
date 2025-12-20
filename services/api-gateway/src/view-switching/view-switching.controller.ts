@@ -1,5 +1,5 @@
 /**
- * ViewSwitchingController - API endpoints for therapist-client view switching
+ * ViewSwitchingController - API endpoints for coach-client view switching
  */
 
 import {
@@ -61,16 +61,16 @@ export class ViewSwitchingController {
     @Request() req: any,
   ): Promise<ViewSwitchingResponse> {
     try {
-      const therapistPayload = req.user;
+      const coachPayload = req.user;
       const { clientId } = body;
 
       if (!clientId) {
         throw new HttpException('Client ID is required', HttpStatus.BAD_REQUEST);
       }
 
-      // Verify therapist can access this client
-      const canAccess = await this.viewSwitchingService.canTherapistAccessClient(
-        therapistPayload.sub,
+      // Verify coach can access this client
+      const canAccess = await this.viewSwitchingService.canCoachAccessClient(
+        coachPayload.sub,
         clientId
       );
 
@@ -89,13 +89,13 @@ export class ViewSwitchingController {
 
       // Generate impersonation token
       const tokens = await this.viewSwitchingService.switchToClientView(
-        therapistPayload,
+        coachPayload,
         clientId,
         clientInfo.email
       );
 
       this.logger.log(
-        `🎭 Therapist ${therapistPayload.sub} switched to client view for ${clientId}`
+        `🎭 Coach ${coachPayload.sub} switched to client view for ${clientId}`
       );
 
       return {
@@ -106,7 +106,7 @@ export class ViewSwitchingController {
           email: clientInfo.email,
           role: 'client',
           isImpersonating: true,
-          originalUserId: therapistPayload.sub,
+          originalUserId: coachPayload.sub,
           viewingAsClientId: clientId,
         },
         message: `Switched to client view for ${clientInfo.name}`,
@@ -126,7 +126,7 @@ export class ViewSwitchingController {
   }
 
   /**
-   * Return to therapist view
+   * Return to coach view
    */
   @Post('exit-impersonation')
   @ViewSwitching({ 
@@ -148,13 +148,13 @@ export class ViewSwitchingController {
         req.headers.authorization.replace('Bearer ', '')
       );
 
-      // Get therapist information
-      const therapistInfo = await this.viewSwitchingService.getTherapistInfo(
+      // Get coach information
+      const coachInfo = await this.viewSwitchingService.getCoachInfo(
         currentPayload.originalUserId
       );
 
       this.logger.log(
-        `🎭 Therapist ${currentPayload.originalUserId} exited client view for ${currentPayload.viewingAsClientId}`
+        `🎭 Coach ${currentPayload.originalUserId} exited client view for ${currentPayload.viewingAsClientId}`
       );
 
       return {
@@ -162,11 +162,11 @@ export class ViewSwitchingController {
         tokens,
         user: {
           id: currentPayload.originalUserId,
-          email: therapistInfo.email,
+          email: coachInfo.email,
           role: 'coach',
           isImpersonating: false,
         },
-        message: 'Returned to therapist view',
+        message: 'Returned to coach view',
       };
     } catch (error) {
       this.logger.error('Failed to exit impersonation:', error);
@@ -203,7 +203,7 @@ export class ViewSwitchingController {
       },
       message: viewSwitching.isImpersonating 
         ? `Viewing as client ${viewSwitching.viewingAsClientId}`
-        : 'In normal therapist view',
+        : 'In normal coach view',
     };
   }
 
@@ -217,9 +217,9 @@ export class ViewSwitchingController {
   })
   async getAccessibleClients(@Request() req: any) {
     try {
-      const therapistPayload = req.user;
-      const clients = await this.viewSwitchingService.getTherapistClients(
-        therapistPayload.sub
+      const coachPayload = req.user;
+      const clients = await this.viewSwitchingService.getCoachClients(
+        coachPayload.sub
       );
 
       return {
@@ -244,7 +244,7 @@ export class ViewSwitchingController {
   }
 
   /**
-   * Get client info by ID (for therapists)
+   * Get client info by ID (for coaches)
    */
   @Get('client/:clientId')
   @ViewSwitching({ 
@@ -254,11 +254,11 @@ export class ViewSwitchingController {
   })
   async getClientInfo(@Param('clientId') clientId: string, @Request() req: any) {
     try {
-      const therapistPayload = req.user;
+      const coachPayload = req.user;
 
       // Verify access
-      const canAccess = await this.viewSwitchingService.canTherapistAccessClient(
-        therapistPayload.sub,
+      const canAccess = await this.viewSwitchingService.canCoachAccessClient(
+        coachPayload.sub,
         clientId
       );
 

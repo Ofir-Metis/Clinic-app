@@ -8,7 +8,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter, LoggingInterceptor, LoggingMiddleware, CentralizedLoggerService } from '@clinic/common';
+import { AllExceptionsFilter, LoggingInterceptor, CentralizedLoggerService } from '@clinic/common';
 
 async function bootstrap() {
   const logger = new Logger('Appointments-Service');
@@ -24,7 +24,7 @@ async function bootstrap() {
     try {
       loggerService = app.get(CentralizedLoggerService);
       logger.log('✅ CentralizedLoggerService initialized successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn('⚠️ CentralizedLoggerService not available, using fallback logging');
       logger.warn(`Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -86,7 +86,7 @@ async function bootstrap() {
     }
 
     // Health check endpoint
-    app.getHttpAdapter().get('/health', (req, res) => {
+    app.getHttpAdapter().get('/health', (_req, res) => {
       res.json({
         status: 'ok',
         service: 'appointments-service',
@@ -109,7 +109,7 @@ async function bootstrap() {
     logger.log(`🔧 Environment: ${configService.get<string>('NODE_ENV', 'development')}`);
     logger.log(`📅 Ready to manage appointments and schedules`);
     
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('💥 Failed to start Appointments Service:', error instanceof Error ? error.stack : String(error));
     throw error;
   }

@@ -127,7 +127,7 @@ export class DashboardService {
       name: 'Business Dashboard',
       description: 'Key business metrics and operational KPIs',
       refreshInterval: 300, // 5 minutes
-      accessRoles: ['admin', 'manager', 'therapist'],
+      accessRoles: ['admin', 'manager', 'coach'],
       alertThresholds: {
         clientRetentionRate: 75, // percentage
         dailyRevenue: 2000, // minimum daily revenue

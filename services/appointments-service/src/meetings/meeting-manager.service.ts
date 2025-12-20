@@ -128,7 +128,7 @@ export class MeetingManagerService {
         warnings
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to create meeting configuration: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -204,7 +204,7 @@ export class MeetingManagerService {
         warnings
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to change meeting type: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -259,7 +259,7 @@ export class MeetingManagerService {
         changes
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to update recording settings: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -432,7 +432,7 @@ export class MeetingManagerService {
     appointment: Appointment,
     updateRequest: MeetingUpdateRequest,
     changes: string[],
-    warnings: string[]
+    _warnings: string[]
   ): Promise<void> {
     appointment.meetingType = 'in-person';
     appointment.meetingConfig.type = 'in-person';
@@ -586,7 +586,7 @@ export class MeetingManagerService {
         meetingId: this.extractMeetingIdFromUrl(meetingUrl)
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to generate Google Meet link: ${error instanceof Error ? error.message : String(error)}`);
       return {
         success: false,
@@ -609,7 +609,7 @@ export class MeetingManagerService {
       );
       
       return result?.googleAccount || null;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to find coach Google account: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     }
@@ -657,7 +657,7 @@ export class MeetingManagerService {
       } else {
         changes.push(`Warning: Failed to update Google Calendar event - ${updateResult.error}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to update Google Calendar event: ${error instanceof Error ? error.message : String(error)}`);
       changes.push('Warning: Could not update Google Calendar event');
     }
@@ -695,7 +695,7 @@ export class MeetingManagerService {
       );
 
       this.logger.log(`Sent meeting type change notification for appointment ${appointment.id}`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to send meeting type change notification: ${error instanceof Error ? error.message : String(error)}`);
       // Don't throw error - notification failure shouldn't break the meeting type change
     }

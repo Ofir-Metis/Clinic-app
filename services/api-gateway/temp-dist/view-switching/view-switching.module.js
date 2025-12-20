@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ViewSwitchingModule - Module for therapist-client view switching functionality
+ * ViewSwitchingModule - Module for coach-client view switching functionality
  */
 var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
     function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }

@@ -100,7 +100,7 @@ export class SwaggerConfig {
       .addTag('Health', 'System health and monitoring')
       .addTag('Patients', 'Patient management and medical records')
       .addTag('Appointments', 'Appointment scheduling and management')
-      .addTag('Therapists', 'Coach/therapist profiles and discovery')
+      .addTag('Coachs', 'Coach/coach profiles and discovery')
       .addTag('Recordings', 'Session recordings and AI analysis')
       .addTag('Google Integration', 'Google Calendar and Gmail integration')
       .addTag('Onboarding', 'User onboarding and setup')
@@ -297,7 +297,7 @@ export class HealthcareExamples {
   static readonly AppointmentExample = {
     id: 'apt_987654321',
     patientId: 'pat_123456789',
-    therapistId: 'thr_456789123',
+    coachId: 'thr_456789123',
     scheduledAt: '2024-02-01T15:00:00Z',
     duration: 60,
     type: 'individual_therapy',
@@ -307,7 +307,7 @@ export class HealthcareExamples {
     createdAt: '2024-01-20T09:00:00Z'
   };
 
-  static readonly TherapistExample = {
+  static readonly CoachExample = {
     id: 'thr_456789123',
     firstName: 'Dr. Sarah',
     lastName: 'Johnson',

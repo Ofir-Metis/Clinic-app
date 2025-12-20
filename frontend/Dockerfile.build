@@ -2,7 +2,7 @@
 
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ vips-dev
 
 # Copy root package files
 COPY package.json yarn.lock ./
@@ -16,6 +16,7 @@ COPY frontend ./frontend
 # Install dependencies
 RUN yarn config set registry https://registry.yarnpkg.com
 RUN yarn config set network-timeout 600000 -g
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN yarn install --frozen-lockfile
 
 # Build shared library first
@@ -28,18 +29,28 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/libs/common/dist ./libs/common/dist
 
-# Copy frontend source
+# Copy frontend source and root package.json (needed for workspace commands)
 COPY frontend ./frontend
 COPY tsconfig.base.json ./
+COPY package.json ./
 
 # Set environment
 ENV NODE_ENV=production
 ENV REACT_APP_API_URL=http://localhost:4000
 ENV REACT_APP_WS_URL=ws://localhost:4000
+ENV VITE_GOOGLE_CLIENT_ID=239782911073-argmil9uvtqcbf34f0dndvk8lpu959kv.apps.googleusercontent.com
 
-# Build frontend
-WORKDIR /app/frontend
-RUN npm run build
+# Copy node_modules into frontend directory for Vite to resolve properly
+# This is necessary for Docker monorepo builds where Vite runs from the workspace subdirectory
+RUN cp -r node_modules frontend/
+
+# Debug: Verify @mui packages exist in copied node_modules
+RUN ls -la frontend/node_modules/@mui/ | head -20 && \
+    echo "Checking for specific packages:" && \
+    ls -d frontend/node_modules/@mui/x-date-pickers* || echo "PACKAGES NOT FOUND"
+
+# Build frontend from workspace root (proper monorepo pattern)
+RUN yarn workspace frontend build
 
 # Production stage with Nginx
 FROM nginx:alpine
@@ -51,7 +62,7 @@ RUN rm -rf ./*
 # Copy built frontend files
 COPY --from=build /app/frontend/dist .
 
-# Create nginx configuration for SPA routing
+# Create nginx configuration for SPA routing (no API proxy - frontend calls API directly)
 RUN echo 'server { \
     listen 80; \
     server_name localhost; \
@@ -59,16 +70,6 @@ RUN echo 'server { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
         try_files $uri $uri/ /index.html; \
-    } \
-    location /api { \
-        proxy_pass http://api-gateway:4000; \
-        proxy_http_version 1.1; \
-        proxy_set_header Upgrade $http_upgrade; \
-        proxy_set_header Connection "upgrade"; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
     } \
     error_page 500 502 503 504 /50x.html; \
     location = /50x.html { \

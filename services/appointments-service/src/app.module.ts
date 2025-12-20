@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 // import { JwtModule } from '@nestjs/jwt'; // Using MockJwtService instead
 import { HealthController } from './health/health.controller';
 import { AppointmentsModule } from './appointments/appointments.module';
-import { PatientsModule } from './patients/patients.module';
+import { ClientsModule } from './clients/clients.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
-import { PatientAppointmentsModule } from './patient-appointments/patient-appointments.module';
+import { ClientAppointmentsModule } from './client-appointments/client-appointments.module';
 import { CommonModule } from '@clinic/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { MockJwtService } from './mock-jwt.service';
@@ -22,9 +22,9 @@ import { MockJwtService } from './mock-jwt.service';
     // }),
     
     AppointmentsModule,
-    PatientsModule,
+    ClientsModule,
     SchedulingModule,
-    PatientAppointmentsModule,
+    ClientAppointmentsModule,
   ],
   controllers: [HealthController],
   providers: [MockJwtService, JwtAuthGuard],

@@ -99,7 +99,7 @@ let AppModule = (() => {
                     persistedQueries: false, // Fix Apollo Server security vulnerability
                 }),
                 dashboard_module_1.DashboardModule,
-                // TherapistsModule, // Keep disabled - may have dependencies
+                // CoachesModule, // Keep disabled - may have dependencies
                 settings_module_1.SettingsModule,
                 // WebSocketModule, // Keep disabled - complex dependencies
                 // RecordingsModule, // Keep disabled - storage dependencies
@@ -126,7 +126,7 @@ let AppModule = (() => {
             providers: [
                 dashboard_service_1.DashboardService,
                 settings_service_1.SettingsService,
-                // TherapistsService, // Keep disabled - may have circular dependencies
+                // CoachesService, // Keep disabled - may have circular dependencies
                 app_resolver_1.AppResolver,
                 {
                     provide: core_1.APP_GUARD,

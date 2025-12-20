@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionPlan } from '../entities/subscription-plan.entity';
 import { CoachSubscription } from '../entities/coach-subscription.entity';
 import { SubscriptionInvoice } from '../entities/subscription-invoice.entity';
-import { ClientTherapistPayment } from '../entities/client-therapist-payment.entity';
-import { TherapistPricing } from '../entities/therapist-pricing.entity';
+import { ClientCoachPayment } from '../entities/client-coach-payment.entity';
+import { CoachPricing } from '../entities/coach-pricing.entity';
 import { TaxComplianceRecord } from '../entities/tax-compliance-record.entity';
 import { PaymentTransaction } from '../entities/payment-transaction.entity';
 
@@ -22,8 +22,8 @@ import { PaymentTransaction } from '../entities/payment-transaction.entity';
       SubscriptionPlan,
       CoachSubscription,
       SubscriptionInvoice,
-      ClientTherapistPayment,
-      TherapistPricing,
+      ClientCoachPayment,
+      CoachPricing,
       TaxComplianceRecord,
       PaymentTransaction,
     ]),

@@ -9,12 +9,10 @@ import * as crypto from 'crypto';
 @Injectable()
 export class TokenManagerService {
   private readonly logger = new Logger(TokenManagerService.name);
-  private readonly algorithm = 'aes-256-cbc';
   private readonly keyLength = 32; // 256 bits
   private readonly ivLength = 16; // 128 bits
-  private readonly tagLength = 16; // 128 bits
 
-  private encryptionKey: Buffer;
+  private encryptionKey!: Buffer;
 
   constructor() {
     this.initializeEncryptionKey();
@@ -72,13 +70,12 @@ export class TokenManagerService {
    */
   async decryptToken(encryptedData: string): Promise<string> {
     try {
-      // Extract components (simplified without GCM tag)
-      const ivHex = encryptedData.slice(0, this.ivLength * 2);
+      // Extract encrypted data (skip IV which createDecipher doesn't use)
       const encryptedHex = encryptedData.slice(this.ivLength * 2);
-      
-      // Convert from hex
-      const iv = Buffer.from(ivHex, 'hex');
-      
+
+      // createDecipher is deprecated but kept for backward compatibility
+      // It derives the IV from the key, so we don't need the stored IV
+
       // Create decipher
       const decipher = crypto.createDecipher('aes-256-cbc', this.encryptionKey);
       
@@ -184,13 +181,13 @@ export class TokenManagerService {
   /**
    * Rotate encryption key (for security best practices)
    */
-  async rotateEncryptionKey(newKeyHex: string): Promise<void> {
+  async rotateEncryptionKey(_newKeyHex: string): Promise<void> {
     // This would be used in a key rotation scenario
     // Implementation would need to:
     // 1. Decrypt all existing tokens with old key
     // 2. Re-encrypt with new key
     // 3. Update key
-    
+
     this.logger.warn('Key rotation not implemented - requires careful migration of existing tokens');
     throw new Error('Key rotation requires implementation of token migration');
   }

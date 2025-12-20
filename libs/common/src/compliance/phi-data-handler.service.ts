@@ -1,7 +1,6 @@
 import { Injectable, Logger, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CentralizedLoggerService, HealthcareLogContext } from '../logging/centralized-logger.service';
-import { HIPAAComplianceService } from './hipaa-compliance.service';
 import * as crypto from 'crypto';
 
 export interface PHIDataRequest {
@@ -79,8 +78,7 @@ export class PHIDataHandlerService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly centralizedLogger: CentralizedLoggerService,
-    private readonly hipaaCompliance: HIPAAComplianceService
+    private readonly centralizedLogger: CentralizedLoggerService
   ) {
     this.encryptionKey = this.configService.get<string>('PHI_ENCRYPTION_KEY', '');
     if (!this.encryptionKey || this.encryptionKey.length < 32) {
@@ -89,7 +87,7 @@ export class PHIDataHandlerService {
   }
 
   /**
-   * Handle PHI data access request with full HIPAA compliance
+   * Handle PHI data access request with full compliance checks
    */
   async handlePHIDataRequest<T>(
     request: PHIDataRequest,
@@ -103,27 +101,21 @@ export class PHIDataHandlerService {
       const accessControl = await this.validateAccess(request);
       if (!accessControl) {
         await this.logPHIAccess(auditId, request, false, 'Access denied - insufficient permissions');
-        throw new ForbiddenException('Access to PHI data denied');
+        throw new ForbiddenException('Access to sensitive data denied');
       }
 
-      // Step 2: Check HIPAA compliance
-      const complianceResult = await this.hipaaCompliance.validatePHIAccess(
-        request.dataType,
-        request.userId,
-        request.context
-      );
-
-      if (!complianceResult.compliant) {
-        await this.logPHIAccess(auditId, request, false, `HIPAA violation: ${complianceResult.violations.join(', ')}`);
-        throw new ForbiddenException(`HIPAA compliance violation: ${complianceResult.violations.join(', ')}`);
+      // Step 2: Verify MFA if required
+      if (!accessControl.mfaVerified && this.requiresMFA(request.dataType, request.operation)) {
+        await this.logPHIAccess(auditId, request, false, 'MFA verification required');
+        throw new ForbiddenException('Multi-factor authentication required for this operation');
       }
 
       // Step 3: Verify consent (if required)
       if (request.patientId && this.requiresConsent(request.dataType, request.operation)) {
         const consentValid = await this.validateConsent(request.patientId, request.dataType, request.purpose);
         if (!consentValid) {
-          await this.logPHIAccess(auditId, request, false, 'Patient consent not found or expired');
-          throw new ForbiddenException('Patient consent required for this operation');
+          await this.logPHIAccess(auditId, request, false, 'Client consent not found or expired');
+          throw new ForbiddenException('Client consent required for this operation');
         }
       }
 
@@ -148,19 +140,14 @@ export class PHIDataHandlerService {
     } catch (error) {
       // Log failed access attempt
       await this.logPHIAccess(auditId, request, false, error.message);
-      
-      // Report HIPAA violation if applicable
-      if (error.message.includes('HIPAA')) {
-        await this.hipaaCompliance.reportViolation(
-          'TECH-001',
-          `PHI access violation: ${error.message}`,
-          'major',
-          request.context
-        );
-      }
-
       throw error;
     }
+  }
+
+  private requiresMFA(dataType: string, operation: string): boolean {
+    const sensitiveTypes = ['client_demographics', 'session_notes', 'financial_information'];
+    const sensitiveOperations = ['export', 'delete'];
+    return sensitiveTypes.includes(dataType) || sensitiveOperations.includes(operation);
   }
 
   /**
@@ -401,13 +388,13 @@ export class PHIDataHandlerService {
     // For now, return a mock access control object
     return {
       userId: request.userId,
-      roles: ['healthcare_provider'], // Would be fetched from user service
+      roles: ['coach'], // Would be fetched from user service
       permissions: ['read_phi', 'write_phi'],
       mfaVerified: request.context.mfaVerified || false,
       sessionExpiry: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
       accessRestrictions: {
         allowedOperations: ['read', 'write', 'update'],
-        allowedDataTypes: ['patient_demographics', 'medical_records']
+        allowedDataTypes: ['client_demographics', 'session_notes']
       }
     };
   }

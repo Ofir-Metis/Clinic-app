@@ -40,14 +40,14 @@ export class DashboardController {
       Retrieves a list of upcoming appointments for the authenticated user.
       
       **Features:**
-      - Role-based filtering (clients see their appointments, therapists see their schedule)
+      - Role-based filtering (clients see their appointments, coaches see their schedule)
       - Customizable time range and limit
       - Real-time status updates
       - HIPAA-compliant data filtering
       
       **Use Cases:**
       - Client dashboard showing next appointments
-      - Therapist schedule overview
+      - Coach schedule overview
       - Admin appointment monitoring
     `
   })

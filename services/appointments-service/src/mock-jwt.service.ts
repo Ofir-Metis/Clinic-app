@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
  */
 @Injectable()
 export class MockJwtService {
-  async verifyAsync(token: string, options?: any): Promise<any> {
+  async verifyAsync(_token: string, _options?: any): Promise<any> {
     // Mock implementation - always return a valid user for testing
     return {
       sub: '1',
@@ -15,7 +15,7 @@ export class MockJwtService {
     };
   }
 
-  sign(payload: any, options?: any): string {
+  sign(_payload: any, _options?: any): string {
     // Mock implementation - return a simple token
     return 'mock-jwt-token';
   }

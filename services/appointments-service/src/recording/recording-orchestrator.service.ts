@@ -117,7 +117,7 @@ export class RecordingOrchestratorService {
 
       return startResult;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to start recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -126,7 +126,7 @@ export class RecordingOrchestratorService {
   /**
    * Stop recording for an appointment
    */
-  async stopRecording(appointmentId: string, userId: string): Promise<RecordingControlResult> {
+  async stopRecording(appointmentId: string, _userId?: string) {
     try {
       const appointment = await this.appointmentRepository.findOne({
         where: { id: appointmentId }
@@ -175,7 +175,7 @@ export class RecordingOrchestratorService {
 
       return stopResult;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to stop recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -184,7 +184,7 @@ export class RecordingOrchestratorService {
   /**
    * Pause recording
    */
-  async pauseRecording(appointmentId: string, userId: string): Promise<RecordingControlResult> {
+  async pauseRecording(appointmentId: string, _userId: string): Promise<RecordingControlResult> {
     try {
       const session = this.activeSessions.get(appointmentId);
       if (!session) {
@@ -205,11 +205,11 @@ export class RecordingOrchestratorService {
 
       if (pauseResult.success) {
         session.status = 'paused';
-        
+
         const appointment = await this.appointmentRepository.findOne({
           where: { id: appointmentId }
         });
-        
+
         if (appointment) {
           appointment.recordingStatus = 'paused';
           await this.appointmentRepository.save(appointment);
@@ -220,7 +220,7 @@ export class RecordingOrchestratorService {
 
       return pauseResult;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to pause recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -229,7 +229,7 @@ export class RecordingOrchestratorService {
   /**
    * Resume recording
    */
-  async resumeRecording(appointmentId: string, userId: string): Promise<RecordingControlResult> {
+  async resumeRecording(appointmentId: string, _userId: string): Promise<RecordingControlResult> {
     try {
       const session = this.activeSessions.get(appointmentId);
       if (!session) {
@@ -254,7 +254,7 @@ export class RecordingOrchestratorService {
         const appointment = await this.appointmentRepository.findOne({
           where: { id: appointmentId }
         });
-        
+
         if (appointment) {
           appointment.recordingStatus = 'recording';
           await this.appointmentRepository.save(appointment);
@@ -265,7 +265,7 @@ export class RecordingOrchestratorService {
 
       return resumeResult;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to resume recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -338,7 +338,7 @@ export class RecordingOrchestratorService {
   private async createRecordingSession(
     appointment: Appointment,
     config: RecordingConfiguration,
-    userId: string
+    _userId: string
   ): Promise<RecordingSession> {
     const sessionId = `rec_${appointment.id}_${Date.now()}`;
     
@@ -393,7 +393,7 @@ export class RecordingOrchestratorService {
         default:
           throw new Error(`Unsupported recording method: ${session.metadata.recordingMethod}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       session.status = 'failed';
       throw error;
     }
@@ -452,7 +452,7 @@ export class RecordingOrchestratorService {
 
   private async terminateRecording(
     session: RecordingSession,
-    appointment: Appointment
+    _appointment: Appointment
   ): Promise<RecordingControlResult> {
     try {
       switch (session.metadata.recordingMethod) {
@@ -468,7 +468,7 @@ export class RecordingOrchestratorService {
         default:
           throw new Error(`Unsupported recording method: ${session.metadata.recordingMethod}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       session.status = 'failed';
       throw error;
     }
@@ -585,7 +585,7 @@ export class RecordingOrchestratorService {
 
       this.logger.log(`Completed processing recording files for session ${session.id}`);
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to process recording files: ${error instanceof Error ? error.message : String(error)}`);
       
       session.status = 'failed';

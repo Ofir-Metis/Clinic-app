@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TherapistPricing } from '../entities/therapist-pricing.entity';
+import { CoachPricing } from '../entities/coach-pricing.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TherapistPricing])],
+  imports: [TypeOrmModule.forFeature([CoachPricing])],
   providers: [],
   exports: [],
 })

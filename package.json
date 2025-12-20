@@ -1,11 +1,19 @@
 {
   "name": "clinic-app",
   "private": true,
-  "workspaces": [
-    "services/*",
-    "frontend",
-    "libs/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "services/*",
+      "frontend",
+      "libs/*"
+    ],
+    "nohoist": [
+      "**/@mui/x-date-pickers",
+      "**/@mui/x-date-pickers/**",
+      "**/@mui/x-date-pickers-pro",
+      "**/@mui/x-date-pickers-pro/**"
+    ]
+  },
   "resolutions": {
     "tough-cookie": "^5.0.0",
     "@types/tough-cookie": "^4.0.5",
@@ -13,12 +21,16 @@
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "yarn": ">=1.22.0"
   },
   "scripts": {
+    "build": "yarn workspace @clinic/common build",
+    "build:all": "yarn workspaces run build",
+    "clean": "yarn workspaces run clean && rm -rf node_modules/.cache",
     "lint": "eslint -c eslint.config.js .",
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "format": "prettier --write .",
     "docker:build": "docker compose build",
     "prepare": "husky install"
@@ -29,19 +41,24 @@
     "@faker-js/faker": "^10.0.0",
     "@playwright/test": "^1.54.1",
     "@tsconfig/node18": "^1.0.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.10",
     "@types/react-big-calendar": "^1.16.2",
     "@types/zxcvbn": "^4.4.5",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
     "axios": "^1.12.2",
+    "csstype": "^3.1.3",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^10.1.5",
+    "expect": "^30.0.4",
     "husky": "^8.0.3",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.2",
     "node-fetch": "^3.3.2",
     "prettier": "^3.0.0",
+    "pretty-format": "^30.0.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
@@ -49,6 +66,9 @@
     "@apollo/gateway": "^2.11.2",
     "@babel/parser": "^7.28.0",
     "@babel/types": "^7.28.0",
+    "@mui/system": "^5.15.14",
+    "@mui/x-date-pickers": "^8.9.0",
+    "@mui/x-date-pickers-pro": "^8.9.0",
     "@nestjs/axios": "^3.0.0",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.2",
@@ -57,16 +77,12 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
     "@nestjs/typeorm": "^10.0.0",
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.0.10",
-    "bcrypt": "^6.0.0",
+    "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "cors": "^2.8.5",
-    "csstype": "^3.1.3",
     "date-fns": "^4",
-    "expect": "^30.0.4",
-    "express": "^5.1.0",
+    "express": "^4.19.2",
     "form-data": "^4.0.3",
     "http-proxy-middleware": "^3.0.5",
     "joi": "^17.13.3",
@@ -74,7 +90,6 @@
     "nats": "^2.15.1",
     "parse5": "^8.0.0",
     "pg": "^8.11.0",
-    "pretty-format": "^30.0.2",
     "ts-morph": "17.0.1",
     "undici-types": "^7.11.0"
   }

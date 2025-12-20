@@ -5,10 +5,7 @@ import {
   Appointment, 
   MeetingType, 
   AppointmentStatus, 
-  RecordingSettings 
 } from './appointment.entity';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
 import { GetHistoryDto } from './dto/get-history.dto';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
@@ -110,7 +107,7 @@ export class AppointmentsService {
       this.logger.log(`Created appointment ${saved.id}`);
       return saved;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to create appointment: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -159,7 +156,7 @@ export class AppointmentsService {
 
       return { appointments: filteredAppointments, total };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to find appointments: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -171,7 +168,7 @@ export class AppointmentsService {
   async findById(id: string): Promise<Appointment | null> {
     try {
       return await this.repo.findOne({ where: { id } });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to find appointment ${id}: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -216,7 +213,7 @@ export class AppointmentsService {
       this.logger.log(`Updated appointment ${id}`);
       return updated;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to update appointment: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -242,7 +239,7 @@ export class AppointmentsService {
         take: limit
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to get upcoming appointments: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -277,7 +274,7 @@ export class AppointmentsService {
         totalPages: Math.ceil(total / limit)
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to get appointment history: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -305,7 +302,7 @@ export class AppointmentsService {
         order: { startTime: 'ASC' }
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to get appointments by date range: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -352,7 +349,7 @@ export class AppointmentsService {
 
       return await this.repo.find({ where });
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to check conflicts: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -399,7 +396,7 @@ export class AppointmentsService {
 
       return { needReminders, needConfirmation, overdue };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to get appointments requiring action: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }

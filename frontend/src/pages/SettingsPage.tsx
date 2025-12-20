@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Tabs,
   Tab,
@@ -22,7 +22,9 @@ import {
   Fade,
   CircularProgress,
   alpha,
-  useTheme
+  useTheme,
+  InputAdornment,
+  Slide
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -35,7 +37,13 @@ import {
   Security as PrivacyIcon,
   Check as CheckIcon,
   Translate as TranslateIcon,
-  AutoAwesome as SparkleIcon
+  AutoAwesome as SparkleIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationIcon,
+  Work as WorkIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon
 } from '@mui/icons-material';
 import { useLanguage, useTranslation } from '../contexts/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../i18n/index';
@@ -47,13 +55,96 @@ interface Setting {
   category: string;
 }
 
+// Form data interface
+interface ProfileFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  professionalTitle: string;
+  specialization: string;
+  location: string;
+  bio: string;
+}
+
+// Form errors interface
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  [key: string]: string | undefined;
+}
+
 const SettingsPage: React.FC = () => {
   const theme = useTheme();
-  const { language, changeLanguage, isChangingLanguage, currentLanguageInfo, t } = useLanguage();
+  const { translations: t, language, isRTL, i18n } = useTranslation();
+  const { currentLanguageInfo, isChangingLanguage } = useLanguage();
+  const changeLanguage = i18n.changeLanguage;
   const [tab, setTab] = useState(0);
   const [snack, setSnack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Form state management
+  const [formData, setFormData] = useState<ProfileFormData>({
+    fullName: 'Dr. Sarah Johnson',
+    email: 'sarah.johnson@coaching.com',
+    phone: '+1 (555) 123-4567',
+    professionalTitle: 'Certified Life & Wellness Coach',
+    specialization: 'Personal Growth & Mindfulness',
+    location: 'San Francisco, CA',
+    bio: "I'm passionate about helping individuals unlock their potential and create meaningful, fulfilling lives. With over 5 years of experience in personal development coaching, I specialize in mindfulness-based approaches to goal achievement and life transformation."
+  });
+
+  const [initialFormData, setInitialFormData] = useState<ProfileFormData>(formData);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Track form changes
+  useEffect(() => {
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    setIsDirty(hasChanges);
+  }, [formData, initialFormData]);
+
+  // Form validation
+  const validateField = useCallback((name: string, value: string): string | undefined => {
+    switch (name) {
+      case 'fullName':
+        if (!value.trim()) return 'Name is required';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters';
+        break;
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return 'Invalid email format';
+        break;
+      case 'phone':
+        if (value && value.trim()) {
+          const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+          if (!phoneRegex.test(value)) return 'Invalid phone format';
+        }
+        break;
+    }
+    return undefined;
+  }, []);
+
+  // Handle field change
+  const handleFieldChange = useCallback((field: keyof ProfileFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Validate field
+    const error = validateField(field, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+  }, [validateField]);
+
+  // Handle discard changes
+  const handleDiscardChanges = useCallback(() => {
+    setFormData(initialFormData);
+    setFormErrors({});
+    setIsDirty(false);
+  }, [initialFormData]);
 
   const categories = [
     { 
@@ -108,10 +199,27 @@ const SettingsPage: React.FC = () => {
   };
 
   const handleSaveSettings = async () => {
+    //  Validate all fields
+    const errors: FormErrors = {};
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key as keyof ProfileFormData]);
+      if (error) {
+        errors[key] = error;
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setError('Please fix the errors before saving');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
+      setInitialFormData(formData); // Update initial data to current
+      setIsDirty(false);
       setSnack(t.status.saved);
     } catch (error) {
       setError(t.errors.general);
@@ -121,10 +229,11 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <WellnessLayout
-      title={t.settings.title}
-      showFab={false}
-    >
+    <>
+      <WellnessLayout
+        title={t.settings.title}
+        showFab={false}
+      >
       {/* Header Section */}
       <Box sx={{ 
         mb: 4, 
@@ -158,14 +267,15 @@ const SettingsPage: React.FC = () => {
         />
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 3 }}>
         {/* Settings Navigation */}
-        <Card sx={{ 
-          width: { xs: '100%', md: 320 },
-          height: 'fit-content',
-          position: { md: 'sticky' },
-          top: { md: 100 },
-          background: alpha(theme.palette.background.paper, 0.85),
+        <Card sx={{
+          width: { xs: '100%', lg: 360 },
+          maxHeight: { lg: 'calc(100vh - 200px)' },
+          overflowY: 'auto',
+          position: { lg: 'sticky' },
+          top: { lg: 100 },
+          background: alpha(theme.palette.background.paper, 0.9),
           backdropFilter: 'blur(20px)',
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           borderRadius: 3,
@@ -173,61 +283,63 @@ const SettingsPage: React.FC = () => {
         }}>
           <CardContent sx={{ p: 0 }}>
             <Tabs
-              orientation={{ xs: 'horizontal', md: 'vertical' }}
+              orientation={{ xs: 'horizontal', lg: 'vertical' }}
               value={tab}
               onChange={(_, v) => setTab(v)}
               variant="scrollable"
               scrollButtons="auto"
               sx={{
                 '& .MuiTab-root': {
-                  minHeight: { xs: 88, sm: 80 }, // Enhanced mobile touch targets
+                  minHeight: { xs: 72, sm: 68, lg: 'auto' },
                   justifyContent: 'flex-start',
                   alignItems: 'flex-start',
                   textAlign: 'left',
-                  px: { xs: 2, sm: 3 }, // Better mobile padding
-                  py: { xs: 2.5, sm: 2 }, // More vertical space on mobile
+                  px: { xs: 2, sm: 2.5, lg: 3 },
+                  py: { xs: 2, sm: 2, lg: 2.5 },
                   borderRadius: 2,
-                  margin: 1,
+                  margin: { xs: 0.5, lg: 1 },
                   transition: 'all 0.3s ease',
                   '&.Mui-selected': {
-                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
-                    borderLeft: { md: `4px solid ${theme.palette.primary.main}` },
-                    borderBottom: { xs: `4px solid ${theme.palette.primary.main}`, md: 'none' },
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.secondary.main, 0.15)} 100%)`,
+                    borderLeft: { lg: `4px solid ${theme.palette.primary.main}` },
+                    borderBottom: { xs: `4px solid ${theme.palette.primary.main}`, lg: 'none' },
                     '& .MuiAvatar-root': {
                       background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                       transform: 'scale(1.1)'
                     }
                   },
                   '&:hover': {
-                    background: alpha(theme.palette.primary.light, 0.05),
-                    transform: 'translateY(-1px)'
+                    background: alpha(theme.palette.primary.light, 0.08),
+                    transform: { lg: 'translateX(4px)' }
                   }
                 },
               }}
             >
               {categories.map((category, index) => (
-                <Tab 
-                  key={category.key} 
+                <Tab
+                  key={category.key}
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, width: '100%', textAlign: 'left' }}>
-                      <Avatar sx={{ 
-                        width: 40, 
-                        height: 40, 
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1.5, lg: 2 }, width: '100%', textAlign: 'left' }}>
+                      <Avatar sx={{
+                        width: { xs: 36, lg: 40 },
+                        height: { xs: 36, lg: 40 },
                         bgcolor: tab === index ? 'primary.main' : alpha(theme.palette.grey[400], 0.3),
                         color: tab === index ? 'white' : 'grey.600',
-                        transition: 'all 0.3s ease'
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0
                       }}>
                         {category.icon}
                       </Avatar>
-                      <Box sx={{ flex: 1, display: 'block' }}>
+                      <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                         <Typography
                           variant="subtitle1"
                           sx={{
                             fontWeight: tab === index ? 600 : 500,
-                            mb: { xs: 0, sm: 0.5 }, // Reduce margin on mobile
+                            mb: 0.5,
                             color: tab === index ? 'primary.main' : 'text.primary',
-                            fontSize: { xs: '0.875rem', sm: '1rem' }, // Mobile-optimized sizing
-                            lineHeight: { xs: 1.3, sm: 1.5 }
+                            fontSize: { xs: '0.875rem', sm: '0.95rem', lg: '1rem' },
+                            lineHeight: 1.4,
+                            wordBreak: 'break-word'
                           }}
                         >
                           {category.title}
@@ -236,12 +348,11 @@ const SettingsPage: React.FC = () => {
                           variant="caption"
                           sx={{
                             color: 'text.secondary',
-                            display: { xs: 'none', sm: '-webkit-box' }, // Hide descriptions on mobile for cleaner UI
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            lineHeight: 1.2
+                            display: { xs: 'none', sm: 'block' },
+                            fontSize: { sm: '0.75rem', lg: '0.8rem' },
+                            lineHeight: 1.3,
+                            wordBreak: 'break-word',
+                            whiteSpace: 'normal'
                           }}
                         >
                           {category.description}
@@ -256,29 +367,30 @@ const SettingsPage: React.FC = () => {
         </Card>
 
         {/* Settings Content */}
-        <Card sx={{ 
+        <Card sx={{
           flex: 1,
-          background: alpha(theme.palette.background.paper, 0.85),
+          minWidth: 0,
+          background: alpha(theme.palette.background.paper, 0.9),
           backdropFilter: 'blur(20px)',
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           borderRadius: 3,
           boxShadow: '0 12px 40px rgba(46, 125, 107, 0.08)'
         }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-              <Avatar sx={{ 
-                mr: 2, 
+          <CardContent sx={{ p: { xs: 2, sm: 3, lg: 4 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, lg: 4 }, gap: 2 }}>
+              <Avatar sx={{
                 bgcolor: 'primary.main',
-                width: 48,
-                height: 48
+                width: { xs: 44, lg: 48 },
+                height: { xs: 44, lg: 48 },
+                flexShrink: 0
               }}>
                 {categories[tab]?.icon}
               </Avatar>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: '1.5rem', sm: '1.75rem', lg: '2rem' } }}>
                   {categories[tab]?.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', lg: '1rem' } }}>
                   {categories[tab]?.description}
                 </Typography>
               </Box>
@@ -566,35 +678,77 @@ const SettingsPage: React.FC = () => {
 
                 {/* Profile Tab */}
                 {tab === 0 && (
-                  <Stack spacing={4}>
+                  <Stack spacing={6}>
+                    {/* Personal Information Section */}
                     <Box>
-                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PersonIcon color="primary" />
-                        Profile Information
-                      </Typography>
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PersonIcon color="primary" />
+                          {t.settings.profile.information}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Your basic contact information and professional details
+                        </Typography>
+                      </Box>
 
-                      <Grid container spacing={{ xs: 3, sm: 4 }}>
-                        <Grid item xs={12} sm={6} md={6}>
-                          <Stack spacing={3}>
+                      <Stack spacing={3}>
+                        {/* Full Name - Single column (most important) */}
+                        <TextField
+                          fullWidth
+                          required
+                          label={t.settings.profile.fullName}
+                          placeholder={t.placeholders.name}
+                          variant="outlined"
+                          value={formData.fullName}
+                          onChange={(e) => handleFieldChange('fullName', e.target.value)}
+                          error={Boolean(formErrors.fullName)}
+                          helperText={formErrors.fullName || 'Your full professional name as it appears on credentials'}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PersonIcon color="action" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: !formErrors.fullName && formData.fullName && (
+                              <InputAdornment position="end">
+                                <CheckCircleIcon color="success" fontSize="small" />
+                              </InputAdornment>
+                            )
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              background: alpha(theme.palette.background.paper, 0.5)
+                            }
+                          }}
+                        />
+
+                        {/* Email and Phone - Paired (related contact info) */}
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               fullWidth
-                              label="Full Name"
-                              placeholder={t.placeholders.name}
-                              variant="outlined"
-                              defaultValue="Dr. Sarah Johnson"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                  background: alpha(theme.palette.background.paper, 0.5)
-                                }
-                              }}
-                            />
-                            <TextField
-                              fullWidth
-                              label="Email Address"
+                              required
+                              type="email"
+                              label={t.settings.profile.email}
                               placeholder={t.placeholders.email}
                               variant="outlined"
-                              defaultValue="sarah.johnson@coaching.com"
+                              value={formData.email}
+                              onChange={(e) => handleFieldChange('email', e.target.value)}
+                              error={Boolean(formErrors.email)}
+                              helperText={formErrors.email || 'Used for login and important notifications'}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <EmailIcon color="action" />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: !formErrors.email && formData.email && (
+                                  <InputAdornment position="end">
+                                    <CheckCircleIcon color="success" fontSize="small" />
+                                  </InputAdornment>
+                                )
+                              }}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -602,12 +756,24 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               fullWidth
-                              label="Phone Number"
+                              label={t.settings.profile.phone}
                               placeholder="+1 (555) 123-4567"
                               variant="outlined"
-                              defaultValue="+1 (555) 123-4567"
+                              value={formData.phone}
+                              onChange={(e) => handleFieldChange('phone', e.target.value)}
+                              error={Boolean(formErrors.phone)}
+                              helperText={formErrors.phone || 'For client contact and appointment reminders'}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PhoneIcon color="action" />
+                                  </InputAdornment>
+                                )
+                              }}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -615,17 +781,37 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             />
-                          </Stack>
+                          </Grid>
                         </Grid>
+                      </Stack>
+                    </Box>
 
-                        <Grid item xs={12} sm={6} md={6}>
-                          <Stack spacing={3}>
+                    <Divider />
+
+                    {/* Professional Information Section */}
+                    <Box>
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <WorkIcon color="primary" />
+                          Professional Details
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Information about your coaching practice and expertise
+                        </Typography>
+                      </Box>
+
+                      <Stack spacing={3}>
+                        {/* Professional Title and Specialization - Paired (related professional info) */}
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               fullWidth
-                              label="Professional Title"
+                              label={t.settings.profile.professionalTitle}
                               placeholder="e.g., Life Coach, Personal Development Expert"
                               variant="outlined"
-                              defaultValue="Certified Life & Wellness Coach"
+                              value={formData.professionalTitle}
+                              onChange={(e) => handleFieldChange('professionalTitle', e.target.value)}
+                              helperText="Your professional title or certification"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -633,12 +819,16 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               fullWidth
-                              label="Specialization"
+                              label={t.settings.profile.specialization}
                               placeholder="e.g., Career Coaching, Mindfulness, Goal Achievement"
                               variant="outlined"
-                              defaultValue="Personal Growth & Mindfulness"
+                              value={formData.specialization}
+                              onChange={(e) => handleFieldChange('specialization', e.target.value)}
+                              helperText="Your areas of coaching expertise"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -646,38 +836,58 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             />
-                            <TextField
-                              fullWidth
-                              label="Location"
-                              placeholder="City, Country"
-                              variant="outlined"
-                              defaultValue="San Francisco, CA"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                  background: alpha(theme.palette.background.paper, 0.5)
-                                }
-                              }}
-                            />
-                          </Stack>
+                          </Grid>
                         </Grid>
-                      </Grid>
+
+                        {/* Location - Single column */}
+                        <TextField
+                          fullWidth
+                          label={t.settings.profile.location}
+                          placeholder="City, Country"
+                          variant="outlined"
+                          value={formData.location}
+                          onChange={(e) => handleFieldChange('location', e.target.value)}
+                          helperText="Your practice location (city and country)"
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <LocationIcon color="action" />
+                              </InputAdornment>
+                            )
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              background: alpha(theme.palette.background.paper, 0.5)
+                            }
+                          }}
+                        />
+                      </Stack>
                     </Box>
-                    
+
                     <Divider />
-                    
+
+                    {/* Bio Section */}
                     <Box>
-                      <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                        Bio & Description
-                      </Typography>
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+                          {t.settings.profile.bioSection}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Tell clients about your approach and experience
+                        </Typography>
+                      </Box>
                       <TextField
                         fullWidth
                         multiline
                         rows={4}
-                        label="Professional Bio"
-                        placeholder="Share your coaching philosophy and approach..."
+                        label={t.settings.profile.professionalBio}
+                        placeholder={t.settings.profile.bioPlaceholder}
                         variant="outlined"
-                        defaultValue="I'm passionate about helping individuals unlock their potential and create meaningful, fulfilling lives. With over 5 years of experience in personal development coaching, I specialize in mindfulness-based approaches to goal achievement and life transformation."
+                        value={formData.bio}
+                        onChange={(e) => handleFieldChange('bio', e.target.value)}
+                        helperText={`${formData.bio.length}/500 characters - Share your coaching philosophy and experience`}
+                        inputProps={{ maxLength: 500 }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 2,
@@ -839,61 +1049,110 @@ const SettingsPage: React.FC = () => {
                 )}
               </Box>
             </Fade>
-            
-            {/* Save Button */}
-            <Box sx={{ mt: 6, pt: 4, borderTop: `1px solid ${theme.palette.divider}` }}>
-              <Stack direction="row" spacing={2} justifyContent="center">
-                <Button 
-                  variant="contained" 
-                  size="large"
-                  disabled={isLoading}
-                  onClick={handleSaveSettings}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 3,
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                    '&:hover': {
-                      background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-                      transform: 'translateY(-1px)',
-                      boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.3)}`
-                    }
-                  }}
-                >
-                  {isLoading ? <CircularProgress size={24} color="inherit" /> : t.actions.save}
-                </Button>
-              </Stack>
-            </Box>
-            
-            {error && (
-              <Alert 
-                severity="error" 
-                onClose={() => setError(null)} 
-                sx={{ 
-                  mt: 3,
-                  borderRadius: 2,
-                  '& .MuiAlert-message': {
-                    fontSize: '1rem'
-                  }
-                }}
-              >
-                {error}
-              </Alert>
-            )}
           </CardContent>
         </Card>
       </Box>
-        
+
+    </WellnessLayout>
+
+      {/* Sticky Save Bar - Only shows when form is dirty */}
+      <Slide direction="up" in={isDirty} mountOnEnter unmountOnExit>
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: `linear-gradient(to top, ${alpha(theme.palette.background.paper, 0.98)}, ${alpha(theme.palette.background.paper, 0.95)})`,
+            backdropFilter: 'blur(20px)',
+            borderTop: `2px solid ${theme.palette.primary.main}`,
+            boxShadow: `0 -8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
+            zIndex: theme.zIndex.appBar - 1,
+            py: 2,
+            px: 3
+          }}
+        >
+          <Box sx={{
+            maxWidth: 1200,
+            mx: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <ErrorIcon color="warning" />
+              <Box>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  You have unsaved changes
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Save your changes or discard them to continue
+                </Typography>
+              </Box>
+            </Box>
+
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="outlined"
+                onClick={handleDiscardChanges}
+                disabled={isLoading}
+                sx={{
+                  borderRadius: 2,
+                  minWidth: 120
+                }}
+              >
+                Discard
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSaveSettings}
+                disabled={isLoading || Object.keys(formErrors).some(key => formErrors[key])}
+                sx={{
+                  borderRadius: 2,
+                  minWidth: 120,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                  }
+                }}
+              >
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : t.actions.save}
+              </Button>
+            </Stack>
+          </Box>
+
+          {error && (
+            <Alert
+              severity="error"
+              onClose={() => setError(null)}
+              sx={{
+                mt: 2,
+                maxWidth: 1200,
+                mx: 'auto',
+                borderRadius: 2,
+                '& .MuiAlert-message': {
+                  fontSize: '0.875rem'
+                }
+              }}
+            >
+              {error}
+            </Alert>
+          )}
+        </Box>
+      </Slide>
+
       <Snackbar
         open={!!snack}
         autoHideDuration={4000}
         onClose={() => setSnack(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setSnack(null)} 
+        <Alert
+          onClose={() => setSnack(null)}
           severity="success"
-          sx={{ 
+          sx={{
             borderRadius: 3,
             minWidth: 300,
             '& .MuiAlert-message': {
@@ -905,7 +1164,7 @@ const SettingsPage: React.FC = () => {
           {snack}
         </Alert>
       </Snackbar>
-    </WellnessLayout>
+    </>
   );
 };
 

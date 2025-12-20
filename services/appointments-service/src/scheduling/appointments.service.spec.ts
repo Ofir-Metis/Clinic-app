@@ -15,7 +15,7 @@ jest.mock('@nestjs/microservices', () => {
 });
 import { AppointmentsService } from './appointments.service';
 import { Appointment } from './appointment.entity';
-import { Patient } from '../patients/patient.entity';
+import { Client } from '../clients/client.entity';
 import { NotificationsService } from './notifications.service';
 
 describe('AppointmentsService', () => {
@@ -30,7 +30,7 @@ describe('AppointmentsService', () => {
         AppointmentsService,
         { provide: NotificationsService, useValue: notif },
         { provide: getRepositoryToken(Appointment), useValue: repo },
-        { provide: getRepositoryToken(Patient), useValue: patientRepo },
+        { provide: getRepositoryToken(Client), useValue: patientRepo },
       ],
     }).compile();
     service = module.get<AppointmentsService>(AppointmentsService);
@@ -40,6 +40,6 @@ describe('AppointmentsService', () => {
     patientRepo.findOne.mockResolvedValue(undefined);
     await expect(
       service.create({ patientId: 1, datetime: new Date().toISOString(), serviceType: 'consultation' })
-    ).rejects.toThrow('Patient not found');
+    ).rejects.toThrow('Client not found');
   });
 });

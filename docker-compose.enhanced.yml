@@ -91,7 +91,7 @@ services:
       - postgres
       - nats
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3009/api/billing/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,7 +116,7 @@ services:
       - nats
       - elasticsearch
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3010/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -129,7 +129,13 @@ services:
       dockerfile: services/cdn-service/Dockerfile
     environment:
       NODE_ENV: production
+      PORT: 3011
       CDN_PORT: 3011
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: clinic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NATS_URL: nats://nats:4222
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -138,8 +144,11 @@ services:
       CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}
     ports:
       - "3011:3011"
+    depends_on:
+      - postgres
+      - nats
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3011/api/v1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -175,10 +184,10 @@ services:
     networks:
       - clinic-network
 
-  therapists-service:
+  coaches-service:
     build:
       context: .
-      dockerfile: services/therapists-service/Dockerfile
+      dockerfile: services/coaches-service/Dockerfile
     environment:
       NODE_ENV: production
       PORT: 3013

@@ -68,6 +68,7 @@ export const es = {
       noAccount: "¿Nuevo en esta aventura?",
       signUp: "¡Comienza Tu Viaje Aquí! 🚀",
       rememberMe: "Recordar mi yo increíble 💭",
+      or: "o",
       errors: {
         invalidCredentials: "Hmm, el universo no reconoce estas credenciales 🤔",
         required: "Este campo tiene ansiedad de separación - ¡por favor llénalo! 😢",

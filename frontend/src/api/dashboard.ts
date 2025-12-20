@@ -9,7 +9,7 @@ export const fetchAppointments = () => {
   console.info({ traceId, action: 'fetchAppointments', payload: null });
   return api
     .get('/dashboard/appointments')
-    .then((res) => res.data);
+    .then((res) => res.data.data || []); // Extract nested data array
 };
 
 export const fetchNotes = () => {
@@ -17,7 +17,7 @@ export const fetchNotes = () => {
   console.info({ traceId, action: 'fetchNotes', payload: null });
   return api
     .get('/dashboard/notes')
-    .then((res) => res.data);
+    .then((res) => res.data.data || []); // Extract nested data array
 };
 
 export const fetchStats = () => {
@@ -25,5 +25,5 @@ export const fetchStats = () => {
   console.info({ traceId, action: 'fetchStats', payload: null });
   return api
     .get('/dashboard/stats')
-    .then((res) => res.data);
+    .then((res) => res.data); // Stats can stay as object
 };

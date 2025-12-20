@@ -42,6 +42,7 @@ import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { he } from 'date-fns/locale';
 import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
@@ -101,7 +102,7 @@ const mockAppointments: Appointment[] = [
 ];
 
 const CalendarPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
@@ -198,10 +199,10 @@ const CalendarPage: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'individual': return 'Individual Therapy';
-      case 'group': return 'Group Therapy';
-      case 'family': return 'Family Therapy';
-      case 'consultation': return 'Consultation';
+      case 'individual': return t.calendarPage.individualTherapy;
+      case 'group': return t.calendarPage.groupTherapy;
+      case 'family': return t.calendarPage.familyTherapy;
+      case 'consultation': return t.calendarPage.consultation;
       default: return type;
     }
   };
@@ -218,23 +219,23 @@ const CalendarPage: React.FC = () => {
 
   return (
     <WellnessLayout
-        title="Calendar & Appointments"
+        title={t.nav.calendar}
         showFab={true}
         fabIcon={<AddIcon />}
         fabAction={handleAddAppointment}
-        fabAriaLabel="Schedule new appointment"
+        fabAriaLabel={t.calendarPage.scheduleNewAppointment}
       >
         {/* Header Section */}
         <Box sx={{ mb: 4 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
             alignItems: 'center',
             mb: 3,
           }}>
-            <Typography 
-              variant="h4" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              sx={{
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
                 backgroundClip: 'text',
@@ -242,29 +243,29 @@ const CalendarPage: React.FC = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              📅 Your Schedule
+              📅 {t.calendarPage.yourSchedule}
             </Typography>
-            
+
             {/* View Controls */}
             <Stack direction="row" spacing={1}>
-              <Tooltip title="Month View">
-                <IconButton 
+              <Tooltip title={t.calendarPage.monthView}>
+                <IconButton
                   onClick={() => setView('month')}
                   color={view === 'month' ? 'primary' : 'default'}
                 >
                   <MonthViewIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Week View">
-                <IconButton 
+              <Tooltip title={t.calendarPage.weekView}>
+                <IconButton
                   onClick={() => setView('week')}
                   color={view === 'week' ? 'primary' : 'default'}
                 >
                   <WeekViewIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Day View">
-                <IconButton 
+              <Tooltip title={t.calendarPage.dayView}>
+                <IconButton
                   onClick={() => setView('day')}
                   color={view === 'day' ? 'primary' : 'default'}
                 >
@@ -275,7 +276,7 @@ const CalendarPage: React.FC = () => {
           </Box>
 
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Manage your therapy sessions and client appointments with ease
+            {t.calendarPage.subtitle}
           </Typography>
         </Box>
 
@@ -286,10 +287,10 @@ const CalendarPage: React.FC = () => {
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TodayIcon color="primary" />
-                  Calendar
+                  {t.calendarPage.calendar}
                 </Typography>
-                
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
+
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
                   <DateCalendar
                     value={selectedDate}
                     onChange={(date) => setSelectedDate(date || new Date())}
@@ -298,14 +299,14 @@ const CalendarPage: React.FC = () => {
                 </LocalizationProvider>
 
                 {/* Quick Stats */}
-                <Box sx={{ 
+                <Box sx={{
                   mt: 3,
                   p: 2,
                   borderRadius: 2,
                   background: 'rgba(46, 125, 107, 0.08)',
                 }}>
                   <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
-                    Selected Date: {selectedDate.toLocaleDateString()}
+                    {t.calendarPage.selectedDate} {selectedDate.toLocaleDateString()}
                   </Typography>
                   <Stack direction="row" spacing={3}>
                     <Box sx={{ textAlign: 'center' }}>
@@ -313,7 +314,7 @@ const CalendarPage: React.FC = () => {
                         {selectedDateAppointments.length}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Appointments
+                        {t.calendarPage.appointments}
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: 'center' }}>
@@ -321,7 +322,7 @@ const CalendarPage: React.FC = () => {
                         {upcomingAppointments.length}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Upcoming
+                        {t.calendarPage.upcoming}
                       </Typography>
                     </Box>
                   </Stack>
@@ -336,38 +337,38 @@ const CalendarPage: React.FC = () => {
               {/* Today's Appointments */}
               <Card>
                 <CardContent>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                  <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 3,
                   }}>
                     <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AccessTimeIcon color="primary" />
-                      Appointments for {selectedDate.toLocaleDateString()}
+                      {t.calendarPage.appointmentsFor} {selectedDate.toLocaleDateString()}
                     </Typography>
-                    <Button 
-                      variant="outlined" 
+                    <Button
+                      variant="outlined"
                       size="small"
                       startIcon={<AddIcon />}
                       onClick={handleAddAppointment}
                     >
-                      Add
+                      {t.calendarPage.add}
                     </Button>
                   </Box>
 
                   {selectedDateAppointments.length === 0 ? (
-                    <Box sx={{ 
-                      textAlign: 'center', 
+                    <Box sx={{
+                      textAlign: 'center',
                       py: 4,
                       background: 'rgba(46, 125, 107, 0.04)',
                       borderRadius: 2,
                     }}>
                       <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                        🌿 No appointments scheduled for this date
+                        {t.calendarPage.noAppointments}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Click "Add" to schedule a new session
+                        {t.calendarPage.clickAddToSchedule}
                       </Typography>
                     </Box>
                   ) : (
@@ -415,31 +416,31 @@ const CalendarPage: React.FC = () => {
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               {appointment.meetingUrl && (
-                                <Button 
-                                  size="small" 
+                                <Button
+                                  size="small"
                                   startIcon={<VideoCallIcon />}
                                   variant="contained"
                                   onClick={() => window.open(appointment.meetingUrl, '_blank')}
                                 >
-                                  Join
+                                  {t.calendarPage.join}
                                 </Button>
                               )}
-                              <Button 
-                                size="small" 
+                              <Button
+                                size="small"
                                 variant="outlined"
                                 onClick={() => navigate(`/patients/${appointment.patientId}`)}
                               >
-                                View Client
+                                {t.calendarPage.viewClient}
                               </Button>
                             </Box>
                             <Box>
-                              <IconButton 
+                              <IconButton
                                 size="small"
                                 onClick={() => handleEditAppointment(appointment)}
                               >
                                 <EditIcon />
                               </IconButton>
-                              <IconButton 
+                              <IconButton
                                 size="small"
                                 color="error"
                                 onClick={() => handleDeleteAppointment(appointment.id)}
@@ -460,12 +461,12 @@ const CalendarPage: React.FC = () => {
                 <CardContent>
                   <Typography variant="h6" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <EventIcon color="secondary" />
-                    Upcoming This Week
+                    {t.calendarPage.upcomingThisWeek}
                   </Typography>
 
                   {upcomingAppointments.length === 0 ? (
                     <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 2 }}>
-                      No upcoming appointments this week
+                      {t.calendarPage.noUpcomingAppointments}
                     </Typography>
                   ) : (
                     <Stack spacing={2}>
@@ -499,16 +500,16 @@ const CalendarPage: React.FC = () => {
         {/* Add/Edit Appointment Dialog */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
-            {editingAppointment ? 'Edit Appointment' : 'Schedule New Appointment'}
+            {editingAppointment ? t.calendarPage.editAppointment : t.calendarPage.scheduleNewAppointment}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Client</InputLabel>
+                <InputLabel>{t.calendarPage.client}</InputLabel>
                 <Select
                   value={formData.patientId}
                   onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-                  label="Client"
+                  label={t.calendarPage.client}
                 >
                   {mockPatients.map((patient) => (
                     <MenuItem key={patient.id} value={patient.id}>
@@ -519,29 +520,29 @@ const CalendarPage: React.FC = () => {
               </FormControl>
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Session Type</InputLabel>
+                <InputLabel>{t.calendarPage.sessionType}</InputLabel>
                 <Select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as Appointment['type'] })}
-                  label="Session Type"
+                  label={t.calendarPage.sessionType}
                 >
-                  <MenuItem value="individual">Individual Therapy</MenuItem>
-                  <MenuItem value="group">Group Therapy</MenuItem>
-                  <MenuItem value="family">Family Therapy</MenuItem>
-                  <MenuItem value="consultation">Consultation</MenuItem>
+                  <MenuItem value="individual">{t.calendarPage.individualTherapy}</MenuItem>
+                  <MenuItem value="group">{t.calendarPage.groupTherapy}</MenuItem>
+                  <MenuItem value="family">{t.calendarPage.familyTherapy}</MenuItem>
+                  <MenuItem value="consultation">{t.calendarPage.consultation}</MenuItem>
                 </Select>
               </FormControl>
 
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
                 <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                   <TimePicker
-                    label="Start Time"
+                    label={t.calendarPage.startTime}
                     value={formData.startTime}
                     onChange={(time) => setFormData({ ...formData, startTime: time || new Date() })}
                     sx={{ flex: 1 }}
                   />
                   <TimePicker
-                    label="End Time"
+                    label={t.calendarPage.endTime}
                     value={formData.endTime}
                     onChange={(time) => setFormData({ ...formData, endTime: time || new Date() })}
                     sx={{ flex: 1 }}
@@ -551,23 +552,23 @@ const CalendarPage: React.FC = () => {
 
               <TextField
                 fullWidth
-                label="Session Notes"
+                label={t.calendarPage.sessionNotes}
                 multiline
                 rows={3}
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Add any notes or special instructions for this session..."
+                placeholder={t.calendarPage.sessionNotesPlaceholder}
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button 
-              onClick={handleSaveAppointment} 
+            <Button onClick={() => setOpenDialog(false)}>{t.calendarPage.cancel}</Button>
+            <Button
+              onClick={handleSaveAppointment}
               variant="contained"
               disabled={!formData.patientId}
             >
-              {editingAppointment ? 'Update' : 'Schedule'}
+              {editingAppointment ? t.calendarPage.update : t.calendarPage.schedule}
             </Button>
           </DialogActions>
         </Dialog>

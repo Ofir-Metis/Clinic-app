@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ViewSwitchingService - Business logic for therapist-client view switching
+ * ViewSwitchingService - Business logic for coach-client view switching
  */
 var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
     function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
@@ -54,23 +54,23 @@ let ViewSwitchingService = (() => {
             this.logger = new common_1.Logger(ViewSwitchingService.name);
         }
         /**
-         * Switch therapist to client view
+         * Switch coach to client view
          */
-        async switchToClientView(therapistPayload, clientId, clientEmail) {
+        async switchToClientView(coachPayload, clientId, clientEmail) {
             try {
-                // Validate therapist permissions
-                if (!this.jwtService.hasPermission(therapistPayload, 'clients:impersonate')) {
+                // Validate coach permissions
+                if (!this.jwtService.hasPermission(coachPayload, 'clients:impersonate')) {
                     throw new Error('Insufficient permissions for view switching');
                 }
                 // Verify client access
-                const canAccess = await this.canTherapistAccessClient(therapistPayload.sub, clientId);
+                const canAccess = await this.canCoachAccessClient(coachPayload.sub, clientId);
                 if (!canAccess) {
                     throw new Error('No access to specified client');
                 }
                 // Generate impersonation token
-                const tokens = this.jwtService.generateImpersonationToken(therapistPayload, clientId, clientEmail);
+                const tokens = this.jwtService.generateImpersonationToken(coachPayload, clientId, clientEmail);
                 // Log the switch for audit
-                this.logger.log(`🎭 View switch: Therapist ${therapistPayload.sub} → Client ${clientId}`);
+                this.logger.log(`🎭 View switch: Coach ${coachPayload.sub} → Client ${clientId}`);
                 return tokens;
             }
             catch (error) {
@@ -79,12 +79,12 @@ let ViewSwitchingService = (() => {
             }
         }
         /**
-         * Exit client view and return to therapist view
+         * Exit client view and return to coach view
          */
         async exitClientView(impersonationToken) {
             try {
                 const tokens = await this.jwtService.exitImpersonation(impersonationToken);
-                this.logger.log('🎭 Exited client view, returned to therapist view');
+                this.logger.log('🎭 Exited client view, returned to coach view');
                 return tokens;
             }
             catch (error) {
@@ -93,16 +93,16 @@ let ViewSwitchingService = (() => {
             }
         }
         /**
-         * Check if therapist can access specific client
+         * Check if coach can access specific client
          */
-        async canTherapistAccessClient(therapistId, clientId) {
+        async canCoachAccessClient(coachId, clientId) {
             try {
                 // In a real implementation, this would query the database
-                // to check therapist-client relationships
+                // to check coach-client relationships
                 // Mock data for demonstration
-                const therapistClientRelations = await this.getTherapistClientRelations(therapistId);
-                const hasAccess = therapistClientRelations.some(relation => relation.clientId === clientId && relation.status === 'active');
-                this.logger.log(`🔍 Access check: Therapist ${therapistId} → Client ${clientId}: ${hasAccess ? '✅' : '❌'}`);
+                const coachClientRelations = await this.getCoachClientRelations(coachId);
+                const hasAccess = coachClientRelations.some(relation => relation.clientId === clientId && relation.status === 'active');
+                this.logger.log(`🔍 Access check: Coach ${coachId} → Client ${clientId}: ${hasAccess ? '✅' : '❌'}`);
                 return hasAccess;
             }
             catch (error) {
@@ -124,7 +124,7 @@ let ViewSwitchingService = (() => {
                         avatar: 'https://i.pravatar.cc/150?u=sarah',
                         lastActive: new Date('2024-01-15T10:30:00Z'),
                         status: 'active',
-                        therapistId: 'therapist_001',
+                        coachId: 'coach_001',
                     },
                     {
                         id: 'client_002',
@@ -133,7 +133,7 @@ let ViewSwitchingService = (() => {
                         avatar: 'https://i.pravatar.cc/150?u=michael',
                         lastActive: new Date('2024-01-14T14:22:00Z'),
                         status: 'active',
-                        therapistId: 'therapist_001',
+                        coachId: 'coach_001',
                     },
                     {
                         id: 'client_003',
@@ -142,7 +142,7 @@ let ViewSwitchingService = (() => {
                         avatar: 'https://i.pravatar.cc/150?u=emma',
                         lastActive: new Date('2024-01-13T09:15:00Z'),
                         status: 'active',
-                        therapistId: 'therapist_002',
+                        coachId: 'coach_002',
                     },
                 ];
                 const client = mockClients.find(c => c.id === clientId);
@@ -157,58 +157,58 @@ let ViewSwitchingService = (() => {
             }
         }
         /**
-         * Get therapist information by ID
+         * Get coach information by ID
          */
-        async getTherapistInfo(therapistId) {
+        async getCoachInfo(coachId) {
             try {
                 // Mock implementation - replace with actual database query
-                const mockTherapists = [
+                const mockCoachs = [
                     {
-                        id: 'therapist_001',
+                        id: 'coach_001',
                         name: 'Dr. Jennifer Smith',
                         email: 'jennifer.smith@clinic.com',
                         specialization: 'Cognitive Behavioral Therapy',
                         avatar: 'https://i.pravatar.cc/150?u=jennifer',
                     },
                     {
-                        id: 'therapist_002',
+                        id: 'coach_002',
                         name: 'Dr. Robert Wilson',
                         email: 'robert.wilson@clinic.com',
                         specialization: 'Family Therapy',
                         avatar: 'https://i.pravatar.cc/150?u=robert',
                     },
                 ];
-                const therapist = mockTherapists.find(t => t.id === therapistId);
-                if (therapist) {
-                    this.logger.log(`👨‍⚕️ Retrieved therapist info for ${therapistId}: ${therapist.name}`);
+                const coach = mockCoachs.find(t => t.id === coachId);
+                if (coach) {
+                    this.logger.log(`👨‍⚕️ Retrieved coach info for ${coachId}: ${coach.name}`);
                 }
-                return therapist || null;
+                return coach || null;
             }
             catch (error) {
-                this.logger.error('Failed to get therapist info:', error);
+                this.logger.error('Failed to get coach info:', error);
                 return null;
             }
         }
         /**
-         * Get all clients accessible to a therapist
+         * Get all clients accessible to a coach
          */
-        async getTherapistClients(therapistId) {
+        async getCoachClients(coachId) {
             try {
                 // Mock implementation - replace with actual database query
                 const allClients = await this.getAllClients();
-                const therapistClients = allClients.filter(client => client.therapistId === therapistId && client.status === 'active');
-                this.logger.log(`📋 Retrieved ${therapistClients.length} clients for therapist ${therapistId}`);
-                return therapistClients;
+                const coachClients = allClients.filter(client => client.coachId === coachId && client.status === 'active');
+                this.logger.log(`📋 Retrieved ${coachClients.length} clients for coach ${coachId}`);
+                return coachClients;
             }
             catch (error) {
-                this.logger.error('Failed to get therapist clients:', error);
+                this.logger.error('Failed to get coach clients:', error);
                 return [];
             }
         }
         /**
-         * Get therapist-client relations (for access control)
+         * Get coach-client relations (for access control)
          */
-        async getTherapistClientRelations(therapistId) {
+        async getCoachClientRelations(coachId) {
             // Mock implementation
             const relations = [
                 {
@@ -222,7 +222,7 @@ let ViewSwitchingService = (() => {
                     assignedAt: new Date('2024-01-05T00:00:00Z'),
                 },
             ];
-            return therapistId === 'therapist_001' ? relations : [];
+            return coachId === 'coach_001' ? relations : [];
         }
         /**
          * Get all clients (helper method)
@@ -237,7 +237,7 @@ let ViewSwitchingService = (() => {
                     avatar: 'https://i.pravatar.cc/150?u=sarah',
                     lastActive: new Date('2024-01-15T10:30:00Z'),
                     status: 'active',
-                    therapistId: 'therapist_001',
+                    coachId: 'coach_001',
                 },
                 {
                     id: 'client_002',
@@ -246,7 +246,7 @@ let ViewSwitchingService = (() => {
                     avatar: 'https://i.pravatar.cc/150?u=michael',
                     lastActive: new Date('2024-01-14T14:22:00Z'),
                     status: 'active',
-                    therapistId: 'therapist_001',
+                    coachId: 'coach_001',
                 },
                 {
                     id: 'client_003',
@@ -255,19 +255,19 @@ let ViewSwitchingService = (() => {
                     avatar: 'https://i.pravatar.cc/150?u=emma',
                     lastActive: new Date('2024-01-13T09:15:00Z'),
                     status: 'active',
-                    therapistId: 'therapist_002',
+                    coachId: 'coach_002',
                 },
             ];
         }
         /**
          * Log impersonation activity for audit
          */
-        async logImpersonationActivity(action, therapistId, clientId) {
+        async logImpersonationActivity(action, coachId, clientId) {
             try {
                 const logEntry = {
                     timestamp: new Date(),
                     action,
-                    therapistId,
+                    coachId,
                     clientId,
                     source: 'view-switching-service',
                 };

@@ -34,7 +34,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 const RegistrationPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -135,14 +135,14 @@ const RegistrationPage: React.FC = () => {
               mb={2}
               fontFamily="Roboto, sans-serif"
             >
-              {t.auth.register.title}
+              {translations.auth.register.title}
             </Typography>
             <TextField
               margin="normal"
               fullWidth
               id="name"
               name="name"
-              label={t.auth.register.fullName}
+              label={translations.auth.register.fullName}
               value={formik.values.name}
               onChange={formik.handleChange}
               error={formik.touched.name && Boolean(formik.errors.name)}
@@ -156,7 +156,7 @@ const RegistrationPage: React.FC = () => {
               fullWidth
               id="email"
               name="email"
-              label={t.auth.register.email}
+              label={translations.auth.register.email}
               value={formik.values.email}
               onChange={formik.handleChange}
               error={formik.touched.email && Boolean(formik.errors.email)}
@@ -171,7 +171,7 @@ const RegistrationPage: React.FC = () => {
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
-              label={t.auth.register.password}
+              label={translations.auth.register.password}
               value={formik.values.password}
               onChange={formik.handleChange}
               error={formik.touched.password && Boolean(formik.errors.password)}
@@ -195,7 +195,7 @@ const RegistrationPage: React.FC = () => {
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              label={t.auth.register.confirmPassword}
+              label={translations.auth.register.confirmPassword}
               value={formik.values.confirmPassword}
               onChange={formik.handleChange}
               error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
@@ -206,22 +206,22 @@ const RegistrationPage: React.FC = () => {
             />
             <FormControl component="fieldset" sx={{ mt: 1, width: '100%' }}>
               <RadioGroup row name="role" value={formik.values.role} onChange={formik.handleChange} aria-label="role" sx={{ justifyContent: 'center' }}>
-                <FormControlLabel value="therapist" control={<Radio />} label={t.auth.register.therapist} />
-                <FormControlLabel value="patient" control={<Radio />} label={t.auth.register.patient} />
+                <FormControlLabel value="therapist" control={<Radio />} label={translations.auth.register.therapist} />
+                <FormControlLabel value="patient" control={<Radio />} label={translations.auth.register.patient} />
               </RadioGroup>
             </FormControl>
-            <LoadingButton 
-              color="primary" 
-              variant="contained" 
-              type="submit" 
-              fullWidth 
+            <LoadingButton
+              color="primary"
+              variant="contained"
+              type="submit"
+              fullWidth
               loading={formik.isSubmitting}
-              aria-label="register" 
+              aria-label="register"
               sx={{ mt: 2, borderRadius: 3, fontWeight: 700, fontSize: 18, py: 1.5 }}
             >
-              {t.auth.register.submitButton}
+              {translations.auth.register.submitButton}
             </LoadingButton>
-            <Box sx={{ textAlign: 'center', my: 2, width: '100%' }}>{t.auth.register.or}</Box>
+            <Box sx={{ textAlign: 'center', my: 2, width: '100%' }}>{translations.auth.register.or}</Box>
             <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
             </Box>

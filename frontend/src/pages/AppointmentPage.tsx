@@ -171,20 +171,50 @@ const AppointmentDetail: React.FC<DetailProps> = ({
               appointmentId={appointment.id.toString()}
               sessionId={appointment.id.toString()}
               participantId={appointment.clientId?.toString() || 'unknown'}
-              userId="current-user-id" // TODO: Get from auth context
-              userRole="coach" // TODO: Get from auth context
+              userId={(() => {
+                try {
+                  const userData = localStorage.getItem('user') || localStorage.getItem('clinic_user');
+                  return userData ? JSON.parse(userData).id : 'current-user-id';
+                } catch {
+                  return 'current-user-id';
+                }
+              })()}
+              userRole={(() => {
+                try {
+                  const userData = localStorage.getItem('user') || localStorage.getItem('clinic_user');
+                  return userData ? JSON.parse(userData).role || 'coach' : 'coach';
+                } catch {
+                  return 'coach';
+                }
+              })()}
               meetingUrl={appointment.meetingUrl}
               sessionType={appointment.meetingUrl ? 'online' : 'in-person'}
-              existingRecordings={[]} // TODO: Load from API
+              existingRecordings={appointment.recordings || []} // Load recordings from appointment data
               onRecordingAdded={(recording) => {
                 console.log('Recording added:', recording);
-                // TODO: Update appointment with new recording
+                // Update appointment recordings list
+                setAppointment(prev => prev ? {
+                  ...prev,
+                  recordings: [...(prev.recordings || []), recording]
+                } : null);
               }}
               onSummaryGenerated={(summary) => {
                 console.log('AI Summary generated:', summary);
-                // TODO: Save summary to appointment
+                // Update appointment with AI summary
+                setAppointment(prev => prev ? {
+                  ...prev,
+                  aiSummary: summary
+                } : null);
               }}
-              canManageRecordings={true} // TODO: Check user permissions
+              canManageRecordings={(() => {
+                try {
+                  const userData = localStorage.getItem('user') || localStorage.getItem('clinic_user');
+                  const role = userData ? JSON.parse(userData).role : 'coach';
+                  return ['coach', 'admin'].includes(role);
+                } catch {
+                  return true;
+                }
+              })()}
               maxFileSize={500} // 500MB max file size
             />
           </Box>

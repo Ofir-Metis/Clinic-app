@@ -18,7 +18,7 @@ declare global {
 export class LoggingMiddleware implements NestMiddleware {
   constructor(private readonly logger: CentralizedLoggerService) {}
 
-  use(req: Request, res: Response, next: NextFunction): void {
+  use = (req: Request, res: Response, next: NextFunction): void => {
     const startTime = Date.now();
     const requestId = uuidv4();
     const correlationId = req.headers['x-correlation-id'] as string || requestId;

@@ -21,6 +21,8 @@ COPY frontend ./frontend
 # Using a mirror can speed things up.
 RUN yarn config set registry https://registry.npmmirror.com
 RUN yarn config set network-timeout 600000 -g
+# Skip Puppeteer Chrome download during Docker build
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN yarn install
 RUN yarn workspaces run build
 
@@ -61,6 +63,7 @@ RUN yarn build
 # --- Final Production stage ---
 # This stage creates the small, final image with only production dependencies.
 FROM node:20-alpine
+RUN apk add --no-cache curl
 WORKDIR /app
 
 # Copy the compiled code from the 'build' stage.

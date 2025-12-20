@@ -1,6 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
 
 interface PaymentRequest {
   invoiceId: string;
@@ -22,10 +20,7 @@ interface PaymentResult {
 export class PaymentProcessingService {
   private readonly logger = new Logger(PaymentProcessingService.name);
 
-  constructor(
-    private configService: ConfigService,
-    private httpService: HttpService,
-  ) {}
+  constructor() {}
 
   async processSubscriptionPayment(request: PaymentRequest): Promise<PaymentResult> {
     this.logger.log(`Processing payment for invoice ${request.invoiceId}`);
@@ -40,11 +35,11 @@ export class PaymentProcessingService {
         processor: 'tranzilla',
         processingFee,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Payment failed for invoice ${request.invoiceId}:`, error);
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }

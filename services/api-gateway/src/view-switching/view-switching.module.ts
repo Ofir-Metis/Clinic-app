@@ -1,5 +1,5 @@
 /**
- * ViewSwitchingModule - Module for therapist-client view switching functionality
+ * ViewSwitchingModule - Module for coach-client view switching functionality
  */
 
 import { Module } from '@nestjs/common';

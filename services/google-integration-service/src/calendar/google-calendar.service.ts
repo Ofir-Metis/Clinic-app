@@ -3,11 +3,10 @@
  * Manages calendar events, sync, and Google Meet integration
  */
 
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { google, calendar_v3 } from 'googleapis';
-import { GoogleAccount } from '../entities/google-account.entity';
 import { CalendarSyncLog } from '../entities/calendar-sync-log.entity';
 import { GoogleOAuthService } from '../auth/google-oauth.service';
 
@@ -110,7 +109,7 @@ export class GoogleCalendarService {
       });
 
       const createdEvent = response.data;
-      const googleEventId = createdEvent.id;
+      const googleEventId = createdEvent.id ?? undefined;
 
       // Log sync activity
       await this.logSyncActivity({
@@ -125,14 +124,14 @@ export class GoogleCalendarService {
         attendeeCount: event.attendees?.length || 0,
       });
 
-      // Extract Google Meet link if created
-      let meetingUrl = event.meetingUrl;
+      // Extract Google Meet link if created (not used but kept for future reference)
+      // Google Meet links are automatically included in conference data
       if (createdEvent.conferenceData?.entryPoints) {
         const meetEntry = createdEvent.conferenceData.entryPoints.find(
           entry => entry.entryPointType === 'video'
         );
         if (meetEntry?.uri) {
-          meetingUrl = meetEntry.uri;
+          // meetingUrl would be meetEntry.uri
         }
       }
 
@@ -228,7 +227,7 @@ export class GoogleCalendarService {
       }
 
       // Update event in Google Calendar
-      const response = await calendar.events.update({
+      await calendar.events.update({
         calendarId: googleAccount.calendarId || 'primary',
         eventId: googleEventId,
         requestBody: updatedGoogleEvent,
@@ -364,20 +363,20 @@ export class GoogleCalendarService {
       const events = response.data.items || [];
 
       return events.map(event => ({
-        id: event.id,
+        id: event.id ?? undefined,
         title: event.summary || 'Untitled Event',
-        description: event.description,
+        description: event.description ?? undefined,
         startTime: new Date(event.start?.dateTime || event.start?.date || Date.now()),
         endTime: new Date(event.end?.dateTime || event.end?.date || Date.now()),
         attendees: event.attendees?.map(attendee => ({
           email: attendee.email || '',
-          name: attendee.displayName,
+          name: attendee.displayName ?? undefined,
           responseStatus: attendee.responseStatus as any,
         })) || [],
-        location: event.location,
+        location: event.location ?? undefined,
         meetingUrl: event.conferenceData?.entryPoints?.find(
           entry => entry.entryPointType === 'video'
-        )?.uri,
+        )?.uri ?? undefined,
         isOnlineMeeting: !!event.conferenceData,
       }));
 

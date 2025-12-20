@@ -7,9 +7,9 @@ import { Note } from './note.entity';
 export class NotesService {
   constructor(@InjectRepository(Note) private readonly repo: Repository<Note>) {}
 
-  recent(therapistId: number, limit: number) {
+  recent(coachId: number, limit: number) {
     return this.repo.find({
-      where: { therapistId },
+      where: { coachId },
       order: { createdAt: 'DESC' },
       take: limit,
     });

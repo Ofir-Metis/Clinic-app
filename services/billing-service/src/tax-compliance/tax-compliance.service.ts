@@ -133,7 +133,7 @@ export class TaxComplianceService {
       } else {
         throw new Error(response.error || 'CTC submission failed');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`CTC submission failed for invoice ${request.invoiceNumber}:`, error);
       throw error;
     }
@@ -176,11 +176,11 @@ export class TaxComplianceService {
           submissionId: `SIM-${Date.now()}`,
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('ITA API call failed:', error);
       return {
         success: false,
-        error: error.message || 'ITA API communication failed',
+        error: error instanceof Error ? error.message : 'ITA API communication failed',
       };
     }
   }
@@ -320,7 +320,7 @@ export class TaxComplianceService {
   /**
    * Group records by month
    */
-  private groupByMonth(records: TaxComplianceRecord[], startDate: Date, endDate: Date): Record<string, any> {
+  private groupByMonth(records: TaxComplianceRecord[], _startDate: Date, _endDate: Date): Record<string, any> {
     const groups: Record<string, any> = {};
 
     for (const record of records) {
@@ -404,7 +404,7 @@ export class TaxComplianceService {
 
         record.lastVerificationDate = new Date();
         await this.complianceRepository.save(record);
-      } catch (error) {
+      } catch (error: unknown) {
         this.logger.error(`Failed to verify compliance for record ${record.id}:`, error);
       }
     }

@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthController } from './health/health.controller';
 import { FilesModule } from './files/files.module';
-import { PatientsModule } from './patients/patients.module';
+import { ClientsModule } from './clients/clients.module';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { PatientsModule } from './patients/patients.module';
       synchronize: false,
     }),
     FilesModule,
-    PatientsModule,
+    ClientsModule,
   ],
   controllers: [HealthController],
 })

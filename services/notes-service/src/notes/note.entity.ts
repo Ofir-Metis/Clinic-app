@@ -6,7 +6,7 @@ export class Note {
   id!: number;
 
   @Column()
-  therapistId!: number;
+  coachId!: number;
 
   @Column('text')
   content!: string;

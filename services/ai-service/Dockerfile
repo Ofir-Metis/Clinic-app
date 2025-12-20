@@ -23,6 +23,7 @@ ENV PATH="../../node_modules/.bin:$PATH"
 RUN yarn build
 
 FROM node:20-alpine
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /app/services/ai-service/dist ./dist
 COPY --from=build /app/services/ai-service/package.json ./package.json

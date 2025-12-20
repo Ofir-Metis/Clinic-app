@@ -38,39 +38,39 @@ var __setFunctionName = (this && this.__setFunctionName) || function (f, name, p
     return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TherapistsService = void 0;
+exports.CoachesService = void 0;
 const common_1 = require("@nestjs/common");
 const rxjs_1 = require("rxjs");
-let TherapistsService = (() => {
+let CoachesService = (() => {
     let _classDecorators = [(0, common_1.Injectable)()];
     let _classDescriptor;
     let _classExtraInitializers = [];
     let _classThis;
-    var TherapistsService = _classThis = class {
+    var CoachesService = _classThis = class {
         constructor(http) {
             this.http = http;
         }
         async getProfile(id) {
-            const url = `${process.env.THERAPISTS_URL}/therapists/${id}/profile`;
+            const url = `${process.env.THERAPISTS_URL}/coaches/${id}/profile`;
             const response = await (0, rxjs_1.firstValueFrom)(this.http.get(url));
             const data = response.data;
             return data;
         }
         async updateProfile(id, dto, auth) {
-            const { data } = await (0, rxjs_1.firstValueFrom)(this.http.put(`${process.env.THERAPISTS_URL}/therapists/${id}/profile`, dto, {
+            const { data } = await (0, rxjs_1.firstValueFrom)(this.http.put(`${process.env.THERAPISTS_URL}/coaches/${id}/profile`, dto, {
                 headers: { Authorization: auth },
             }));
             return data;
         }
     };
-    __setFunctionName(_classThis, "TherapistsService");
+    __setFunctionName(_classThis, "CoachesService");
     (() => {
         const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(null) : void 0;
         __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
-        TherapistsService = _classThis = _classDescriptor.value;
+        CoachesService = _classThis = _classDescriptor.value;
         if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         __runInitializers(_classThis, _classExtraInitializers);
     })();
-    return TherapistsService = _classThis;
+    return CoachesService = _classThis;
 })();
-exports.TherapistsService = TherapistsService;
+exports.CoachesService = CoachesService;

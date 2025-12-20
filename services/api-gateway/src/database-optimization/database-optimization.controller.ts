@@ -235,7 +235,7 @@ export class DatabaseOptimizationController {
           type: 'array',
           items: { type: 'string' },
           example: [
-            'Created index on appointments(therapist_id, start_time)',
+            'Created index on appointments(coach_id, start_time)',
             'Dropped unused index old_idx_client_email'
           ]
         },

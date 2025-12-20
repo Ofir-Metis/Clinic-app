@@ -490,10 +490,10 @@ services:
     networks:
       - clinic-network
 
-  therapists-service:
+  coaches-service:
     build:
       context: .
-      dockerfile: services/therapists-service/Dockerfile
+      dockerfile: services/coaches-service/Dockerfile
     environment:
       NODE_ENV: production
       PORT: 3013

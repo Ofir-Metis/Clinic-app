@@ -8,34 +8,28 @@ import {
   Get,
   Post,
   Put,
-  Delete,
   Patch,
   Body,
   Param,
   Query,
   Req,
   BadRequestException,
-  NotFoundException,
   ForbiddenException,
   Logger,
-  UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AppointmentsService, CreateAppointmentData, UpdateAppointmentData, AppointmentFilters } from './appointments.service';
+import { AppointmentsService, CreateAppointmentData, UpdateAppointmentData} from './appointments.service';
 import { MeetingManagerService, MeetingCreationRequest, MeetingUpdateRequest } from '../meetings/meeting-manager.service';
 import { RecordingOrchestratorService, RecordingStartRequest } from '../recording/recording-orchestrator.service';
-import { 
-  Appointment, 
-  MeetingType, 
-  RecordingType, 
-  AppointmentStatus, 
-  RecordingSettings 
+import {
+  MeetingType,
+  RecordingType,
+  RecordingSettings
 } from './appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
-import { GetHistoryDto } from './dto/get-history.dto';
 // import { JwtAuthGuard } from '../jwt-auth.guard'; // Temporarily disabled
 
 interface AuthenticatedRequest extends Request {
@@ -63,16 +57,6 @@ interface CreateAppointmentRequest {
     requireConfirmation: boolean;
   };
   reminderTimes?: string[];
-  tags?: string[];
-}
-
-interface UpdateAppointmentRequest {
-  startTime?: string;
-  endTime?: string;
-  title?: string;
-  description?: string;
-  status?: AppointmentStatus;
-  notes?: string;
   tags?: string[];
 }
 
@@ -162,7 +146,7 @@ export class AppointmentsController {
         warnings: meetingResult.warnings
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to create appointment: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -220,7 +204,7 @@ export class AppointmentsController {
         message: `Meeting type changed to ${changeRequest.meetingType} successfully`
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to change meeting type: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -250,7 +234,7 @@ export class AppointmentsController {
         message: 'Recording settings updated successfully'
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to update recording settings: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -280,7 +264,7 @@ export class AppointmentsController {
 
       return result;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to start recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -300,7 +284,7 @@ export class AppointmentsController {
 
       return result;
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to stop recording: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -322,7 +306,7 @@ export class AppointmentsController {
         recordingFiles: status.appointment?.recordingFiles
       };
 
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to get recording status: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
@@ -380,10 +364,12 @@ export class AppointmentsController {
     @Req() req: any,
   ) {
     this.logger.log('PUT /appointments/:id (legacy)', { id, user: req.user?.id });
-    const updateData = {
-      ...dto,
+    const updateData: UpdateAppointmentData = {
       ...(dto.startTime && { startTime: new Date(dto.startTime) }),
       ...(dto.endTime && { endTime: new Date(dto.endTime) }),
+      ...(dto.title !== undefined && { title: dto.title }),
+      ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.tags !== undefined && { tags: dto.tags }),
       updatedBy: req.user?.id
     };
     return this.appointmentsService.update(id.toString(), updateData);

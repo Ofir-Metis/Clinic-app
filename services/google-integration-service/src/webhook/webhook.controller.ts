@@ -12,7 +12,6 @@ import {
   Req,
   Res,
   Query,
-  Param,
   Logger,
   UseGuards,
   HttpStatus,
@@ -42,7 +41,6 @@ export class WebhookController {
   @ApiResponse({ status: 400, description: 'Invalid webhook notification' })
   async handleCalendarWebhook(
     @Headers() headers: Record<string, string>,
-    @Body() body: any,
     @Req() req: Request,
     @Res() res: Response
   ) {
@@ -98,7 +96,6 @@ export class WebhookController {
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   async handleGmailWebhook(
     @Headers() headers: Record<string, string>,
-    @Body() body: any,
     @Req() req: Request,
     @Res() res: Response
   ) {
@@ -154,7 +151,7 @@ export class WebhookController {
   @ApiBearerAuth()
   async setupCalendarWebhook(
     @Body() body: { googleAccountId: string },
-    @Req() req: AuthenticatedRequest
+    @Req() _req: AuthenticatedRequest
   ) {
     try {
       // Note: In a production environment, you should verify that the account belongs to the user
@@ -190,7 +187,7 @@ export class WebhookController {
   @ApiBearerAuth()
   async stopCalendarWebhook(
     @Body() body: { channelId: string; resourceId: string },
-    @Req() req: AuthenticatedRequest
+    @Req() _req: AuthenticatedRequest
   ) {
     try {
       const success = await this.webhookService.stopCalendarWebhook(body.channelId, body.resourceId);
@@ -256,7 +253,7 @@ export class WebhookController {
   @ApiResponse({ status: 200, description: 'Webhook cleanup completed' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async cleanupWebhooks(@Req() req: AuthenticatedRequest) {
+  async cleanupWebhooks(@Req() _req: AuthenticatedRequest) {
     try {
       const cleanedCount = await this.webhookService.cleanupExpiredWebhooks();
 

@@ -40,7 +40,6 @@
     "winston-elasticsearch": "^0.19.0"
   },
   "devDependencies": {
-    "@types/aws-sdk": "^2.7.0",
     "@types/jest": "^29.5.2",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.3.1",
