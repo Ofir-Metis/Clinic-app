@@ -8,7 +8,7 @@ export class AuthController {
   constructor(private readonly httpService: HttpService) {}
 
   @Post('register')
-  @Throttle({ strict: { ttl: 900000, limit: 3 } }) // 3 registrations per 15 minutes
+  @Throttle({ strict: { ttl: 900000, limit: 20 } }) // 20 registrations per 15 minutes
   async register(@Body() body: any) {
     try {
       const response = await firstValueFrom(
@@ -21,7 +21,7 @@ export class AuthController {
   }
 
   @Post('login')
-  @Throttle({ strict: { ttl: 900000, limit: 5 } }) // 5 login attempts per 15 minutes
+  @Throttle({ strict: { ttl: 900000, limit: 30 } }) // 30 login attempts per 15 minutes
   async login(@Body() body: any) {
     try {
       const response = await firstValueFrom(
@@ -39,6 +39,19 @@ export class AuthController {
     try {
       const response = await firstValueFrom(
         this.httpService.get(`http://auth-service:3000/auth/user-info?email=${encodeURIComponent(email)}`, { withCredentials: true })
+      );
+      return response.data;
+    } catch (error) {
+      throw new HttpException(error.response?.data || 'Auth service error', error.response?.status || HttpStatus.BAD_GATEWAY);
+    }
+  }
+
+  @Post('reset-request')
+  @Throttle({ default: { ttl: 60000, limit: 5 } }) // 5 reset requests per minute
+  async resetRequest(@Body() body: any) {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post('http://auth-service:3000/auth/reset-request', body, { withCredentials: true })
       );
       return response.data;
     } catch (error) {

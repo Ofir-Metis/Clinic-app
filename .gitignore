@@ -2,6 +2,12 @@ node_modules/
 logs
 *.log
 .env
+# Environment files with secrets (only .env.example should be tracked)
+.env.production
+.env.staging
+.env.production.test
+.env.local
+.env.*.local
 dist/
 coverage/
 .pnp.cjs

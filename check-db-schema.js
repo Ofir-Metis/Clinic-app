@@ -1,22 +1,25 @@
 const { Client } = require('pg');
 
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
 const dbConfig = {
-  host: 'localhost',
-  port: 5432,
-  database: 'clinic',
-  user: 'postgres',
-  password: 'postgres'
+  host: process.env.POSTGRES_HOST || 'localhost',
+  port: parseInt(process.env.POSTGRES_PORT || '5432'),
+  database: process.env.POSTGRES_DB || 'clinic',
+  user: process.env.POSTGRES_USER || 'postgres',
+  password: process.env.POSTGRES_PASSWORD || 'postgres'
 };
 
 async function checkDatabaseSchema() {
   console.log('🔍 Checking Database Schema\n');
-  
+
   const client = new Client(dbConfig);
-  
+
   try {
     await client.connect();
     console.log('✅ Connected to PostgreSQL database');
-    
+
     // Check what tables exist
     const tablesQuery = `
       SELECT table_name 
@@ -24,50 +27,50 @@ async function checkDatabaseSchema() {
       WHERE table_schema = 'public'
       ORDER BY table_name;
     `;
-    
+
     const tablesResult = await client.query(tablesQuery);
     const tables = tablesResult.rows;
-    
+
     console.log(`\n📋 Found ${tables.length} tables in database:`);
-    
+
     if (tables.length === 0) {
       console.log('   (No tables found - database may need initialization)');
-      
+
       console.log('\n💡 Possible solutions:');
       console.log('   1. Run database migrations from the services');
       console.log('   2. Start the backend services to auto-create tables');
       console.log('   3. Check if the database is properly initialized');
-      
+
       return;
     }
-    
+
     tables.forEach((table, index) => {
       console.log(`   ${index + 1}. ${table.table_name}`);
     });
-    
+
     // Check columns for key tables if they exist
     const keyTables = ['users', 'patients', 'clients', 'therapists', 'appointments'];
-    
+
     for (const tableName of keyTables) {
       const tableExists = tables.some(t => t.table_name.toLowerCase() === tableName.toLowerCase());
-      
+
       if (tableExists) {
         console.log(`\n🔍 Structure of ${tableName} table:`);
-        
+
         const columnsQuery = `
           SELECT column_name, data_type, is_nullable, column_default
           FROM information_schema.columns 
           WHERE table_name = $1 AND table_schema = 'public'
           ORDER BY ordinal_position;
         `;
-        
+
         const columnsResult = await client.query(columnsQuery, [tableName]);
         const columns = columnsResult.rows;
-        
+
         columns.forEach((column, index) => {
           console.log(`   ${index + 1}. ${column.column_name} (${column.data_type}) ${column.is_nullable === 'NO' ? 'NOT NULL' : 'NULL'}`);
         });
-        
+
         // Show sample data
         const sampleQuery = `SELECT * FROM "${tableName}" LIMIT 3;`;
         try {
@@ -85,26 +88,26 @@ async function checkDatabaseSchema() {
         }
       }
     }
-    
+
     // Check for any existing user/therapist data
     console.log('\n🔍 Checking for existing user data...');
-    
+
     const userTables = ['users', 'therapists', 'auth_users', 'accounts'];
     let foundUserData = false;
-    
+
     for (const tableName of userTables) {
       const tableExists = tables.some(t => t.table_name.toLowerCase() === tableName.toLowerCase());
-      
+
       if (tableExists) {
         try {
           const countQuery = `SELECT COUNT(*) as count FROM "${tableName}";`;
           const countResult = await client.query(countQuery);
           const count = parseInt(countResult.rows[0].count);
-          
+
           if (count > 0) {
             console.log(`   ✅ Found ${count} records in ${tableName} table`);
             foundUserData = true;
-            
+
             // Show sample emails/usernames if available
             const commonFields = ['email', 'username', 'firstName', 'lastName', 'name'];
             for (const field of commonFields) {
@@ -127,12 +130,12 @@ async function checkDatabaseSchema() {
         }
       }
     }
-    
+
     if (!foundUserData) {
       console.log('   ❌ No user/therapist data found in database');
       console.log('   💡 You may need to create users first before creating patients');
     }
-    
+
   } catch (error) {
     console.error('❌ Database check error:', error.message);
   } finally {

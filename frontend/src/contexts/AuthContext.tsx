@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 // Types
@@ -9,6 +9,7 @@ export interface User {
   name?: string;
   avatar?: string;
   permissions?: string[];
+  coachId?: string;
 }
 
 export interface TokenData {
@@ -24,6 +25,7 @@ export interface JWTPayload {
   exp: number;
   iat: number;
   permissions?: string[];
+  coachId?: string;
 }
 
 export interface AuthState {
@@ -36,10 +38,16 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
+  // Legacy compatibility
+  userId: number;
+  loading: boolean;  // Alias for isLoading
+
+  // Token management
   login: (tokens: TokenData, userData?: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshAuthToken: () => Promise<boolean>;
   updateUser: (userData: User) => void;
+  updateTokens: (tokens: TokenData) => void;  // Legacy compatibility
   checkAuthStatus: () => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string | string[]) => boolean;
@@ -54,13 +62,17 @@ const TOKEN_EXPIRY_KEY = 'clinic_token_expiry';
 // Token refresh threshold (5 minutes before expiry)
 const REFRESH_THRESHOLD = 5 * 60 * 1000;
 
+// Session inactivity timeout (30 minutes)
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000;
+const ACTIVITY_DEBOUNCE = 30 * 1000; // Debounce activity tracking to every 30s
+
 // Create context
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 // Utility functions
 const isTokenValid = (token: string | null): boolean => {
   if (!token) return false;
-  
+
   try {
     const decoded = jwtDecode<JWTPayload>(token);
     const currentTime = Date.now() / 1000;
@@ -77,7 +89,8 @@ const extractUserFromToken = (token: string): User | null => {
       id: decoded.sub,
       email: decoded.email,
       role: decoded.role as User['role'],
-      permissions: decoded.permissions || []
+      permissions: decoded.permissions || [],
+      coachId: decoded.coachId
     };
   } catch {
     return null;
@@ -123,6 +136,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return () => clearTimeout(timeoutId);
   }, [authState.tokenExpiry, authState.isAuthenticated]);
+
+  // Session inactivity timeout
+  const lastActivityRef = useRef(Date.now());
+  const logoutRef = useRef<() => Promise<void>>();
+
+  useEffect(() => {
+    if (!authState.isAuthenticated) return;
+
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    // Debounced activity handler to avoid excessive updates
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const debouncedActivity = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateActivity, ACTIVITY_DEBOUNCE);
+    };
+
+    // Track user activity
+    window.addEventListener('mousemove', debouncedActivity);
+    window.addEventListener('keydown', debouncedActivity);
+    window.addEventListener('click', debouncedActivity);
+    window.addEventListener('scroll', debouncedActivity);
+    window.addEventListener('touchstart', debouncedActivity);
+
+    // Set initial activity
+    updateActivity();
+
+    // Check inactivity every minute
+    const inactivityCheck = setInterval(() => {
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed >= INACTIVITY_TIMEOUT && logoutRef.current) {
+        logoutRef.current();
+      }
+    }, 60 * 1000);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      clearInterval(inactivityCheck);
+      window.removeEventListener('mousemove', debouncedActivity);
+      window.removeEventListener('keydown', debouncedActivity);
+      window.removeEventListener('click', debouncedActivity);
+      window.removeEventListener('scroll', debouncedActivity);
+      window.removeEventListener('touchstart', debouncedActivity);
+    };
+  }, [authState.isAuthenticated]);
 
   const initializeAuth = useCallback(async () => {
     try {
@@ -249,10 +309,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [authState.accessToken]);
 
+  // Keep ref updated for inactivity timer (avoids stale closure)
+  useEffect(() => {
+    logoutRef.current = logout;
+  });
+
   const refreshAuthToken = useCallback(async (): Promise<boolean> => {
     try {
       const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-      
+
       if (!storedRefreshToken || !isTokenValid(storedRefreshToken)) {
         await logout();
         return false;
@@ -289,11 +354,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkAuthStatus = useCallback(async (): Promise<boolean> => {
     if (!authState.accessToken) return false;
-    
+
     if (!isTokenValid(authState.accessToken)) {
       return await refreshAuthToken();
     }
-    
+
     return true;
   }, [authState.accessToken, refreshAuthToken]);
 
@@ -303,17 +368,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const hasRole = useCallback((role: string | string[]): boolean => {
     if (!authState.user?.role) return false;
-    
+
     const roles = Array.isArray(role) ? role : [role];
     return roles.includes(authState.user.role);
   }, [authState.user?.role]);
 
+  // Legacy compatibility: updateTokens (same as re-login with existing user)
+  const updateTokens = useCallback(async (tokens: TokenData) => {
+    await login(tokens, authState.user || undefined);
+  }, [login, authState.user]);
+
   const contextValue: AuthContextValue = {
     ...authState,
+    // Legacy compatibility aliases
+    userId: authState.user?.id ? parseInt(authState.user.id, 10) || 1 : 1,
+    loading: authState.isLoading,
+    // Actions
     login,
     logout,
     refreshAuthToken,
     updateUser,
+    updateTokens,
     checkAuthStatus,
     hasPermission,
     hasRole,

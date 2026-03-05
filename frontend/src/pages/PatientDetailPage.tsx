@@ -98,7 +98,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
 
   return (
     <WellnessLayout
-      title={detail ? `${detail.firstName} ${detail.lastName}` : 'Patient Details'}
+      title={detail ? `${detail.firstName} ${detail.lastName}` : 'Client Details'}
       showFab={true}
       fabIcon={tab === 1 ? <NoteAddIcon /> : <UploadIcon />}
       fabAction={handleFabClick}
@@ -136,7 +136,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                       {`${detail.firstName} ${detail.lastName}`}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Patient ID: #{detail.id}
+                      Client ID: #{detail.id}
                     </Typography>
                   </Box>
                   
@@ -219,7 +219,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <AssignmentIcon fontSize="small" />
-                      {t('overview', 'Overview')}
+                      Overview
                     </Box>
                   } 
                 />
@@ -227,7 +227,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <CalendarIcon fontSize="small" />
-                      {t('sessions', 'Sessions')}
+                      Sessions
                     </Box>
                   } 
                 />
@@ -235,7 +235,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <FileIcon fontSize="small" />
-                      {t('files', 'Files')}
+                      Files
                     </Box>
                   } 
                 />
@@ -243,7 +243,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PaymentIcon fontSize="small" />
-                      {t('billing', 'Billing')}
+                      Billing
                     </Box>
                   } 
                 />
@@ -252,7 +252,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
               {tab === 0 && (
                 <Box sx={{ p: 4 }}>
                   <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                    Patient Overview
+                    Client Overview
                   </Typography>
                   <Grid container spacing={3}>
                     <Grid item xs={12} sm={6} md={3}>
@@ -265,7 +265,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                             {detail?.totalSessions || 0}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {t('totalSessions', 'Total Sessions')}
+                            Total Sessions
                           </Typography>
                         </CardContent>
                       </Card>
@@ -282,7 +282,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                               : 'N/A'}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {t('lastSession', 'Last Session')}
+                            Last Session
                           </Typography>
                         </CardContent>
                       </Card>
@@ -363,7 +363,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                                 </Box>
                               </Box>
                               <IconButton 
-                                aria-label={t('viewNote', 'View Note')} 
+                                aria-label="View Note"
                                 size="small"
                                 onClick={() => navigate(`/sessions/${s.id}`)}
                               >
@@ -381,7 +381,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
               {tab === 2 && (
                 <Box sx={{ p: 4 }}>
                   <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                    Patient Files ({files.length})
+                    Client Files ({files.length})
                   </Typography>
                   {files.length === 0 ? (
                     <Box sx={{ 
@@ -426,7 +426,7 @@ const PatientDetailPage: React.FC<{ id: number }> = ({ id }) => {
                                 </Box>
                               </Box>
                               <IconButton 
-                                aria-label={t('download', 'Download')} 
+                                aria-label="Download"
                                 href={f.url} 
                                 size="small"
                                 component="a"

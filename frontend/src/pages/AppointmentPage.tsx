@@ -12,13 +12,18 @@ import {
   Alert,
   Skeleton,
   useMediaQuery,
+  Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import PageAppBar from '../components/PageAppBar';
 import SessionRecorder from '../components/SessionRecorder';
 import AppointmentRecordingManager from '../components/AppointmentRecordingManager';
+import TherapistNotes from '../components/TherapistNotes';
+import PatientCommunication from '../components/PatientCommunication';
 import { MeetingTypeToggle } from '../components/appointments/MeetingTypeToggle';
+import { VoiceNoteList, VoiceNoteButton, VoiceNoteEditor, VoiceNotePlayer } from '../components/voice-notes';
+import { VoiceNote } from '../api/voiceNotes';
 import { theme } from '../theme';
 import * as RBC from 'react-big-calendar';
 const Calendar = RBC.Calendar as React.ComponentType<any>;
@@ -55,14 +60,18 @@ interface DetailProps {
   onAppointmentUpdate?: (updatedAppointment: Appointment) => void;
 }
 
-const AppointmentDetail: React.FC<DetailProps> = ({ 
-  appointment, 
-  open, 
-  onClose, 
-  onAppointmentUpdate 
+const AppointmentDetail: React.FC<DetailProps> = ({
+  appointment,
+  open,
+  onClose,
+  onAppointmentUpdate
 }) => {
-  const { t } = useTranslation();
+  const { t, translations } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [voiceNotesRefreshKey, setVoiceNotesRefreshKey] = useState(0);
+  const [selectedVoiceNote, setSelectedVoiceNote] = useState<VoiceNote | null>(null);
+  const [voiceNoteEditorOpen, setVoiceNoteEditorOpen] = useState(false);
+  const [voiceNotePlayerOpen, setVoiceNotePlayerOpen] = useState(false);
 
   // Mock meeting configuration based on appointment data
   const getMeetingConfig = (apt: Appointment) => ({
@@ -93,7 +102,7 @@ const AppointmentDetail: React.FC<DetailProps> = ({
     try {
       // Mock API call to change meeting type
       console.log('Changing meeting type:', { appointmentId, newType, config });
-      
+
       // Simulate API response
       const updatedAppointment = {
         ...appointment!,
@@ -137,13 +146,13 @@ const AppointmentDetail: React.FC<DetailProps> = ({
       <Box sx={{ width: 500, p: 2, maxHeight: '100vh', overflow: 'auto' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
           <Typography variant="h5" fontWeight={600}>
-            {t.nav.appointments} Details
+            {t('nav.appointments')} Details
           </Typography>
           <IconButton onClick={onClose} aria-label="close">
             <CloseIcon />
           </IconButton>
         </Box>
-        
+
         {appointment ? (
           <Box display="flex" flexDirection="column" gap={3}>
             <Box>
@@ -165,7 +174,7 @@ const AppointmentDetail: React.FC<DetailProps> = ({
               onMeetingTypeChange={handleMeetingTypeChange}
               onRecordingSettingsChange={handleRecordingSettingsChange}
             />
-            
+
             {/* Comprehensive Recording Management */}
             <AppointmentRecordingManager
               appointmentId={appointment.id.toString()}
@@ -193,18 +202,22 @@ const AppointmentDetail: React.FC<DetailProps> = ({
               onRecordingAdded={(recording) => {
                 console.log('Recording added:', recording);
                 // Update appointment recordings list
-                setAppointment(prev => prev ? {
-                  ...prev,
-                  recordings: [...(prev.recordings || []), recording]
-                } : null);
+                if (onAppointmentUpdate && appointment) {
+                  onAppointmentUpdate({
+                    ...appointment,
+                    recordings: [...(appointment.recordings || []), recording]
+                  });
+                }
               }}
               onSummaryGenerated={(summary) => {
                 console.log('AI Summary generated:', summary);
                 // Update appointment with AI summary
-                setAppointment(prev => prev ? {
-                  ...prev,
-                  aiSummary: summary
-                } : null);
+                if (onAppointmentUpdate && appointment) {
+                  onAppointmentUpdate({
+                    ...appointment,
+                    aiSummary: summary
+                  });
+                }
               }}
               canManageRecordings={(() => {
                 try {
@@ -217,6 +230,48 @@ const AppointmentDetail: React.FC<DetailProps> = ({
               })()}
               maxFileSize={500} // 500MB max file size
             />
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Voice Notes Section */}
+            <Box>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                {translations.voiceNotes?.title || 'Voice Notes'}
+              </Typography>
+              <VoiceNoteList
+                appointmentId={appointment.id.toString()}
+                refreshKey={voiceNotesRefreshKey}
+                onPlay={(note) => {
+                  setSelectedVoiceNote(note);
+                  setVoiceNotePlayerOpen(true);
+                }}
+                onEdit={(note) => {
+                  setSelectedVoiceNote(note);
+                  setVoiceNoteEditorOpen(true);
+                }}
+              />
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <TherapistNotes
+              entityId={appointment.id.toString()}
+              entityType="appointment"
+            />
+
+            <Divider sx={{ my: 2 }} />
+
+            <PatientCommunication
+              patientId={appointment.clientId?.toString() || 'unknown'}
+              currentUserId={(() => {
+                try {
+                  const userData = localStorage.getItem('user') || localStorage.getItem('clinic_user');
+                  return userData ? JSON.parse(userData).id : 'current-user-id';
+                } catch {
+                  return 'current-user-id';
+                }
+              })()}
+            />
           </Box>
         ) : (
           <Box display="flex" flexDirection="column" gap={2}>
@@ -225,6 +280,27 @@ const AppointmentDetail: React.FC<DetailProps> = ({
             <Skeleton variant="rectangular" width="100%" height={150} />
           </Box>
         )}
+
+        {/* Voice Note Editor Dialog */}
+        <VoiceNoteEditor
+          open={voiceNoteEditorOpen}
+          onClose={() => {
+            setVoiceNoteEditorOpen(false);
+            setSelectedVoiceNote(null);
+          }}
+          voiceNote={selectedVoiceNote}
+          onSaved={() => setVoiceNotesRefreshKey(k => k + 1)}
+        />
+
+        {/* Voice Note Player Dialog */}
+        <VoiceNotePlayer
+          open={voiceNotePlayerOpen}
+          onClose={() => {
+            setVoiceNotePlayerOpen(false);
+            setSelectedVoiceNote(null);
+          }}
+          voiceNote={selectedVoiceNote}
+        />
       </Box>
     </Drawer>
   );
@@ -240,8 +316,8 @@ const AppointmentPage: React.FC = () => {
   const isMobile = useMediaQuery('(max-width:600px)');
 
   const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
-    setAppointments(prev => 
-      prev.map(apt => 
+    setAppointments(prev =>
+      prev.map(apt =>
         apt.id === updatedAppointment.id ? updatedAppointment : apt
       )
     );
@@ -250,7 +326,7 @@ const AppointmentPage: React.FC = () => {
 
   useEffect(() => {
     setLoading(true);
-    getAppointments({ therapistId: 1, view: 'calendar' })
+    getAppointments({ coachId: '1', view: 'calendar' })
       .then((data) => {
         setAppointments(data);
         setError('');
@@ -274,7 +350,7 @@ const AppointmentPage: React.FC = () => {
       <Box sx={{ p: 2 }}>
         {error && <Alert severity="error">{error}</Alert>}
         <Tabs value={tab} onChange={(_, v) => setTab(v)} aria-label="appointment tabs">
-          <Tab label={t.nav.calendar} />
+          <Tab label={t('nav.calendar')} />
           <Tab label="List View" />
         </Tabs>
         {loading ? (
@@ -306,9 +382,9 @@ const AppointmentPage: React.FC = () => {
             )}
           </>
         )}
-        <AppointmentDetail 
-          appointment={selected} 
-          open={Boolean(selected)} 
+        <AppointmentDetail
+          appointment={selected}
+          open={Boolean(selected)}
           onClose={() => setSelected(null)}
           onAppointmentUpdate={handleAppointmentUpdate}
         />

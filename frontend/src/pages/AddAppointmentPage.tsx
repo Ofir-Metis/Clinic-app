@@ -11,6 +11,12 @@ import {
   Typography,
   Avatar,
   Grid,
+  FormControlLabel,
+  Switch,
+  Alert,
+  Divider,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   EventAvailable as EventIcon,
@@ -18,41 +24,63 @@ import {
   Schedule as ScheduleIcon,
   Notes as NotesIcon,
   MedicalServices as ServiceIcon,
+  VideoCall as VideoCallIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
+import { getDatePickerLocale } from '../locales/datePickerLocale';
 import { useTranslation } from '../contexts/LanguageContext';
 import { scheduleAppointment } from '../api/appointments';
 import WellnessLayout from '../layouts/WellnessLayout';
+
+type MeetingType = 'in-person' | 'online';
 
 /**
  * Page for scheduling a new appointment.
  */
 const AddAppointmentPage: React.FC = () => {
-  const { t } = useTranslation();
-  const [patientId, setPatientId] = useState('');
+  const { translations: t, language } = useTranslation();
+  const { adapterLocale, localeText } = getDatePickerLocale(language);
+  const theme = useTheme();
+  const [clientId, setClientId] = useState('');
   const [datetime, setDatetime] = useState<Date | null>(new Date());
-  const [serviceType, setServiceType] = useState('consultation');
+  const [sessionType, setSessionType] = useState('consultation');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
 
+  // Meeting configuration state
+  const [meetingType, setMeetingType] = useState<MeetingType>('in-person');
+  const [googleMeetEnabled, setGoogleMeetEnabled] = useState(true);
+  const [location, setLocation] = useState('');
+
+  const isOnline = meetingType === 'online';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientId || !datetime) return;
+    if (!clientId || !datetime) return;
+    if (!isOnline && !location.trim()) return; // Location required for in-person
+
     setSaving(true);
     try {
       await scheduleAppointment({
-        patientId: Number(patientId),
+        patientId: Number(clientId),
         datetime: datetime.toISOString(),
-        serviceType,
+        serviceType: sessionType,
         notes,
+        meetingType,
+        location: isOnline ? undefined : location,
+        googleMeetEnabled: isOnline ? googleMeetEnabled : false,
       });
-      setSnack(t('appointmentSaved', 'Appointment saved'));
-      setPatientId('');
+      setSnack(t.addAppointmentPage.appointmentSaved);
+      setClientId('');
       setNotes('');
+      setLocation('');
+      setMeetingType('in-person');
+      setGoogleMeetEnabled(true);
     } catch {
-      setSnack(t('saveFailed', 'Save failed'));
+      setSnack(t.addAppointmentPage.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -60,17 +88,17 @@ const AddAppointmentPage: React.FC = () => {
 
   return (
     <WellnessLayout
-      title="Schedule Appointment"
+      title={t.addAppointmentPage.title}
       showFab={false}
     >
       {/* Header Section */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Avatar sx={{ 
-          width: 80, 
-          height: 80, 
-          bgcolor: 'secondary.main', 
-          mx: 'auto', 
-          mb: 2 
+        <Avatar sx={{
+          width: 80,
+          height: 80,
+          bgcolor: 'secondary.main',
+          mx: 'auto',
+          mb: 2
         }}>
           <EventIcon sx={{ fontSize: 40 }} />
         </Avatar>
@@ -86,10 +114,10 @@ const AddAppointmentPage: React.FC = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          📅 Schedule New Appointment
+          {t.addAppointmentPage.heading}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Book a therapy session with your client
+          {t.addAppointmentPage.subtitle}
         </Typography>
       </Box>
 
@@ -101,28 +129,32 @@ const AddAppointmentPage: React.FC = () => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label={t('patientId', 'Patient ID')}
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  placeholder="Enter patient ID or search by name"
+                  label={t.addAppointmentPage.clientId}
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder={t.addAppointmentPage.clientIdPlaceholder}
                   InputProps={{
                     startAdornment: <PersonIcon sx={{ mr: 1, color: 'action.active' }} />
                   }}
                 />
               </Grid>
               <Grid item xs={12}>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <LocalizationProvider
+                  dateAdapter={AdapterDateFns}
+                  adapterLocale={adapterLocale}
+                  localeText={localeText}
+                >
                   <DateTimePicker
-                    label={t('datetime', 'Date & Time')}
+                    label={t.addAppointmentPage.datetime}
                     value={datetime}
                     onChange={(val) => setDatetime(val)}
-                    slotProps={{ 
-                      textField: { 
+                    slotProps={{
+                      textField: {
                         fullWidth: true,
                         InputProps: {
                           startAdornment: <ScheduleIcon sx={{ mr: 1, color: 'action.active' }} />
                         }
-                      } 
+                      }
                     }}
                   />
                 </LocalizationProvider>
@@ -131,29 +163,172 @@ const AddAppointmentPage: React.FC = () => {
                 <TextField
                   select
                   fullWidth
-                  label={t('serviceType', 'Session Type')}
-                  value={serviceType}
-                  onChange={(e) => setServiceType(e.target.value)}
+                  label={t.addAppointmentPage.sessionType}
+                  value={sessionType}
+                  onChange={(e) => setSessionType(e.target.value)}
                   InputProps={{
                     startAdornment: <ServiceIcon sx={{ mr: 1, color: 'action.active' }} />
                   }}
                 >
-                  <MenuItem value="consultation">Initial Consultation</MenuItem>
-                  <MenuItem value="therapy">Individual Therapy</MenuItem>
-                  <MenuItem value="group">Group Therapy</MenuItem>
-                  <MenuItem value="family">Family Therapy</MenuItem>
-                  <MenuItem value="followup">Follow-up Session</MenuItem>
+                  <MenuItem value="consultation">{t.addAppointmentPage.sessionTypes.consultation}</MenuItem>
+                  <MenuItem value="coaching">{t.addAppointmentPage.sessionTypes.coaching}</MenuItem>
+                  <MenuItem value="group">{t.addAppointmentPage.sessionTypes.group}</MenuItem>
+                  <MenuItem value="family">{t.addAppointmentPage.sessionTypes.family}</MenuItem>
+                  <MenuItem value="followup">{t.addAppointmentPage.sessionTypes.followup}</MenuItem>
                 </TextField>
               </Grid>
+
+              {/* Meeting Configuration Section */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="h6" sx={{ mt: 2, mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {isOnline ? <VideoCallIcon color="primary" /> : <LocationIcon color="secondary" />}
+                  {t.addAppointmentPage.meetingConfiguration}
+                </Typography>
+              </Grid>
+
+              {/* Meeting Type Toggle */}
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          backgroundColor: isOnline
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.secondary.main, 0.15),
+                          color: isOnline ? theme.palette.primary.main : theme.palette.secondary.main,
+                        }}
+                      >
+                        {isOnline ? <VideoCallIcon /> : <LocationIcon />}
+                      </Box>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight={600}>
+                          {isOnline ? t.addAppointmentPage.onlineMeeting : t.addAppointmentPage.inPersonMeeting}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {isOnline
+                            ? t.addAppointmentPage.meetingTypes.online
+                            : t.addAppointmentPage.meetingTypes.inPerson}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={isOnline}
+                          onChange={(e) => setMeetingType(e.target.checked ? 'online' : 'in-person')}
+                          color="primary"
+                        />
+                      }
+                      label=""
+                      sx={{ m: 0 }}
+                    />
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Google Meet Toggle (for online meetings) */}
+              {isOnline && (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderRadius: 2,
+                      backgroundColor: alpha(theme.palette.info.main, 0.04),
+                      border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: googleMeetEnabled ? 2 : 0 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1,
+                            backgroundColor: googleMeetEnabled
+                              ? alpha('#4285F4', 0.15)
+                              : alpha(theme.palette.grey[500], 0.15),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <img
+                            src="https://www.gstatic.com/meet/google_meet_horizontal_wordmark_2020q4_1x_icon_124_40_2373e79660dabbf194273d27aa7ee1f5.png"
+                            alt="Google Meet"
+                            style={{ height: 20, opacity: googleMeetEnabled ? 1 : 0.5 }}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </Box>
+                        <Box>
+                          <Typography variant="subtitle1" fontWeight={600}>
+                            {t.addAppointmentPage.googleMeet.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t.addAppointmentPage.googleMeet.enabled}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={googleMeetEnabled}
+                            onChange={(e) => setGoogleMeetEnabled(e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label=""
+                        sx={{ m: 0 }}
+                      />
+                    </Box>
+                    {googleMeetEnabled && (
+                      <Alert severity="info" sx={{ borderRadius: 2 }}>
+                        <Typography variant="body2">
+                          {t.addAppointmentPage.googleMeet.willGenerate}
+                        </Typography>
+                      </Alert>
+                    )}
+                  </Box>
+                </Grid>
+              )}
+
+              {/* Location Field (for in-person meetings) */}
+              {!isOnline && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    required
+                    label={t.addAppointmentPage.location}
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder={t.addAppointmentPage.locationPlaceholder}
+                    InputProps={{
+                      startAdornment: <LocationIcon sx={{ mr: 1, color: 'action.active' }} />
+                    }}
+                  />
+                </Grid>
+              )}
+
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  label={t('notes', 'Session Notes')}
+                  label={t.addAppointmentPage.notes}
                   multiline
                   rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add any special instructions or notes for this session..."
+                  placeholder={t.addAppointmentPage.notesPlaceholder}
                   InputProps={{
                     startAdornment: <NotesIcon sx={{ mr: 1, color: 'action.active', alignSelf: 'flex-start', mt: 1 }} />
                   }}
@@ -166,22 +341,22 @@ const AddAppointmentPage: React.FC = () => {
                     variant="contained"
                     size="large"
                     fullWidth
-                    disabled={saving || !patientId || !datetime}
+                    disabled={saving || !clientId || !datetime || (!isOnline && !location.trim())}
                     startIcon={<EventIcon />}
                     sx={{ height: 56 }}
                   >
-                    {t('submit', 'Schedule Appointment')}
+                    {t.addAppointmentPage.scheduleButton}
                   </Button>
                   {saving && (
-                    <CircularProgress 
-                      size={24} 
-                      sx={{ 
-                        position: 'absolute', 
-                        top: '50%', 
-                        left: '50%', 
-                        mt: -1.5, 
-                        ml: -1.5 
-                      }} 
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        mt: -1.5,
+                        ml: -1.5
+                      }}
                     />
                   )}
                 </Box>
@@ -191,7 +366,7 @@ const AddAppointmentPage: React.FC = () => {
         </CardContent>
       </Card>
       </Box>
-      
+
       <Snackbar
         open={Boolean(snack)}
         autoHideDuration={4000}

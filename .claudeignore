@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.yarn/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Test artifacts
+coverage/
+frontend/coverage/
+test-results/
+test-results-old-*/
+playwright-report/
+frontend/test-results/
+
+# Generated reports
+qa-reports/
+*.json.gz
+
+# Docker volumes and data
+.docker-data/
+postgres-data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large binary files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.webp
+*.mp3
+*.mp4
+*.wav
+
+# Lock files (large, low value for context)
+yarn.lock
+package-lock.json
+
+# Env files (security)
+.env
+.env.*
+!.env.example
+
+# Temporary scripts at root level
+seed-data.js
+truncate.js
+debug-*.js
+inspect-*.js
+check-db-schema.js
+create-client-accounts.js
+ui-populate-*.js
+simple-*.js
+test-login-data.json

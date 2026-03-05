@@ -18,6 +18,7 @@ import 'react-quill/dist/quill.snow.css';
 import { getTherapistProfile, updateTherapistProfile, TherapistProfile } from '../api/therapist';
 import { logger } from '../logger';
 import { theme } from '../theme';
+import DOMPurify from 'dompurify';
 
 function getUserIdFromToken(): number | null {
   const token = localStorage.getItem('token');
@@ -33,11 +34,43 @@ function getUserIdFromToken(): number | null {
 const TherapistProfilePage: React.FC<{ id: number }> = ({ id }) => {
   const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<TherapistProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [edit, setEdit] = useState(false);
   const [snack, setSnack] = useState<string | null>(null);
 
   useEffect(() => {
-    getTherapistProfile(id).then(setProfile);
+    setLoading(true);
+    setError(false);
+    getTherapistProfile(id)
+      .then(setProfile)
+      .catch((err) => {
+        // If API returns 404, create a default profile (API not yet implemented)
+        if (err?.response?.status === 404) {
+          const savedUser = localStorage.getItem('user') || localStorage.getItem('clinic_user');
+          let userData = { name: '', email: '' };
+          try {
+            if (savedUser) userData = JSON.parse(savedUser);
+          } catch {}
+          setProfile({
+            id,
+            userId: id,
+            firstName: userData.name?.split(' ')[0] || 'User',
+            lastName: userData.name?.split(' ').slice(1).join(' ') || '',
+            name: userData.name || 'User Profile',
+            email: userData.email || '',
+            title: 'Coach',
+            bio: '<p>Welcome to your profile page. This feature is coming soon!</p>',
+            media: [],
+            specializations: [],
+            languages: ['Hebrew', 'English'],
+            availability: {},
+          });
+        } else {
+          setError(true);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   const isOwner = profile?.userId === getUserIdFromToken();
@@ -54,7 +87,27 @@ const TherapistProfilePage: React.FC<{ id: number }> = ({ id }) => {
     }
   };
 
-  if (!profile) return null;
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography>Loading profile...</Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography color="error">Failed to load profile</Typography>
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -100,7 +153,7 @@ const TherapistProfilePage: React.FC<{ id: number }> = ({ id }) => {
             {edit ? (
               <ReactQuill value={profile.bio} onChange={(v) => setProfile({ ...profile, bio: v })} />
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: profile.bio }} />
+              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(profile.bio) }} />
             )}
           </Grid>
         </Grid>

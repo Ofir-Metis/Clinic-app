@@ -13,7 +13,7 @@ import { RecordingChunk } from './recording-chunk.entity';
   imports: [
     TypeOrmModule.forFeature([RecordingUpload, RecordingChunk]),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'default-secret',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '24h' },
     })
   ],

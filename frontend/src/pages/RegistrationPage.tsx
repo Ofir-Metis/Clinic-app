@@ -14,6 +14,8 @@ import {
   FormControlLabel,
   Radio,
   RadioGroup,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
@@ -21,6 +23,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
 import zxcvbn from 'zxcvbn';
+import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../contexts/LanguageContext';
 import { logger } from '../logger';
@@ -43,9 +46,9 @@ const RegistrationPage: React.FC = () => {
 
   // Set page title and meta tags
   usePageTitle({
-    title: 'Register',
-    description: 'Join our wellness coaching platform. Create your account to start your journey toward personal growth and transformation.',
-    keywords: 'register, sign up, wellness coaching, join platform, wellness coach, life coach, personal growth'
+    title: translations.auth?.register?.pageTitle || 'Register',
+    description: translations.auth?.register?.pageDescription || 'Join our wellness coaching platform. Create your account to start your journey toward personal growth and transformation.',
+    keywords: translations.auth?.register?.pageKeywords || 'register, sign up, wellness coaching, join platform, wellness coach, life coach, personal growth'
   });
 
   const formik = useFormik({
@@ -69,8 +72,17 @@ const RegistrationPage: React.FC = () => {
         logger.debug('register success');
         
         // Create user object from registration data
+        // Extract ID from JWT token (sub field contains user ID)
+        let userId = '0';
+        try {
+          const decoded = jwtDecode<{ sub: number | string }>(response.data.access_token);
+          userId = decoded.sub?.toString() || '0';
+        } catch (e) {
+          logger.warn('Failed to decode JWT for user ID', e);
+        }
+
         const userData = {
-          id: 'registered', // Will be updated with real ID if needed
+          id: userId,
           email: values.email,
           role: values.role === 'patient' ? 'client' : 'coach' as 'coach' | 'client',
           name: values.name
@@ -87,7 +99,7 @@ const RegistrationPage: React.FC = () => {
         login(tokens, userData);
 
         // Show success message briefly before redirect
-        setSuccessMessage(`Welcome aboard! Setting up your dashboard...`);
+        setSuccessMessage(translations.ui?.welcomeAboard || 'Welcome aboard! Setting up your dashboard...');
 
         // Delay redirect slightly to show success message
         setTimeout(() => {
@@ -114,10 +126,42 @@ const RegistrationPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           background: 'linear-gradient(135deg, #e0f7fa 0%, #f5f5f5 100%)',
+          position: 'relative',
         }}>
+          {/* Language Switcher */}
+          <Box sx={{
+            position: 'absolute',
+            top: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
+            zIndex: 10,
+          }}>
+            <Select
+              value={i18n.language}
+              onChange={(e) => {
+                const newLang = e.target.value as 'en' | 'es' | 'he';
+                i18n.changeLanguage(newLang);
+              }}
+              size="small"
+              aria-label={translations.ui?.languageSwitcher || "language switcher"}
+              sx={{
+                minWidth: 120,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                '& .MuiSelect-select': {
+                  py: 1,
+                  fontSize: '0.875rem',
+                },
+              }}
+            >
+              <MenuItem value="en">🇺🇸 English</MenuItem>
+              <MenuItem value="es">🇪🇸 Español</MenuItem>
+              <MenuItem value="he">🇮🇱 עברית</MenuItem>
+            </Select>
+          </Box>
           <Box component="form" onSubmit={formik.handleSubmit} sx={{
             p: 4,
             bgcolor: 'rgba(255,255,255,0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
             boxShadow: '0 8px 32px 0 rgba(31,38,135,0.15)',
             borderRadius: 4,
             border: '1px solid rgba(255,255,255,0.18)',
@@ -182,13 +226,39 @@ const RegistrationPage: React.FC = () => {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword((p) => !p)} aria-label="toggle password visibility" edge="end">
+                    <IconButton onClick={() => setShowPassword((p) => !p)} aria-label={translations.ui?.togglePasswordVisibility || "toggle password visibility"} edge="end" sx={{ mr: 0.5 }}>
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
+            {/* Password Strength Indicator */}
+            {formik.values.password && (
+              <Box sx={{ width: '100%', mt: -1, mb: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={strength}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    bgcolor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 3,
+                      bgcolor: strength < 50 ? 'error.main' : strength < 75 ? 'warning.main' : 'success.main',
+                    }
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  {translations.auth?.register?.passwordStrength || 'Password strength'}: {
+                    strength < 25 ? (translations.auth?.register?.strengthWeak || 'Weak') :
+                    strength < 50 ? (translations.auth?.register?.strengthFair || 'Fair') :
+                    strength < 75 ? (translations.auth?.register?.strengthGood || 'Good') :
+                    (translations.auth?.register?.strengthStrong || 'Strong')
+                  }
+                </Typography>
+              </Box>
+            )}
             <TextField
               margin="normal"
               fullWidth
@@ -223,7 +293,7 @@ const RegistrationPage: React.FC = () => {
             </LoadingButton>
             <Box sx={{ textAlign: 'center', my: 2, width: '100%' }}>{translations.auth.register.or}</Box>
             <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-              <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
+              <GoogleLogin onSuccess={() => {}} onError={() => {}} width={400} />
             </Box>
           </Box>
         </Box>

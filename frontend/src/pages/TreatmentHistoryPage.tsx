@@ -97,7 +97,7 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
                 <EventIcon sx={{ fontSize: 32 }} />
               </Avatar>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Treatment Session
+                {t('historyPage.coachingSession') || 'Coaching Session'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {new Date(appointment.startTime).toLocaleDateString('en-US', {
@@ -115,7 +115,7 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <TimeIcon color="action" />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Time</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('historyPage.time') || 'Time'}</Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {new Date(appointment.startTime).toLocaleTimeString([], { 
                       hour: '2-digit', 
@@ -128,7 +128,7 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <PersonIcon color="action" />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Client ID</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('historyPage.clientId') || 'Client ID'}</Typography>
                   <Typography variant="body1" fontWeight={500}>
                     {appointment.clientId}
                   </Typography>
@@ -138,7 +138,7 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <EventIcon color="action" />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Session Type</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('historyPage.sessionType') || 'Session Type'}</Typography>
                   <Chip 
                     label={appointment.type} 
                     size="small" 
@@ -151,7 +151,7 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <NotesIcon color="action" />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Status</Typography>
+                  <Typography variant="body2" color="text.secondary">{t('historyPage.status') || 'Status'}</Typography>
                   <Chip 
                     label={appointment.status} 
                     size="small" 
@@ -165,10 +165,10 @@ const TreatmentDetailDrawer: React.FC<DetailDrawerProps> = ({ id, open, onClose 
             
             <Stack direction="row" spacing={2}>
               <Button variant="contained" fullWidth startIcon={<NotesIcon />}>
-                {t('viewNote', 'View Notes')}
+                {t('historyPage.viewNote')}
               </Button>
               <Button variant="outlined" fullWidth startIcon={<EventIcon />}>
-                {t('reschedule', 'Reschedule')}
+                {t('historyPage.reschedule')}
               </Button>
             </Stack>
           </Stack>
@@ -227,17 +227,17 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
 
   return (
     <WellnessLayout
-      title="Treatment History"
+      title={t('historyPage.title') || 'Session History'}
       showFab={true}
       fabIcon={<AddIcon />}
       fabAction={() => setShowNew(true)}
-      fabAriaLabel="Schedule new appointment"
+      fabAriaLabel={t('historyPage.scheduleNew') || 'Schedule new coaching session'}
     >
       {/* Header Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h4" 
-          sx={{ 
+        <Typography
+          variant="h4"
+          sx={{
             fontWeight: 700,
             mb: 1,
             background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
@@ -246,10 +246,10 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          🕰️ Treatment History
+          {t('historyPage.title') || 'Session History'}
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Comprehensive view of your therapy sessions and appointments
+          {t('historyPage.subtitle') || 'Comprehensive view of your coaching sessions'}
         </Typography>
       </Box>
       {error && (
@@ -277,21 +277,21 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
               },
             }}
           >
-            <Tab 
+            <Tab
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarIcon fontSize="small" />
-                  {t('calendarView', 'Calendar View')}
+                  {t('historyPage.calendarView')}
                 </Box>
-              } 
+              }
             />
-            <Tab 
+            <Tab
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <ListIcon fontSize="small" />
-                  {t('listView', 'List View')}
+                  {t('historyPage.listView')}
                 </Box>
-              } 
+              }
             />
           </Tabs>
         </CardContent>
@@ -344,10 +344,10 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
                   <DataGrid
                     rows={items}
                     columns={[
-                      { 
-                        field: 'date', 
-                        headerName: 'Date', 
-                        flex: 1, 
+                      {
+                        field: 'date',
+                        headerName: t('historyPage.date') || 'Date',
+                        flex: 1,
                         renderCell: ({ row }) => (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <EventIcon fontSize="small" color="action" />
@@ -355,9 +355,9 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
                           </Box>
                         )
                       },
-                      { 
-                        field: 'clientId', 
-                        headerName: 'Client', 
+                      {
+                        field: 'clientId',
+                        headerName: t('historyPage.client') || 'Client',
                         flex: 1,
                         renderCell: (params) => (
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -366,9 +366,9 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
                           </Box>
                         )
                       },
-                      { 
-                        field: 'type', 
-                        headerName: 'Type', 
+                      {
+                        field: 'type',
+                        headerName: t('historyPage.type') || 'Type',
                         flex: 1,
                         renderCell: (params) => (
                           <Chip 
@@ -379,9 +379,9 @@ const TreatmentHistoryPage: React.FC<Props> = ({ user = { id: 1 } }) => {
                           />
                         )
                       },
-                      { 
-                        field: 'status', 
-                        headerName: 'Status', 
+                      {
+                        field: 'status',
+                        headerName: t('historyPage.statusHeader') || 'Status',
                         flex: 1,
                         renderCell: (params) => (
                           <Chip 

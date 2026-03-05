@@ -60,97 +60,48 @@ const LoginPage: React.FC = () => {
         logger.info('login attempt', values.email);
       }
       clearError();
-      
+
       const attemptLogin = async () => {
         try {
           const response = await authLogin(values.email, values.password);
-          
-          // Determine user role and data from the database
-          // Check if this email exists in the user table and get their role
-          let userData = {
-            id: '1',
-            email: values.email,
-            role: 'coach' as const,
-            name: 'Test User'
+
+          // Use user info from login response (auth service now returns user data with login)
+          const userRole = response.user?.roles?.includes('client') ? 'client' :
+            response.user?.roles?.includes('admin') ? 'admin' : 'coach';
+
+          const userData = {
+            id: response.user?.id?.toString() || '0',
+            email: response.user?.email || values.email,
+            role: userRole as 'coach' | 'client' | 'admin',
+            name: response.user?.name || values.email.split('@')[0],
+            // Include coachId for coach users - required for data isolation on dashboard/calendar
+            ...(response.user?.coachId && { coachId: response.user.coachId })
           };
 
-          try {
-            // Try to get user info via API, but use fallback if it fails
-            const userInfoResponse = await api.get(`/auth/user-info?email=${encodeURIComponent(values.email)}`);
-            if (userInfoResponse.data) {
-              userData = {
-                id: userInfoResponse.data.id.toString(),
-                email: userInfoResponse.data.email,
-                role: userInfoResponse.data.roles?.includes('client') ? 'client' : 
-                      userInfoResponse.data.roles?.includes('admin') ? 'admin' : 'coach',
-                name: userInfoResponse.data.name || `${userInfoResponse.data.firstName || ''} ${userInfoResponse.data.lastName || ''}`.trim() || 'User'
-              };
-            }
-          } catch (userInfoError) {
-            // Fallback: determine role based on email patterns
-            if (process.env.NODE_ENV === 'development') {
-              logger.debug('Could not fetch user info, using email-based detection', userInfoError);
-            }
-            
-            // Check if email matches known client patterns
-            const clientEmails = [
-              'blake.brown3@email.com',
-              'aurora.scott4@email.com', 
-              'sebastian.flores5@email.com',
-              'owen.johnson6@email.com',
-              'hazel.young8@email.com',
-              'marcus.campbell9@email.com',
-              'sofia.mitchell10@email.com',
-              'jackson.williams11@email.com',
-              'quinn.torres12@email.com',
-              'marcus.rodriguez13@email.com',
-              'marcus.martinez339@email.com',
-              'owen.miller326@email.com',
-              'violet.davis243@email.com',
-              'carter.gonzalez461@email.com',
-              'nora.moore435@email.com'
-            ];
-            
-            if (clientEmails.includes(values.email)) {
-              userData = {
-                id: '1',
-                email: values.email,
-                role: 'client' as const,
-                name: values.email.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ')
-              };
-            } else if (values.email.includes('@clinic.com')) {
-              // Therapist/coach accounts
-              userData = {
-                id: '1',
-                email: values.email,
-                role: 'coach' as const,
-                name: values.email.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ')
-              };
-            } else {
-              // Default to coach for unknown emails
-              userData = {
-                id: '1',
-                email: values.email,
-                role: 'coach' as const,
-                name: 'User'
-              };
-            }
+          // Validate user ID
+          if (!userData.id || userData.id === '0') {
+            logger.warn('Login succeeded but no user ID returned - data isolation may be compromised');
           }
-          
+
+          // Validate coachId for coach role - critical for proper data filtering
+          if (userRole === 'coach' && !response.user?.coachId) {
+            logger.warn('Coach login succeeded but no coachId returned - dashboard may show incorrect data');
+          }
+
           const tokens = {
             accessToken: response.access_token,
             refreshToken: response.refresh_token || response.access_token,
             expiresIn: 3600
           };
-          
+
           login(tokens, userData);
-          
+
           if (process.env.NODE_ENV === 'development') {
             logger.debug('login success', { role: userData.role });
           }
 
           // Show success message briefly before redirect
-          setSuccessMessage(`Welcome back! Redirecting to your dashboard...`);
+          setSuccessMessage(translations.ui?.welcomeBack || `Welcome back! Redirecting to your dashboard...`);
 
           // Delay redirect slightly to show success message
           setTimeout(() => {
@@ -158,7 +109,7 @@ const LoginPage: React.FC = () => {
             if (userData.role === 'client') {
               navigate('/client/dashboard');
             } else if (userData.role === 'admin') {
-              navigate('/admin/dashboard');
+              navigate('/admin');
             } else {
               // Default to coach/therapist dashboard
               navigate('/dashboard');
@@ -191,9 +142,9 @@ const LoginPage: React.FC = () => {
           py: { xs: 3, sm: 4 },
         }}>
           {/* Language Switcher */}
-          <Box sx={{ 
-            position: 'absolute', 
-            top: { xs: 16, sm: 24 }, 
+          <Box sx={{
+            position: 'absolute',
+            top: { xs: 16, sm: 24 },
             right: { xs: 16, sm: 24 },
             zIndex: 10,
           }}>
@@ -204,7 +155,7 @@ const LoginPage: React.FC = () => {
                 i18n.changeLanguage(newLang);
               }}
               size="small"
-              aria-label="language switcher"
+              aria-label={translations.ui?.languageSwitcher || "language switcher"}
               sx={{
                 minWidth: 120,
                 '& .MuiSelect-select': {
@@ -218,9 +169,9 @@ const LoginPage: React.FC = () => {
               <MenuItem value="he">🇮🇱 עברית</MenuItem>
             </Select>
           </Box>
-          <LoadingOverlay 
-            loading={formik.isSubmitting} 
-            message="Authenticating..."
+          <LoadingOverlay
+            loading={formik.isSubmitting}
+            message={translations.ui?.authenticating || "Authenticating..."}
             variant="overlay"
             backdrop
           >
@@ -234,232 +185,239 @@ const LoginPage: React.FC = () => {
               gap: { xs: 2, sm: 2.5 },
               position: 'relative',
             }}>
-            {/* Welcome Header */}
-            <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
-              <Typography
-                component="h1"
-                variant="h3"
-                sx={{
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
-                  fontWeight: 700,
-                  mb: 1,
-                  background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {translations.auth.login.title}
-              </Typography>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: 'text.secondary',
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  maxWidth: 280,
-                  mx: 'auto',
-                }}
-              >
-                {translations.auth.login.subtitle}
-              </Typography>
-            </Box>
-            {error && (
-              <ErrorAlert
-                error={error}
-                onRetry={() => formik.handleSubmit()}
-                onClose={clearError}
-                showDetails={process.env.NODE_ENV === 'development'}
-                className="login-error-alert"
-              />
-            )}
-            {successMessage && (
-              <Alert
-                severity="success"
-                onClose={() => setSuccessMessage(null)}
-                role="status"
-                aria-live="polite"
+              {/* Welcome Header */}
+              <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 } }}>
+                <Typography
+                  component="h1"
+                  variant="h3"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                    fontWeight: 700,
+                    mb: 1,
+                    background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {translations.auth.login.title}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    maxWidth: 280,
+                    mx: 'auto',
+                  }}
+                >
+                  {translations.auth.login.subtitle}
+                </Typography>
+              </Box>
+              {error && (
+                <ErrorAlert
+                  error={error}
+                  onRetry={() => formik.handleSubmit()}
+                  onClose={clearError}
+                  showDetails={process.env.NODE_ENV === 'development'}
+                  className="login-error-alert"
+                />
+              )}
+              {successMessage && (
+                <Alert
+                  severity="success"
+                  onClose={() => setSuccessMessage(null)}
+                  role="status"
+                  aria-live="polite"
+                  sx={{
+                    mb: 2,
+                    border: '2px solid',
+                    borderColor: 'success.main',
+                    backgroundColor: 'success.light',
+                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)',
+                    '& .MuiAlert-icon': {
+                      fontSize: '1.5rem'
+                    },
+                    '& .MuiAlert-message': {
+                      fontWeight: 600
+                    }
+                  }}
+                >
+                  {successMessage}
+                </Alert>
+              )}
+              <TextField
+                margin="normal"
+                fullWidth
+                id="email"
+                name="email"
+                data-testid="login-email"
+                label={t('auth.login.email')}
+                placeholder={translations.placeholders?.enterEmail || "Enter your email address"}
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+                aria-label="email"
+                size="medium"
+                autoComplete="email"
+                inputProps={{ 'data-testid': 'login-email-input' }}
                 sx={{
                   mb: 2,
-                  border: '2px solid',
-                  borderColor: 'success.main',
-                  backgroundColor: 'success.light',
-                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)',
-                  '& .MuiAlert-icon': {
-                    fontSize: '1.5rem'
-                  },
-                  '& .MuiAlert-message': {
-                    fontWeight: 600
-                  }
-                }}
-              >
-                {successMessage}
-              </Alert>
-            )}
-            <TextField
-              margin="normal"
-              fullWidth
-              id="email"
-              name="email"
-              label={t('auth.login.email')}
-              placeholder="Enter your email address"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
-              aria-label="email"
-              size="medium"
-              autoComplete="email"
-              sx={{
-                mb: 2,
-                // Enhanced error styling
-                ...(formik.touched.email && formik.errors.email && {
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderWidth: '2px',
-                      borderColor: 'error.main',
+                  // Enhanced error styling
+                  ...(formik.touched.email && formik.errors.email && {
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderWidth: '2px',
+                        borderColor: 'error.main',
+                      },
                     },
-                  },
-                  '& .MuiFormHelperText-root': {
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                  }
-                })
-              }}
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              label={t('auth.login.password')}
-              placeholder="Enter your password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              error={formik.touched.password && Boolean(formik.errors.password)}
-              helperText={formik.touched.password && formik.errors.password}
-              aria-label="password"
-              size="medium"
-              autoComplete="current-password"
-              sx={{
-                mb: 1,
-                // Enhanced error styling
-                ...(formik.touched.password && formik.errors.password && {
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderWidth: '2px',
-                      borderColor: 'error.main',
-                    },
-                  },
-                  '& .MuiFormHelperText-root': {
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                  }
-                })
-              }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton 
-                      onClick={() => setShowPassword((p) => !p)} 
-                      aria-label="toggle password visibility" 
-                      edge="end"
-                      sx={{ mr: 0.5 }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Box sx={{ textAlign: 'right', mb: 3, width: '100%' }}>
-              <Link 
-                component={RouterLink} 
-                to="/reset/request" 
-                underline="hover"
-                sx={{ 
-                  fontSize: '0.875rem',
-                  color: 'text.secondary',
-                  '&:hover': { color: 'primary.main' },
+                    '& .MuiFormHelperText-root': {
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                    }
+                  })
                 }}
-              >
-                {t('auth.login.forgotPassword')}
-              </Link>
-            </Box>
-
-            <LoadingButton
-              color="primary" 
-              variant="contained" 
-              type="submit" 
-              fullWidth 
-              loading={formik.isSubmitting}
-              loadingText="Signing in..."
-              aria-label="login" 
-              size="large"
-              sx={{ 
-                mb: 3,
-                py: { xs: 1.5, sm: 1.75 },
-                fontSize: { xs: '1rem', sm: '1.125rem' },
-                height: { xs: 48, sm: 52 },
-              }}
-            >
-              {t('auth.login.loginButton')}
-            </LoadingButton>
-
-            {/* Divider */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              width: '100%', 
-              my: 3,
-            }}>
-              <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
-              <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
-                {translations.auth.login.or}
-              </Typography>
-              <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
-            </Box>
-
-            {/* Google Login */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              width: '100%',
-              mb: 3,
-            }}>
-              <GoogleLogin 
-                onSuccess={() => {}} 
-                onError={() => {}} 
-                width="100%" 
-                theme="outline"
-                size="large"
               />
-            </Box>
+              <TextField
+                margin="normal"
+                fullWidth
+                id="password"
+                name="password"
+                data-testid="login-password"
+                type={showPassword ? 'text' : 'password'}
+                label={t('auth.login.password')}
+                placeholder={translations.placeholders?.enterPassword || "Enter your password"}
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                error={formik.touched.password && Boolean(formik.errors.password)}
+                helperText={formik.touched.password && formik.errors.password}
+                aria-label="password"
+                size="medium"
+                autoComplete="current-password"
+                inputProps={{ 'data-testid': 'login-password-input' }}
+                sx={{
+                  mb: 1,
+                  // Enhanced error styling
+                  ...(formik.touched.password && formik.errors.password && {
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderWidth: '2px',
+                        borderColor: 'error.main',
+                      },
+                    },
+                    '& .MuiFormHelperText-root': {
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                    }
+                  })
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword((p) => !p)}
+                        aria-label={translations.ui?.togglePasswordVisibility || "toggle password visibility"}
+                        edge="end"
+                        sx={{ mr: 0.5 }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Box sx={{ textAlign: 'right', mb: 3, width: '100%' }}>
+                <Link
+                  component={RouterLink}
+                  to="/reset/request"
+                  underline="hover"
+                  data-testid="forgot-password-link"
+                  sx={{
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                  }}
+                >
+                  {t('auth.login.forgotPassword')}
+                </Link>
+              </Box>
 
-            {/* Sign Up Button */}
-            <Box sx={{ textAlign: 'center', width: '100%' }}>
-              <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-                {translations.auth.login.noAccount}
-              </Typography>
-              <Button 
-                component={RouterLink} 
-                to="/register" 
-                color="secondary" 
-                variant="outlined" 
-                fullWidth 
-                aria-label="sign up" 
+              <LoadingButton
+                color="primary"
+                variant="contained"
+                type="submit"
+                fullWidth
+                loading={formik.isSubmitting}
+                loadingText={translations.ui?.signingIn || "Signing in..."}
+                aria-label="login"
+                data-testid="login-submit"
                 size="large"
-                sx={{ 
+                sx={{
+                  mb: 3,
                   py: { xs: 1.5, sm: 1.75 },
                   fontSize: { xs: '1rem', sm: '1.125rem' },
                   height: { xs: 48, sm: 52 },
                 }}
               >
-                {t('auth.login.signUp')}
-              </Button>
+                {t('auth.login.loginButton')}
+              </LoadingButton>
+
+              {/* Divider */}
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+                my: 3,
+              }}>
+                <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
+                <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
+                  {translations.auth.login.or}
+                </Typography>
+                <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
+              </Box>
+
+              {/* Google Login */}
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%',
+                mb: 3,
+              }}>
+                <GoogleLogin
+                  onSuccess={() => { }}
+                  onError={() => { }}
+                  width={400}
+                  theme="outline"
+                  size="large"
+                />
+              </Box>
+
+              {/* Sign Up Button */}
+              <Box sx={{ textAlign: 'center', width: '100%' }}>
+                <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                  {translations.auth.login.noAccount}
+                </Typography>
+                <Button
+                  component={RouterLink}
+                  to="/register"
+                  color="secondary"
+                  variant="outlined"
+                  fullWidth
+                  aria-label="sign up"
+                  data-testid="signup-link"
+                  size="large"
+                  sx={{
+                    py: { xs: 1.5, sm: 1.75 },
+                    fontSize: { xs: '1rem', sm: '1.125rem' },
+                    height: { xs: 48, sm: 52 },
+                  }}
+                >
+                  {t('auth.login.signUp')}
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </LoadingOverlay>
+          </LoadingOverlay>
         </Box>
       </ThemeProvider>
     </GoogleOAuthProvider>

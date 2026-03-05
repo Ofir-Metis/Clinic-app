@@ -168,6 +168,12 @@ export const theme = createTheme({
               background: wellnessColors.glassLight,
               boxShadow: `0 0 0 3px rgba(46, 125, 107, 0.1)`,
             },
+            '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+              WebkitBoxShadow: '0 0 0 100px rgba(46, 125, 107, 0.06) inset',
+              WebkitTextFillColor: '#1a1a1a',
+              caretColor: '#1a1a1a',
+              borderRadius: 'inherit',
+            },
           },
         },
       },

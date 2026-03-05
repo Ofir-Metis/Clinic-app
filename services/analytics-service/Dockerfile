@@ -2,6 +2,7 @@
 # This stage installs all dependencies for the entire monorepo.
 FROM node:20-alpine AS deps
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 
 # IMPORTANT: Copy the root tsconfig.json first, so the build stage can access it.
 COPY tsconfig.base.json ./
@@ -19,7 +20,7 @@ COPY frontend ./frontend
 
 # Install all dependencies
 # Using a mirror can speed things up.
-RUN yarn config set registry https://registry.npmmirror.com
+RUN yarn config set registry https://registry.yarnpkg.com
 RUN yarn config set network-timeout 600000 -g
 # Skip Puppeteer Chrome download during Docker build
 ENV PUPPETEER_SKIP_DOWNLOAD=true

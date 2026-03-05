@@ -50,7 +50,7 @@ export class NotifierService {
       subject: "You've been invited",
       html: `<a href="${inviteLink}">Register</a>`,
     });
-    if (client.whatsappOptIn && client.phone) {
+    if (client.phone) {
       if (this.twilio) {
         this.logger.log(`Sending WhatsApp invitation to ${client.phone}`);
         try {

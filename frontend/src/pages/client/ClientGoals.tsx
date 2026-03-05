@@ -206,7 +206,7 @@ const STATUS_COLORS = {
 
 const ClientGoals: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
   
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -216,8 +216,10 @@ const ClientGoals: React.FC = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showGoalDetails, setShowGoalDetails] = useState(false);
+  const [showUpdateProgress, setShowUpdateProgress] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [createStep, setCreateStep] = useState(0);
+  const [progressUpdate, setProgressUpdate] = useState({ progress: 0, notes: '' });
   
   const [newGoal, setNewGoal] = useState<Partial<Goal>>({
     title: '',
@@ -546,15 +548,49 @@ const ClientGoals: React.FC = () => {
     }
   };
 
+  const handleViewGoalDetails = (goal: Goal) => {
+    setSelectedGoal(goal);
+    setShowGoalDetails(true);
+  };
+
+  const handleUpdateProgress = () => {
+    setShowUpdateProgress(true);
+  };
+
+  const handleSaveProgressUpdate = async () => {
+    try {
+      // TODO: Save progress update via API
+      console.log('Saving progress update:', progressUpdate);
+      setShowUpdateProgress(false);
+      setProgressUpdate({ progress: 0, notes: '' });
+      await loadGoals();
+    } catch (error) {
+      console.error('Failed to save progress update:', error);
+    }
+  };
+
+  const handleCompleteGoal = async (goalId: string) => {
+    try {
+      // TODO: Complete goal via API
+      console.log('Completing goal:', goalId);
+      await loadGoals();
+    } catch (error) {
+      console.error('Failed to complete goal:', error);
+    }
+  };
+
   const renderGoalCard = (goal: Goal) => (
     <Card
       key={goal.id}
+      data-testid={`goal-card-${goal.id}`}
+      onClick={() => handleViewGoalDetails(goal)}
       sx={{
         background: alpha(theme.palette.background.paper, 0.85),
         backdropFilter: 'blur(20px)',
         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         borderRadius: 3,
         transition: 'all 0.3s ease',
+        cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: `0 12px 40px ${alpha(theme.palette.primary.main, 0.15)}`
@@ -581,6 +617,16 @@ const ClientGoals: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Chip
+                label={categoryConfig[goal.category]?.label || goal.category}
+                size="small"
+                data-testid="goal-category"
+                sx={{
+                  borderColor: getCategoryColor(goal.category),
+                  color: getCategoryColor(goal.category)
+                }}
+                variant="outlined"
+              />
+              <Chip
                 label={goal.status}
                 size="small"
                 color={getStatusColor(goal.status) as any}
@@ -595,7 +641,7 @@ const ClientGoals: React.FC = () => {
                 }}
                 variant="outlined"
               />
-              {goal.isSmartGoal && (
+              {goal.smartCriteria && Object.values(goal.smartCriteria).every(Boolean) && (
                 <Chip
                   label="SMART"
                   size="small"
@@ -606,10 +652,23 @@ const ClientGoals: React.FC = () => {
             </Box>
           </Box>
           <Box>
-            <IconButton size="small" onClick={() => handleEditGoal(goal)}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditGoal(goal);
+              }}
+            >
               <EditIcon />
             </IconButton>
-            <IconButton size="small" onClick={() => handleDeleteGoal(goal.id)} color="error">
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteGoal(goal.id);
+              }}
+              color="error"
+            >
               <DeleteIcon />
             </IconButton>
           </Box>
@@ -754,7 +813,7 @@ const ClientGoals: React.FC = () => {
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2 }}>
-        <Stepper activeStep={currentStep} sx={{ mb: 4 }}>
+        <Stepper activeStep={createStep} sx={{ mb: 4 }}>
           {createGoalSteps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -769,7 +828,7 @@ const ClientGoals: React.FC = () => {
               fullWidth
               label={t.goals.client.create.goalTitle}
               value={newGoal.title || ''}
-              onChange={(e) => setGoalForm(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) => setNewGoal(prev => ({ ...prev, title: e.target.value }))}
               placeholder={t.goals.client.create.goalPlaceholder || 'What do you want to achieve?'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
@@ -780,7 +839,7 @@ const ClientGoals: React.FC = () => {
               rows={3}
               label={t.goals.client.create.description}
               value={newGoal.description || ''}
-              onChange={(e) => setGoalForm(prev => ({ ...prev, description: e.target.value }))}
+              onChange={(e) => setNewGoal(prev => ({ ...prev, description: e.target.value }))}
               placeholder={t.goals.client.create.descriptionPlaceholder || 'Describe your goal in detail...'}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
@@ -792,7 +851,7 @@ const ClientGoals: React.FC = () => {
                   <Select
                     value={newGoal.category}
                     label={t.goals.client.create.category}
-                    onChange={(e) => setGoalForm(prev => ({ ...prev, category: e.target.value as GoalCategory }))}
+                    onChange={(e) => setNewGoal(prev => ({ ...prev, category: e.target.value as GoalCategory }))}
                     sx={{ borderRadius: 2 }}
                   >
                     {Object.entries(categoryConfig).map(([key, cat]) => (
@@ -813,7 +872,7 @@ const ClientGoals: React.FC = () => {
                   <Select
                     value={newGoal.priority}
                     label={t.goals.client.create.priority}
-                    onChange={(e) => setGoalForm(prev => ({ ...prev, priority: e.target.value as GoalPriority }))}
+                    onChange={(e) => setNewGoal(prev => ({ ...prev, priority: e.target.value as GoalPriority }))}
                     sx={{ borderRadius: 2 }}
                   >
                     <MenuItem value={GoalPriority.Low}>{t.goals.client.priorities.low}</MenuItem>
@@ -830,7 +889,7 @@ const ClientGoals: React.FC = () => {
               type="date"
               label={t.goals.client.create.targetDate}
               value={newGoal.targetDate ? new Date(newGoal.targetDate).toISOString().split('T')[0] : ''}
-              onChange={(e) => setGoalForm(prev => ({ ...prev, targetDate: e.target.value }))}
+              onChange={(e) => setNewGoal(prev => ({ ...prev, targetDate: new Date(e.target.value) }))}
               InputLabelProps={{ shrink: true }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
@@ -848,64 +907,71 @@ const ClientGoals: React.FC = () => {
               {t.goals.client.create.milestonesSubtitle || 'Milestones help you track progress and maintain motivation. Add 2-5 key checkpoints.'}
             </Typography>
 
-            {(newGoal.milestones || []).map((milestone, index) => (
-              <Card key={milestone.id} sx={{ p: 2, bgcolor: alpha(theme.palette.primary.light, 0.05) }}>
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label={t.goals.client.create.milestoneTitle || 'Milestone Title'}
-                      value={milestone.title}
-                      onChange={(e) => {
-                        const newMilestones = [...(newGoal.milestones || [])];
-                        newMilestones[index].title = e.target.value;
-                        setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
-                      }}
-                    />
+            {(newGoal.milestones || []).map((milestone, index) => {
+              // Ensure targetDate is a Date object
+              const targetDate = milestone.targetDate instanceof Date
+                ? milestone.targetDate
+                : new Date(milestone.targetDate);
+
+              return (
+                <Card key={milestone.id} sx={{ p: 2, bgcolor: alpha(theme.palette.primary.light, 0.05) }}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label={t.goals.client.create.milestoneTitle || 'Milestone Title'}
+                        value={milestone.title}
+                        onChange={(e) => {
+                          const newMilestones = [...(newGoal.milestones || [])];
+                          newMilestones[index].title = e.target.value;
+                          setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label={t.goals.client.create.description}
+                        value={milestone.description}
+                        onChange={(e) => {
+                          const newMilestones = [...(newGoal.milestones || [])];
+                          newMilestones[index].description = e.target.value;
+                          setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="date"
+                        label={t.goals.client.create.targetDate}
+                        value={targetDate.toISOString().split('T')[0]}
+                        onChange={(e) => {
+                          const newMilestones = [...(newGoal.milestones || [])];
+                          newMilestones[index].targetDate = new Date(e.target.value);
+                          setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={1}>
+                      <IconButton
+                        color="error"
+                        onClick={() => {
+                          const newMilestones = (newGoal.milestones || []).filter((_, i) => i !== index);
+                          setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Grid>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label={t.goals.client.create.description}
-                      value={milestone.description}
-                      onChange={(e) => {
-                        const newMilestones = [...(newGoal.milestones || [])];
-                        newMilestones[index].description = e.target.value;
-                        setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={3}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="date"
-                      label={t.goals.client.create.targetDate}
-                      value={milestone.targetDate.toISOString().split('T')[0]}
-                      onChange={(e) => {
-                        const newMilestones = [...(newGoal.milestones || [])];
-                        newMilestones[index].targetDate = new Date(e.target.value);
-                        setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={1}>
-                    <IconButton
-                      color="error"
-                      onClick={() => {
-                        const newMilestones = (newGoal.milestones || []).filter((_, i) => i !== index);
-                        setNewGoal(prev => ({ ...prev, milestones: newMilestones }));
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
 
             <Button
               variant="outlined"
@@ -916,7 +982,8 @@ const ClientGoals: React.FC = () => {
                   title: '',
                   description: '',
                   targetDate: newGoal.targetDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                  isCompleted: false
+                  isCompleted: false,
+                  order: (newGoal.milestones || []).length + 1
                 };
                 setNewGoal(prev => ({ ...prev, milestones: [...(prev.milestones || []), newMilestone] }));
               }}
@@ -1038,6 +1105,364 @@ const ClientGoals: React.FC = () => {
     </Dialog>
   );
 
+  const renderGoalDetailsDialog = () => {
+    if (!selectedGoal) return null;
+
+    return (
+      <Dialog
+        open={showGoalDetails}
+        onClose={() => {
+          setShowGoalDetails(false);
+          setSelectedGoal(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: getCategoryColor(selectedGoal.category) }}>
+                {getCategoryIcon(selectedGoal.category)}
+              </Avatar>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                  {selectedGoal.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {categoryConfig[selectedGoal.category]?.label || selectedGoal.category}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton
+              onClick={() => {
+                setShowGoalDetails(false);
+                setSelectedGoal(null);
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 2 }}>
+          <Stack spacing={3}>
+            {/* Status and Progress */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Chip
+                  label={selectedGoal.status}
+                  size="small"
+                  color={getStatusColor(selectedGoal.status) as any}
+                />
+                <Chip
+                  label={`Priority: ${GoalPriority[selectedGoal.priority]}`}
+                  size="small"
+                  sx={{
+                    borderColor: getPriorityColor(selectedGoal.priority),
+                    color: getPriorityColor(selectedGoal.priority)
+                  }}
+                  variant="outlined"
+                />
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t.goals.client.labels.progress || 'Progress'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedGoal.progress}%
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={selectedGoal.progress}
+                  role="progressbar"
+                  sx={{
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: alpha(theme.palette.grey[300], 0.3),
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 5,
+                      background: `linear-gradient(90deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.main} 100%)`
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* Description */}
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                {t.goals.client.details.description || 'Description'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selectedGoal.description}
+              </Typography>
+            </Box>
+
+            {/* Target Date */}
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                {t.goals.client.details.target || 'Target Date'}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DateIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                <Typography variant="body2" color="text.secondary">
+                  {selectedGoal.targetDate.toLocaleDateString()}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Milestones */}
+            {selectedGoal.milestones.length > 0 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  {t.goals.client.labels.milestones || 'Milestones'} (
+                  {selectedGoal.milestones.filter((m) => m.isCompleted).length}/
+                  {selectedGoal.milestones.length})
+                </Typography>
+                <List data-testid="milestone-list" sx={{ bgcolor: alpha(theme.palette.background.default, 0.5), borderRadius: 2 }}>
+                  {selectedGoal.milestones.map((milestone, index) => (
+                    <React.Fragment key={milestone.id}>
+                      <ListItem data-testid={`milestone-${milestone.id}`}>
+                        <ListItemIcon>
+                          <Checkbox
+                            checked={milestone.isCompleted}
+                            disabled
+                            icon={<MilestoneIcon />}
+                            checkedIcon={<CompletedIcon />}
+                          />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={milestone.title}
+                          secondary={
+                            <>
+                              {milestone.description}
+                              <br />
+                              <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                <DateIcon sx={{ fontSize: 14 }} />
+                                Target: {milestone.targetDate.toLocaleDateString()}
+                                {milestone.completedDate && (
+                                  <> • Completed: {milestone.completedDate.toLocaleDateString()}</>
+                                )}
+                              </Typography>
+                            </>
+                          }
+                          primaryTypographyProps={{
+                            sx: {
+                              textDecoration: milestone.isCompleted ? 'line-through' : 'none',
+                              fontWeight: 600,
+                            },
+                          }}
+                        />
+                      </ListItem>
+                      {index < selectedGoal.milestones.length - 1 && <Divider component="li" />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              </Box>
+            )}
+
+            {/* Progress History */}
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                {t.goals.client.details.progressHistory || 'Progress History'}
+              </Typography>
+              <Box
+                data-testid="progress-history"
+                sx={{
+                  p: 2,
+                  bgcolor: alpha(theme.palette.background.default, 0.5),
+                  borderRadius: 2,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {t.goals.client.details.noProgressUpdates || 'No progress updates yet. Click "Update Progress" to log your first entry.'}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Notes */}
+            {selectedGoal.notes && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  {t.goals.client.details.notes || 'Notes'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedGoal.notes}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Tags */}
+            {selectedGoal.tags.length > 0 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  {t.goals.client.details.tags || 'Tags'}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {selectedGoal.tags.map((tag) => (
+                    <Chip key={tag} label={tag} size="small" variant="outlined" />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* Achievements */}
+            {selectedGoal.achievements && selectedGoal.achievements.length > 0 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  {t.goals.client.details.achievements || 'Achievements'}
+                </Typography>
+                <Stack spacing={1}>
+                  {selectedGoal.achievements.map((achievement) => (
+                    <Box
+                      key={achievement.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        p: 1.5,
+                        bgcolor: alpha(theme.palette.success.light, 0.1),
+                        borderRadius: 2,
+                      }}
+                    >
+                      <Typography variant="h4">{achievement.icon}</Typography>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {achievement.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {achievement.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Stack>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button
+            onClick={() => {
+              setShowGoalDetails(false);
+              setSelectedGoal(null);
+            }}
+          >
+            {t.actions.close || 'Close'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<ShareIcon />}
+            onClick={() => {
+              // TODO: Implement share functionality
+            }}
+          >
+            {t.goals.client.actions.share || 'Share'}
+          </Button>
+          {selectedGoal.status !== GoalStatus.Completed && (
+            <>
+              <Button
+                variant="contained"
+                startIcon={<ProgressIcon />}
+                onClick={handleUpdateProgress}
+              >
+                {t.goals.client.actions.updateProgress || 'Update Progress'}
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<CompletedIcon />}
+                onClick={() => handleCompleteGoal(selectedGoal.id)}
+              >
+                {t.goals.client.actions.complete || 'Mark as Complete'}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
+  const renderUpdateProgressDialog = () => (
+    <Dialog
+      open={showUpdateProgress}
+      onClose={() => {
+        setShowUpdateProgress(false);
+        setProgressUpdate({ progress: 0, notes: '' });
+      }}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'primary.main' }}>
+            <ProgressIcon />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {t.goals.client.updateProgress.title || 'Update Progress'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {selectedGoal?.title}
+            </Typography>
+          </Box>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 2 }}>
+        <Stack spacing={3}>
+          <TextField
+            fullWidth
+            type="number"
+            label={t.goals.client.updateProgress.percentage || 'Progress Percentage'}
+            value={progressUpdate.progress}
+            onChange={(e) =>
+              setProgressUpdate((prev) => ({ ...prev, progress: parseInt(e.target.value) || 0 }))
+            }
+            InputProps={{
+              endAdornment: <Typography>%</Typography>,
+            }}
+            inputProps={{ min: 0, max: 100 }}
+          />
+
+          <TextField
+            fullWidth
+            multiline
+            rows={4}
+            label={t.goals.client.updateProgress.notes || 'Progress Notes'}
+            value={progressUpdate.notes}
+            onChange={(e) => setProgressUpdate((prev) => ({ ...prev, notes: e.target.value }))}
+            placeholder={t.goals.client.updateProgress.notesPlaceholder || 'What progress have you made? Any challenges or wins?'}
+          />
+        </Stack>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 3 }}>
+        <Button
+          onClick={() => {
+            setShowUpdateProgress(false);
+            setProgressUpdate({ progress: 0, notes: '' });
+          }}
+        >
+          {t.actions.cancel}
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<ProgressIcon />}
+          onClick={handleSaveProgressUpdate}
+          disabled={progressUpdate.progress < 0 || progressUpdate.progress > 100}
+        >
+          {t.goals.client.updateProgress.submit || 'Log Progress'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <Box
       sx={{
@@ -1051,6 +1476,7 @@ const ClientGoals: React.FC = () => {
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography
             variant="h3"
+            data-testid="goals-page-heading"
             sx={{
               fontWeight: 700,
               mb: 2,
@@ -1070,9 +1496,9 @@ const ClientGoals: React.FC = () => {
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
+            <Card data-testid="stat-card-total-goals" sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <GoalIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              <Typography variant="h4" data-testid="total-goals-count" sx={{ fontWeight: 700, color: 'primary.main' }}>
                 {goals.length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1080,11 +1506,11 @@ const ClientGoals: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
+            <Card data-testid="stat-card-active" sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <TrendingIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
+              <Typography variant="h4" data-testid="active-goals-count" sx={{ fontWeight: 700, color: 'info.main' }}>
                 {goals.filter(g => g.status === GoalStatus.Active).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1092,11 +1518,11 @@ const ClientGoals: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
+            <Card data-testid="stat-card-completed" sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <CompletedIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
+              <Typography variant="h4" data-testid="completed-goals-count" sx={{ fontWeight: 700, color: 'success.main' }}>
                 {goals.filter(g => g.status === GoalStatus.Completed).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1104,11 +1530,11 @@ const ClientGoals: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
+            <Card data-testid="stat-card-shared" sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <CollaborateIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+              <Typography variant="h4" data-testid="shared-goals-count" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                 {goals.filter(g => g.isSharedWithCoaches).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -1221,6 +1647,8 @@ const ClientGoals: React.FC = () => {
         <Fab
           color="primary"
           onClick={handleCreateGoal}
+          data-testid="create-goal-fab"
+          aria-label="Create new goal"
           sx={{
             position: 'fixed',
             bottom: 24,
@@ -1237,6 +1665,12 @@ const ClientGoals: React.FC = () => {
 
         {/* Create/Edit Goal Dialog */}
         {renderCreateGoalDialog()}
+
+        {/* Goal Details Dialog */}
+        {renderGoalDetailsDialog()}
+
+        {/* Update Progress Dialog */}
+        {renderUpdateProgressDialog()}
       </Box>
     </Box>
   );

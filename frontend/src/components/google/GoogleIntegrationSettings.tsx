@@ -36,7 +36,7 @@ import {
 import {
   ExpandMore as ExpandMoreIcon,
   Google as GoogleIcon,
-  Calendar as CalendarIcon,
+  CalendarMonth as CalendarIcon,
   Email as EmailIcon,
   VideoCall as VideoCallIcon,
   Notifications as NotificationsIcon,

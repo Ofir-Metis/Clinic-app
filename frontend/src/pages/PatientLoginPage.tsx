@@ -32,8 +32,8 @@ const PatientLoginPage: React.FC = () => {
   const formik = useFormik({
     initialValues: { email: '', password: '' },
     validationSchema: Yup.object({
-      email: Yup.string().email('Invalid').required('Required'),
-      password: Yup.string().required('Required'),
+      email: Yup.string().email(t('auth.login.errors.emailFormat')).required(t('auth.login.errors.required')),
+      password: Yup.string().required(t('auth.login.errors.required')),
     }),
     onSubmit: async (values) => {
       logger.info('login attempt', values.email);
@@ -52,7 +52,7 @@ const PatientLoginPage: React.FC = () => {
           navigate('/patient/history');
         } catch (e) {
           logger.error('login failed', e);
-          setError(t('loginFailed', 'Login failed'));
+          setError(t('auth.login.errors.invalidCredentials'));
           handleError(e, 'Login failed. Please try again.');
         }
       };
@@ -74,7 +74,7 @@ const PatientLoginPage: React.FC = () => {
               fullWidth
               id="email"
               name="email"
-              label={t('email')}
+              label={t('auth.login.email')}
               value={formik.values.email}
               onChange={formik.handleChange}
               error={formik.touched.email && Boolean(formik.errors.email)}
@@ -88,7 +88,7 @@ const PatientLoginPage: React.FC = () => {
               type="password"
               id="password"
               name="password"
-              label={t('password')}
+              label={t('auth.login.password')}
               value={formik.values.password}
               onChange={formik.handleChange}
               error={formik.touched.password && Boolean(formik.errors.password)}
@@ -96,19 +96,19 @@ const PatientLoginPage: React.FC = () => {
               aria-label="password"
               autoComplete="current-password"
             />
-            <LoadingButton 
-              color="primary" 
-              variant="contained" 
-              type="submit" 
-              fullWidth 
+            <LoadingButton
+              color="primary"
+              variant="contained"
+              type="submit"
+              fullWidth
               loading={formik.isSubmitting}
               aria-label="login"
             >
-              {t('login')}
+              {t('auth.login.loginButton')}
             </LoadingButton>
-            <Box sx={{ textAlign: 'center', my: 2 }}>{t('or')}</Box>
+            <Box sx={{ textAlign: 'center', my: 2 }}>{t('auth.login.or')}</Box>
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <GoogleLogin onSuccess={() => {}} onError={() => {}} width="100%" />
+              <GoogleLogin onSuccess={() => {}} onError={() => {}} width={320} />
             </Box>
           </Box>
         </Box>

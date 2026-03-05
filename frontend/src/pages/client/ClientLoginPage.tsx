@@ -19,7 +19,11 @@ import {
   CircularProgress,
   useTheme,
   alpha,
-  Fade
+  Fade,
+  Select,
+  MenuItem,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
 import {
   Psychology as MindIcon,
@@ -35,6 +39,8 @@ import { useErrorHandler } from '../../hooks/useErrorHandler';
 import ErrorAlert from '../../components/ErrorAlert';
 import LoadingButton from '../../components/LoadingButton';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { login as authLogin } from '../../api/auth';
+import { useAuth, User } from '../../contexts/AuthContext';
 
 interface LoginFormData {
   email: string;
@@ -43,15 +49,18 @@ interface LoginFormData {
 
 const ClientLoginPage: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
+  const cl = translations.clientPortal?.login;
   const navigate = useNavigate();
-  
+  const { login } = useAuth();
+
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { error, handleError, clearError, setRetryAction } = useErrorHandler();
 
   const handleInputChange = (field: keyof LoginFormData) => (
@@ -63,30 +72,64 @@ const ClientLoginPage: React.FC = () => {
     }));
     // Clear error when user starts typing
     if (error) clearError();
+    if (loginError) setLoginError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     clearError();
-    
+
     const attemptLogin = async () => {
       try {
-        // Mock API call - replace with actual client auth service
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock successful login
-        localStorage.setItem('clientToken', 'mock-client-token');
-        localStorage.setItem('clientUser', JSON.stringify({
-          id: '1',
-          name: 'Sarah Johnson',
-          email: formData.email,
-          coachName: 'Dr. Emily Chen'
-        }));
-        
+        // Call real authentication API
+        const response = await authLogin(formData.email, formData.password);
+
+        // Determine role from API response (defaults to 'client' for client login)
+        const userRole: User['role'] = response.user?.roles?.includes('admin')
+          ? 'admin'
+          : response.user?.roles?.includes('coach') || response.user?.roles?.includes('therapist')
+            ? 'coach'
+            : 'client';
+
+        // Build user data from API response
+        const userData: User = {
+          id: response.user?.id?.toString() || '0',
+          email: response.user?.email || formData.email,
+          name: response.user?.name || '',
+          role: userRole,
+        };
+
+        // Use AuthContext to properly store credentials
+        await login(
+          {
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token || response.access_token,
+            expiresIn: 3600, // 1 hour default
+          },
+          userData
+        );
+
+        // Navigate to client dashboard
         navigate('/client/dashboard');
-      } catch (err) {
-        handleError(err, 'auth');
+      } catch (err: any) {
+        // Handle authentication errors - use local state to avoid useErrorHandler navigation side effects
+        console.error('[ClientLogin] Login error:', err);
+        // Extract error message - API gateway nests messages deeply
+        const msg = err?.response?.data?.message;
+        let errorMessage = 'Invalid credentials. Please try again.';
+        if (typeof msg === 'string') {
+          errorMessage = msg;
+        } else if (typeof msg === 'object' && msg !== null) {
+          // Unwrap nested message objects from API gateway
+          const inner = msg?.message;
+          if (typeof inner === 'string') {
+            errorMessage = inner;
+          } else if (typeof inner === 'object' && inner !== null && typeof inner.message === 'string') {
+            errorMessage = inner.message;
+          }
+        }
+        setLoginError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -106,9 +149,39 @@ const ClientLoginPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.secondary.light} 50%, ${theme.palette.background.default} 100%)`,
-        p: 2
+        p: 2,
+        position: 'relative',
       }}
     >
+      {/* Language Switcher */}
+      <Box sx={{
+        position: 'absolute',
+        top: { xs: 16, sm: 24 },
+        right: { xs: 16, sm: 24 },
+        zIndex: 10,
+      }}>
+        <Select
+          value={i18n.language}
+          onChange={(e) => {
+            const newLang = e.target.value as 'en' | 'es' | 'he';
+            i18n.changeLanguage(newLang);
+          }}
+          size="small"
+          aria-label={translations.ui?.languageSwitcher || "language switcher"}
+          sx={{
+            minWidth: 120,
+            bgcolor: alpha(theme.palette.background.paper, 0.8),
+            '& .MuiSelect-select': {
+              py: 1,
+              fontSize: '0.875rem',
+            },
+          }}
+        >
+          <MenuItem value="en">🇺🇸 English</MenuItem>
+          <MenuItem value="es">🇪🇸 Español</MenuItem>
+          <MenuItem value="he">🇮🇱 עברית</MenuItem>
+        </Select>
+      </Box>
       <Card
         sx={{
           maxWidth: 450,
@@ -121,9 +194,9 @@ const ClientLoginPage: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 6 }}>
-          <LoadingOverlay 
-            loading={isLoading} 
-            message="Connecting to your coaching journey..."
+          <LoadingOverlay
+            loading={isLoading}
+            message={cl?.loadingMessage || 'Connecting to your coaching journey...'}
             variant="overlay"
             backdrop
           >
@@ -153,15 +226,15 @@ const ClientLoginPage: React.FC = () => {
                 WebkitTextFillColor: 'transparent'
               }}
             >
-              Welcome Back! 🌟
+              {cl?.welcomeBack || 'Welcome Back!'} 🌟
             </Typography>
-            
+
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-              Access Your Personal Growth Journey
+              {cl?.accessJourney || 'Access Your Personal Growth Journey'}
             </Typography>
-            
+
             <Typography variant="body2" color="text.secondary">
-              Continue your transformation with your dedicated coach
+              {cl?.continueTransformation || 'Continue your transformation with your dedicated coach'}
             </Typography>
           </Box>
 
@@ -170,13 +243,15 @@ const ClientLoginPage: React.FC = () => {
             <Stack spacing={3}>
               <TextField
                 fullWidth
-                label="Email Address"
+                label={cl?.emailLabel || 'Email Address'}
                 type="email"
                 variant="outlined"
                 value={formData.email}
                 onChange={handleInputChange('email')}
-                placeholder="your.email@example.com"
+                placeholder={cl?.emailPlaceholder || 'your.email@example.com'}
                 autoComplete="email"
+                data-testid="client-login-email"
+                inputProps={{ 'data-testid': 'client-login-email-input' }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
@@ -193,13 +268,29 @@ const ClientLoginPage: React.FC = () => {
               
               <TextField
                 fullWidth
-                label="Password"
+                label={cl?.passwordLabel || 'Password'}
                 type={showPassword ? 'text' : 'password'}
                 variant="outlined"
                 value={formData.password}
                 onChange={handleInputChange('password')}
-                placeholder="Enter your password"
+                placeholder={cl?.passwordPlaceholder || 'Enter your password'}
                 autoComplete="current-password"
+                data-testid="client-login-password"
+                inputProps={{ 'data-testid': 'client-login-password-input' }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                        data-testid="password-visibility-toggle"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 3,
@@ -214,14 +305,18 @@ const ClientLoginPage: React.FC = () => {
                 }}
               />
 
-              {error && (
+              {loginError && (
                 <Fade in>
-                  <ErrorAlert 
-                    error={error} 
-                    onRetry={() => handleSubmit(new Event('submit') as any)}
-                    onClose={clearError}
-                    showDetails={process.env.NODE_ENV === 'development'}
-                  />
+                  <Alert
+                    severity="error"
+                    variant="standard"
+                    role="alert"
+                    data-testid="login-error-alert"
+                    onClose={() => setLoginError(null)}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    {loginError}
+                  </Alert>
                 </Fade>
               )}
 
@@ -231,8 +326,9 @@ const ClientLoginPage: React.FC = () => {
                 size="large"
                 disabled={!isFormValid}
                 loading={isLoading}
-                loadingText="Signing In..."
+                loadingText={cl?.signingIn || 'Signing In...'}
                 startIcon={<LoginIcon />}
+                data-testid="client-login-submit"
                 sx={{
                   py: 2,
                   borderRadius: 3,
@@ -248,14 +344,14 @@ const ClientLoginPage: React.FC = () => {
                   }
                 }}
               >
-                Start My Journey
+                {cl?.submitButton || 'Start My Journey'}
               </LoadingButton>
             </Stack>
           </Box>
 
           <Divider sx={{ my: 4 }}>
             <Typography variant="body2" color="text.secondary">
-              New to coaching?
+              {cl?.newToCoaching || 'New to coaching?'}
             </Typography>
           </Divider>
 
@@ -267,6 +363,7 @@ const ClientLoginPage: React.FC = () => {
             size="large"
             fullWidth
             startIcon={<RegisterIcon />}
+            data-testid="client-register-link"
             sx={{
               py: 2,
               borderRadius: 3,
@@ -279,7 +376,7 @@ const ClientLoginPage: React.FC = () => {
               }
             }}
           >
-            Begin Your Transformation
+            {cl?.beginTransformation || 'Begin Your Transformation'}
           </Button>
 
           {/* Footer Links */}
@@ -289,17 +386,19 @@ const ClientLoginPage: React.FC = () => {
                 component={RouterLink}
                 to="/client/forgot-password"
                 variant="body2"
+                data-testid="client-forgot-password-link"
                 sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
               >
-                Forgot Password?
+                {cl?.forgotPassword || 'Forgot Password?'}
               </Link>
               <Link
                 component={RouterLink}
                 to="/login"
                 variant="body2"
+                data-testid="coach-login-link"
                 sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
               >
-                Coach Login
+                {cl?.coachLogin || 'Coach Login'}
               </Link>
             </Stack>
           </Box>
@@ -317,10 +416,10 @@ const ClientLoginPage: React.FC = () => {
           >
             <SparkleIcon sx={{ fontSize: 32, color: theme.palette.success.main, mb: 1 }} />
             <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-              "Every expert was once a beginner."
+              "{cl?.motivationalQuote || 'Every expert was once a beginner.'}"
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Your journey of growth starts here ✨
+              {cl?.journeyStarts || 'Your journey of growth starts here'} ✨
             </Typography>
           </Box>
         </LoadingOverlay>

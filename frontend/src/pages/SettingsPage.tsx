@@ -43,11 +43,17 @@ import {
   LocationOn as LocationIcon,
   Work as WorkIcon,
   CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Google as GoogleIcon
 } from '@mui/icons-material';
 import { useLanguage, useTranslation } from '../contexts/LanguageContext';
 import { SUPPORTED_LANGUAGES } from '../i18n/index';
 import WellnessLayout from '../layouts/WellnessLayout';
+import { useAuth } from '../AuthContext';
+import { fetchSettings, saveSettings } from '../api/settings';
+import { updateTherapistProfile } from '../api/therapist';
+import { logger } from '../logger';
+import { GoogleIntegrationSettings } from '../components/google/GoogleIntegrationSettings';
 
 interface Setting {
   key: string;
@@ -78,26 +84,70 @@ const SettingsPage: React.FC = () => {
   const theme = useTheme();
   const { translations: t, language, isRTL, i18n } = useTranslation();
   const { currentLanguageInfo, isChangingLanguage } = useLanguage();
+  const { user } = useAuth();
   const changeLanguage = i18n.changeLanguage;
   const [tab, setTab] = useState(0);
   const [snack, setSnack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form state management
+  // Form state management - initialized with empty values, populated from user context
   const [formData, setFormData] = useState<ProfileFormData>({
-    fullName: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@coaching.com',
-    phone: '+1 (555) 123-4567',
-    professionalTitle: 'Certified Life & Wellness Coach',
-    specialization: 'Personal Growth & Mindfulness',
-    location: 'San Francisco, CA',
-    bio: "I'm passionate about helping individuals unlock their potential and create meaningful, fulfilling lives. With over 5 years of experience in personal development coaching, I specialize in mindfulness-based approaches to goal achievement and life transformation."
+    fullName: '',
+    email: '',
+    phone: '',
+    professionalTitle: '',
+    specialization: '',
+    location: '',
+    bio: ''
   });
 
   const [initialFormData, setInitialFormData] = useState<ProfileFormData>(formData);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isDirty, setIsDirty] = useState(false);
+
+  // Populate form data from authenticated user and load settings from API
+  useEffect(() => {
+    if (user) {
+      const userData: ProfileFormData = {
+        fullName: user.name || '',
+        email: user.email || '',
+        phone: '',
+        professionalTitle: '',
+        specialization: '',
+        location: '',
+        bio: '',
+      };
+      setFormData(userData);
+      setInitialFormData(userData);
+
+      // Load saved settings from backend
+      fetchSettings()
+        .then((settings: Setting[]) => {
+          if (!Array.isArray(settings)) return;
+          const profileUpdates: Partial<ProfileFormData> = {};
+          settings.forEach((s: Setting) => {
+            if (s.category === 'profile') {
+              if (s.key === 'phone') profileUpdates.phone = s.value;
+              if (s.key === 'professionalTitle') profileUpdates.professionalTitle = s.value;
+              if (s.key === 'specialization') profileUpdates.specialization = s.value;
+              if (s.key === 'location') profileUpdates.location = s.value;
+              if (s.key === 'bio') profileUpdates.bio = s.value;
+            }
+          });
+          if (Object.keys(profileUpdates).length > 0) {
+            setFormData((prev) => {
+              const merged = { ...prev, ...profileUpdates };
+              setInitialFormData(merged);
+              return merged;
+            });
+          }
+        })
+        .catch((e) => {
+          logger.debug('Failed to load settings, using defaults', e);
+        });
+    }
+  }, [user]);
 
   // Track form changes
   useEffect(() => {
@@ -147,41 +197,47 @@ const SettingsPage: React.FC = () => {
   }, [initialFormData]);
 
   const categories = [
-    { 
-      key: 'profile', 
+    {
+      key: 'profile',
       title: t.settings.sections.profile.title,
       description: t.settings.sections.profile.description,
-      icon: <PersonIcon /> 
+      icon: <PersonIcon />
     },
-    { 
-      key: 'preferences', 
+    {
+      key: 'preferences',
       title: t.settings.sections.preferences.title,
       description: t.settings.sections.preferences.description,
-      icon: <SettingsIcon /> 
+      icon: <SettingsIcon />
     },
-    { 
-      key: 'language', 
+    {
+      key: 'google',
+      title: t.settings.sections.google.title,
+      description: t.settings.sections.google.description,
+      icon: <GoogleIcon />
+    },
+    {
+      key: 'language',
       title: t.settings.sections.language.title,
       description: t.settings.sections.language.description,
-      icon: <TranslateIcon /> 
+      icon: <TranslateIcon />
     },
-    { 
-      key: 'theme', 
+    {
+      key: 'theme',
       title: t.settings.sections.theme.title,
       description: t.settings.sections.theme.description,
-      icon: <ThemeIcon /> 
+      icon: <ThemeIcon />
     },
-    { 
-      key: 'notifications', 
+    {
+      key: 'notifications',
       title: t.settings.sections.notifications.title,
       description: t.settings.sections.notifications.description,
-      icon: <NotificationsIcon /> 
+      icon: <NotificationsIcon />
     },
-    { 
-      key: 'privacy', 
+    {
+      key: 'privacy',
       title: t.settings.sections.privacy.title,
       description: t.settings.sections.privacy.description,
-      icon: <PrivacyIcon /> 
+      icon: <PrivacyIcon />
     }
   ];
 
@@ -210,18 +266,39 @@ const SettingsPage: React.FC = () => {
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      setError('Please fix the errors before saving');
+      setError(t.settings?.errors?.pleaseFixErrors || 'Please fix the errors before saving');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setInitialFormData(formData); // Update initial data to current
+      // Save profile fields to settings service
+      const settingsPayload: Setting[] = [
+        { key: 'phone', value: formData.phone, category: 'profile' },
+        { key: 'professionalTitle', value: formData.professionalTitle, category: 'profile' },
+        { key: 'specialization', value: formData.specialization, category: 'profile' },
+        { key: 'location', value: formData.location, category: 'profile' },
+        { key: 'bio', value: formData.bio, category: 'profile' },
+      ];
+      await saveSettings(settingsPayload);
+
+      // Also update coach profile (name, email) via the coach profile API
+      if (user?.id) {
+        await updateTherapistProfile(user.id, {
+          userId: user.id,
+          name: formData.fullName,
+          title: formData.professionalTitle,
+          bio: formData.bio,
+          services: [],
+          media: [],
+        });
+      }
+
+      setInitialFormData(formData);
       setIsDirty(false);
       setSnack(t.status.saved);
-    } catch (error) {
+    } catch (err) {
+      logger.error('Failed to save settings', err);
       setError(t.errors.general);
     } finally {
       setIsLoading(false);
@@ -398,8 +475,13 @@ const SettingsPage: React.FC = () => {
             
             <Fade in timeout={300}>
               <Box>
-                {/* Language Settings Tab */}
+                {/* Google Integration Tab */}
                 {tab === 2 && (
+                  <GoogleIntegrationSettings currentUserId={user?.id?.toString() || ''} />
+                )}
+
+                {/* Language Settings Tab */}
+                {tab === 3 && (
                   <Stack spacing={4}>
                     <Box>
                       <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -511,7 +593,7 @@ const SettingsPage: React.FC = () => {
                 )}
 
                 {/* Theme Settings Tab */}
-                {tab === 3 && (
+                {tab === 4 && (
                   <Stack spacing={4}>
                     <Box>
                       <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -604,11 +686,11 @@ const SettingsPage: React.FC = () => {
                 )}
 
                 {/* Notifications Tab */}
-                {tab === 4 && (
+                {tab === 5 && (
                   <Stack spacing={4}>
                     <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <NotificationsIcon color="primary" />
-                      Notification Preferences
+                      {t.settings.notifications.heading}
                     </Typography>
                     
                     <Stack spacing={3}>
@@ -687,7 +769,7 @@ const SettingsPage: React.FC = () => {
                           {t.settings.profile.information}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Your basic contact information and professional details
+                          {t.settings.profile.informationDescription}
                         </Typography>
                       </Box>
 
@@ -702,7 +784,7 @@ const SettingsPage: React.FC = () => {
                           value={formData.fullName}
                           onChange={(e) => handleFieldChange('fullName', e.target.value)}
                           error={Boolean(formErrors.fullName)}
-                          helperText={formErrors.fullName || 'Your full professional name as it appears on credentials'}
+                          helperText={formErrors.fullName || t.settings?.profile?.fullNameHelper || 'Your full professional name as it appears on credentials'}
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
@@ -736,7 +818,7 @@ const SettingsPage: React.FC = () => {
                               value={formData.email}
                               onChange={(e) => handleFieldChange('email', e.target.value)}
                               error={Boolean(formErrors.email)}
-                              helperText={formErrors.email || 'Used for login and important notifications'}
+                              helperText={formErrors.email || t.settings?.profile?.emailHelper || 'Used for login and important notifications'}
                               InputProps={{
                                 startAdornment: (
                                   <InputAdornment position="start">
@@ -761,12 +843,12 @@ const SettingsPage: React.FC = () => {
                             <TextField
                               fullWidth
                               label={t.settings.profile.phone}
-                              placeholder="+1 (555) 123-4567"
+                              placeholder={t.settings?.profile?.phonePlaceholder || "+1 (555) 123-4567"}
                               variant="outlined"
                               value={formData.phone}
                               onChange={(e) => handleFieldChange('phone', e.target.value)}
                               error={Boolean(formErrors.phone)}
-                              helperText={formErrors.phone || 'For client contact and appointment reminders'}
+                              helperText={formErrors.phone || t.settings?.profile?.phoneHelper || 'For client contact and appointment reminders'}
                               InputProps={{
                                 startAdornment: (
                                   <InputAdornment position="start">
@@ -793,10 +875,10 @@ const SettingsPage: React.FC = () => {
                       <Box sx={{ mb: 4 }}>
                         <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <WorkIcon color="primary" />
-                          Professional Details
+                          {t.settings.profile.professionalDetails}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Information about your coaching practice and expertise
+                          {t.settings.profile.professionalDetailsDescription}
                         </Typography>
                       </Box>
 
@@ -807,11 +889,11 @@ const SettingsPage: React.FC = () => {
                             <TextField
                               fullWidth
                               label={t.settings.profile.professionalTitle}
-                              placeholder="e.g., Life Coach, Personal Development Expert"
+                              placeholder={t.settings?.profile?.professionalTitlePlaceholder || "e.g., Life Coach, Personal Development Expert"}
                               variant="outlined"
                               value={formData.professionalTitle}
                               onChange={(e) => handleFieldChange('professionalTitle', e.target.value)}
-                              helperText="Your professional title or certification"
+                              helperText={t.settings?.profile?.professionalTitleHelper || "Your professional title or certification"}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -824,11 +906,11 @@ const SettingsPage: React.FC = () => {
                             <TextField
                               fullWidth
                               label={t.settings.profile.specialization}
-                              placeholder="e.g., Career Coaching, Mindfulness, Goal Achievement"
+                              placeholder={t.settings?.profile?.specializationPlaceholder || "e.g., Career Coaching, Mindfulness, Goal Achievement"}
                               variant="outlined"
                               value={formData.specialization}
                               onChange={(e) => handleFieldChange('specialization', e.target.value)}
-                              helperText="Your areas of coaching expertise"
+                              helperText={t.settings?.profile?.specializationHelper || "Your areas of coaching expertise"}
                               sx={{
                                 '& .MuiOutlinedInput-root': {
                                   borderRadius: 2,
@@ -843,11 +925,11 @@ const SettingsPage: React.FC = () => {
                         <TextField
                           fullWidth
                           label={t.settings.profile.location}
-                          placeholder="City, Country"
+                          placeholder={t.settings?.profile?.locationPlaceholder || "City, Country"}
                           variant="outlined"
                           value={formData.location}
                           onChange={(e) => handleFieldChange('location', e.target.value)}
-                          helperText="Your practice location (city and country)"
+                          helperText={t.settings?.profile?.locationHelper || "Your practice location (city and country)"}
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
@@ -874,7 +956,7 @@ const SettingsPage: React.FC = () => {
                           {t.settings.profile.bioSection}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Tell clients about your approach and experience
+                          {t.settings.profile.bioSectionDescription}
                         </Typography>
                       </Box>
                       <TextField
@@ -905,19 +987,19 @@ const SettingsPage: React.FC = () => {
                     <Box>
                       <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <SettingsIcon color="primary" />
-                        Application Preferences
+                        {t.settings.preferences.heading}
                       </Typography>
 
                       <Grid container spacing={{ xs: 3, sm: 4 }}>
                         <Grid item xs={12} sm={6} md={6}>
                           <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                            Session Defaults
+                            {t.settings.preferences.sessionDefaults}
                           </Typography>
                           <Stack spacing={3}>
                             <TextField
                               select
                               fullWidth
-                              label="Default Session Duration"
+                              label={t.settings.preferences.defaultDuration}
                               defaultValue="60"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -926,16 +1008,16 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             >
-                              <MenuItem value="30">30 minutes</MenuItem>
-                              <MenuItem value="45">45 minutes</MenuItem>
-                              <MenuItem value="60">60 minutes</MenuItem>
-                              <MenuItem value="90">90 minutes</MenuItem>
+                              <MenuItem value="30">{t.settings.preferences.duration30}</MenuItem>
+                              <MenuItem value="45">{t.settings.preferences.duration45}</MenuItem>
+                              <MenuItem value="60">{t.settings.preferences.duration60}</MenuItem>
+                              <MenuItem value="90">{t.settings.preferences.duration90}</MenuItem>
                             </TextField>
-                            
+
                             <TextField
                               select
                               fullWidth
-                              label="Default Meeting Type"
+                              label={t.settings.preferences.defaultMeetingType}
                               defaultValue="online"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -944,16 +1026,16 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             >
-                              <MenuItem value="online">🌐 Online Session</MenuItem>
-                              <MenuItem value="in-person">🏢 In-Person Meeting</MenuItem>
-                              <MenuItem value="hybrid">🔄 Hybrid (Client Choice)</MenuItem>
+                              <MenuItem value="online">🌐 {t.settings.preferences.meetingOnline}</MenuItem>
+                              <MenuItem value="in-person">🏢 {t.settings.preferences.meetingInPerson}</MenuItem>
+                              <MenuItem value="hybrid">🔄 {t.settings.preferences.meetingHybrid}</MenuItem>
                             </TextField>
-                            
+
                             <FormControlLabel
                               control={<Switch defaultChecked />}
-                              label="Auto-generate session summaries"
-                              sx={{ 
-                                '& .MuiFormControlLabel-label': { 
+                              label={t.settings.preferences.autoSummaries}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
                                   fontSize: '1rem',
                                   fontWeight: 500
                                 }
@@ -961,9 +1043,9 @@ const SettingsPage: React.FC = () => {
                             />
                             <FormControlLabel
                               control={<Switch defaultChecked />}
-                              label="Send session reminders 24h before"
-                              sx={{ 
-                                '& .MuiFormControlLabel-label': { 
+                              label={t.settings.preferences.sendReminders}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
                                   fontSize: '1rem',
                                   fontWeight: 500
                                 }
@@ -974,13 +1056,13 @@ const SettingsPage: React.FC = () => {
 
                         <Grid item xs={12} sm={6} md={6}>
                           <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                            Interface Options
+                            {t.settings.preferences.interfaceOptions}
                           </Typography>
                           <Stack spacing={3}>
                             <TextField
                               select
                               fullWidth
-                              label="Dashboard View"
+                              label={t.settings.preferences.dashboardView}
                               defaultValue="cards"
                               sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -989,16 +1071,16 @@ const SettingsPage: React.FC = () => {
                                 }
                               }}
                             >
-                              <MenuItem value="cards">📋 Card View</MenuItem>
-                              <MenuItem value="list">📝 List View</MenuItem>
-                              <MenuItem value="calendar">📅 Calendar View</MenuItem>
+                              <MenuItem value="cards">📋 {t.settings.preferences.viewCards}</MenuItem>
+                              <MenuItem value="list">📝 {t.settings.preferences.viewList}</MenuItem>
+                              <MenuItem value="calendar">📅 {t.settings.preferences.viewCalendar}</MenuItem>
                             </TextField>
-                            
+
                             <FormControlLabel
                               control={<Switch defaultChecked />}
-                              label="Show motivational quotes"
-                              sx={{ 
-                                '& .MuiFormControlLabel-label': { 
+                              label={t.settings.preferences.showQuotes}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
                                   fontSize: '1rem',
                                   fontWeight: 500
                                 }
@@ -1006,9 +1088,9 @@ const SettingsPage: React.FC = () => {
                             />
                             <FormControlLabel
                               control={<Switch />}
-                              label="Enable celebration animations"
-                              sx={{ 
-                                '& .MuiFormControlLabel-label': { 
+                              label={t.settings.preferences.enableAnimations}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
                                   fontSize: '1rem',
                                   fontWeight: 500
                                 }
@@ -1016,9 +1098,9 @@ const SettingsPage: React.FC = () => {
                             />
                             <FormControlLabel
                               control={<Switch defaultChecked />}
-                              label="Compact navigation menu"
-                              sx={{ 
-                                '& .MuiFormControlLabel-label': { 
+                              label={t.settings.preferences.compactMenu}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
                                   fontSize: '1rem',
                                   fontWeight: 500
                                 }
@@ -1032,18 +1114,18 @@ const SettingsPage: React.FC = () => {
                 )}
 
                 {/* Privacy Tab placeholder */}
-                {tab === 5 && (
-                  <Box sx={{ 
-                    textAlign: 'center', 
+                {tab === 6 && (
+                  <Box sx={{
+                    textAlign: 'center',
                     py: 8,
                     color: 'text.secondary'
                   }}>
                     <SparkleIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                      Privacy & Security Settings Coming Soon! 🔒
+                      {t.settings.privacy.comingSoon} 🔒
                     </Typography>
                     <Typography variant="body1">
-                      We're preparing advanced privacy controls for your coaching practice!
+                      {t.settings.privacy.comingSoonDescription}
                     </Typography>
                   </Box>
                 )}
@@ -1085,10 +1167,10 @@ const SettingsPage: React.FC = () => {
               <ErrorIcon color="warning" />
               <Box>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  You have unsaved changes
+                  {t.settings.unsavedChanges.title}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Save your changes or discard them to continue
+                  {t.settings.unsavedChanges.description}
                 </Typography>
               </Box>
             </Box>
@@ -1103,7 +1185,7 @@ const SettingsPage: React.FC = () => {
                   minWidth: 120
                 }}
               >
-                Discard
+                {t.settings.unsavedChanges.discard}
               </Button>
               <Button
                 variant="contained"

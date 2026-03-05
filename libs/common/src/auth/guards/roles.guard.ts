@@ -17,7 +17,7 @@ export class RolesGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly logger: CentralizedLoggerService
-  ) {}
+  ) { }
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
@@ -43,16 +43,21 @@ export class RolesGuard implements CanActivate {
         alertLevel: 'high',
         dataType: 'system'
       });
-      
+
       throw new ForbiddenException('Authentication required');
     }
 
-    const hasRole = requiredRoles.some(role => user.role === role);
-    
+    const hasRole = requiredRoles.some(requiredRole => {
+      if (user.roles && Array.isArray(user.roles)) {
+        return user.roles.includes(requiredRole);
+      }
+      return user.role === requiredRole;
+    });
+
     if (!hasRole) {
       this.logger.securityLog('Insufficient role privileges', {
         userId: user.id,
-        userRole: user.role,
+        userRole: user.role || (user.roles ? user.roles.join(',') : 'none'),
         requiredRoles: requiredRoles.join(','),
         endpoint: request.url,
         method: request.method,
@@ -61,7 +66,7 @@ export class RolesGuard implements CanActivate {
         alertLevel: 'medium',
         dataType: 'system'
       });
-      
+
       throw new ForbiddenException('Insufficient permissions');
     }
 

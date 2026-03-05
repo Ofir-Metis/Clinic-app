@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,23 +17,16 @@ import {
   CardContent,
   FormControlLabel,
   Switch,
-  Chip,
-  Stack,
   Alert,
-  Collapse,
-  IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   VideoCall as VideoCallIcon,
   Person as PersonIcon,
-  Settings as SettingsIcon,
-  Warning as WarningIcon,
-  Info as InfoIcon,
 } from '@mui/icons-material';
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
-import { useTranslation } from 'react-i18next';
+import { getDatePickerLocale } from '../locales/datePickerLocale';
+import { useTranslation } from '../contexts/LanguageContext';
 import { searchPatients } from '../api/patients';
 import { scheduleAppointment } from '../api/appointments';
 import { logger } from '../logger';
@@ -44,29 +37,7 @@ interface Option {
   label: string;
 }
 
-export type MeetingType = 'in-person' | 'online' | 'hybrid';
-export type RecordingType = 'none' | 'audio-only' | 'video' | 'screen-share' | 'full-session';
-
-interface RecordingSettings {
-  enabled: boolean;
-  type: RecordingType;
-  quality: 'low' | 'medium' | 'high' | 'ultra';
-  autoStart: boolean;
-  includeTranscription: boolean;
-  shareWithClient: boolean;
-  retentionDays: number;
-}
-
-interface MeetingConfig {
-  type: MeetingType;
-  location?: string;
-  meetingUrl?: string;
-  googleMeetEnabled: boolean;
-  recordingSettings: RecordingSettings;
-  waitingRoomEnabled: boolean;
-  allowClientToJoinEarly: boolean;
-  meetingDuration: number;
-}
+export type MeetingType = 'in-person' | 'online';
 
 interface ScheduleAppointmentModalProps {
   open: boolean;
@@ -74,12 +45,13 @@ interface ScheduleAppointmentModalProps {
   onScheduled?: (appointment: any) => void;
 }
 
-const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({ 
-  open, 
-  onClose, 
-  onScheduled 
+const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
+  open,
+  onClose,
+  onScheduled
 }) => {
-  const { t, i18n } = useTranslation();
+  const { translations: t, language } = useTranslation();
+  const { adapterLocale, localeText } = getDatePickerLocale(language);
   const [patientQuery, setPatientQuery] = useState('');
   const [patientOptions, setPatientOptions] = useState<Option[]>([]);
   const [loadingPatients, setLoadingPatients] = useState(false);
@@ -88,32 +60,20 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
   const [serviceType, setServiceType] = useState('consultation');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   // Meeting configuration state
   const [meetingType, setMeetingType] = useState<MeetingType>('in-person');
   const [location, setLocation] = useState('');
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [recordingSettings, setRecordingSettings] = useState<RecordingSettings>({
-    enabled: false,
-    type: 'none',
-    quality: 'medium',
-    autoStart: false,
-    includeTranscription: false,
-    shareWithClient: false,
-    retentionDays: 30
-  });
 
   // Helper functions
-  const isOnline = meetingType === 'online' || meetingType === 'hybrid';
+  const isOnline = meetingType === 'online';
   
   const getMeetingTypeIcon = (type: MeetingType) => {
     switch (type) {
       case 'online':
         return <VideoCallIcon />;
       case 'in-person':
-        return <PersonIcon />;
-      case 'hybrid':
-        return <VideoCallIcon />; // Could use a hybrid icon
       default:
         return <PersonIcon />;
     }
@@ -124,37 +84,10 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
       case 'online':
         return theme.palette.primary.main;
       case 'in-person':
+      default:
         return theme.palette.secondary.main;
-      case 'hybrid':
-        return theme.palette.accent?.main || theme.palette.warning.main;
-      default:
-        return theme.palette.grey[500];
     }
   };
-
-  const getRecommendedRecordingType = (meetingType: MeetingType): RecordingType => {
-    switch (meetingType) {
-      case 'online':
-        return recordingSettings.enabled ? 'full-session' : 'none';
-      case 'in-person':
-        return recordingSettings.enabled ? 'audio-only' : 'none';
-      case 'hybrid':
-        return recordingSettings.enabled ? 'video' : 'none';
-      default:
-        return 'none';
-    }
-  };
-
-  // Update recording type when meeting type changes
-  useEffect(() => {
-    if (recordingSettings.enabled) {
-      const recommendedType = getRecommendedRecordingType(meetingType);
-      setRecordingSettings(prev => ({
-        ...prev,
-        type: recommendedType
-      }));
-    }
-  }, [meetingType, recordingSettings.enabled]);
 
   // debounce search
   useEffect(() => {
@@ -176,59 +109,28 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
 
   const handleSubmit = async () => {
     if (!selectedPatient || !datetime) return;
-    
+
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       logger.info('submit appointment with meeting config');
-      
-      // Calculate meeting duration
-      const endTime = new Date(datetime.getTime() + 60 * 60 * 1000); // Default 1 hour
-      const meetingDuration = Math.floor((endTime.getTime() - datetime.getTime()) / (1000 * 60));
-      
-      // Prepare enhanced appointment data
-      const appointmentData = {
-        therapistId: localStorage.getItem('userId') || 'current-user-id', // Get from localStorage (set during login)
-        clientId: selectedPatient.id.toString(),
-        startTime: datetime.toISOString(),
-        endTime: endTime.toISOString(),
-        title: `${serviceType} with ${selectedPatient.label}`,
-        description: notes,
+
+      const result = await scheduleAppointment({
+        patientId: selectedPatient.id,
+        datetime: datetime.toISOString(),
+        serviceType,
+        notes: notes || undefined,
         meetingType,
         location: meetingType === 'in-person' ? location : undefined,
-        recordingSettings,
         googleMeetEnabled: isOnline,
-        clientPreferences: {
-          preferredNotificationMethod: 'email' as const,
-          allowRecording: recordingSettings.enabled,
-          requireConfirmation: true
-        },
-        reminderTimes: ['24h', '1h'],
-        tags: [serviceType]
-      };
-
-      // Use the enhanced appointment creation endpoint
-      const authToken = localStorage.getItem('accessToken') || localStorage.getItem('clinic_access_token');
-      const result = await fetch('/api/appointments/enhanced', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
-        },
-        body: JSON.stringify(appointmentData)
       });
 
-      if (!result.ok) {
-        throw new Error('Failed to schedule coaching session');
+      if (onScheduled) {
+        onScheduled(result);
       }
 
-      const responseData = await result.json();
-      
-      if (onScheduled) {
-        onScheduled(responseData.appointment);
-      }
-      
       onClose();
-      
+
       // Reset form
       setSelectedPatient(null);
       setDatetime(new Date());
@@ -236,17 +138,11 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
       setNotes('');
       setMeetingType('in-person');
       setLocation('');
-      setRecordingSettings({
-        enabled: false,
-        type: 'none',
-        quality: 'medium',
-        autoStart: false,
-        includeTranscription: false,
-        shareWithClient: false,
-        retentionDays: 30
-      });
-      
-    } catch (e) {
+      setSubmitError(null);
+
+    } catch (e: any) {
+      const message = e?.response?.data?.message || e?.message || t.calendarPage.scheduleFailed || 'Failed to schedule coaching session';
+      setSubmitError(message);
       logger.error('schedule appointment failed', e);
     } finally {
       setIsSubmitting(false);
@@ -256,13 +152,17 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={undefined}>
-        <Dialog 
-          open={open} 
-          onClose={onClose} 
-          fullWidth 
-          maxWidth="md" 
-          dir={i18n.dir()}
+      <LocalizationProvider
+        dateAdapter={AdapterDateFns}
+        adapterLocale={adapterLocale}
+        localeText={localeText}
+      >
+        <Dialog
+          open={open}
+          onClose={onClose}
+          fullWidth
+          maxWidth="sm"
+          dir="rtl"
           PaperProps={{
             sx: {
               borderRadius: 3,
@@ -273,10 +173,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
         >
           <DialogTitle sx={{ pb: 1 }}>
             <Typography variant="h5" fontWeight={600}>
-              {t('scheduleAppointment')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Configure meeting type and recording preferences
+              {t.calendarPage.scheduleNewAppointment}
             </Typography>
           </DialogTitle>
           
@@ -292,7 +189,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label={t('patientName')}
+                    label={t.calendarPage.client}
                     variant="outlined"
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -314,17 +211,40 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
 
               {/* Date and Time */}
               <DateTimePicker
-                label={t('datetime')}
+                label={t.addAppointmentPage.datetime}
                 value={datetime}
                 onChange={(val) => setDatetime(val)}
                 slotProps={{
-                  textField: { 
-                    fullWidth: true, 
+                  textField: {
+                    fullWidth: true,
                     error: !!(datetime && datetime < new Date()),
                     sx: {
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
                       }
+                    }
+                  },
+                  popper: {
+                    sx: {
+                      // Force LTR on the entire picker layout so hours appear on LEFT, minutes on RIGHT
+                      '& .MuiPickersLayout-root': {
+                        direction: 'ltr !important',
+                      },
+                      '& .MuiPickersLayout-contentWrapper': {
+                        direction: 'ltr !important',
+                      },
+                      '& .MuiMultiSectionDigitalClock-root': {
+                        direction: 'ltr !important',
+                        flexDirection: 'row !important',
+                      },
+                      // Keep calendar header in RTL for Hebrew month names
+                      '& .MuiPickersCalendarHeader-root': {
+                        direction: 'rtl',
+                      },
+                      // Keep day grid in RTL for Hebrew day names
+                      '& .MuiDayCalendar-root': {
+                        direction: 'rtl',
+                      },
                     }
                   },
                 }}
@@ -334,7 +254,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
               <TextField
                 select
                 fullWidth
-                label={t('serviceType')}
+                label={t.calendarPage.sessionType}
                 value={serviceType}
                 onChange={(e) => setServiceType(e.target.value)}
                 sx={{
@@ -343,8 +263,10 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                   }
                 }}
               >
-                <MenuItem value="consultation">Consultation</MenuItem>
-                <MenuItem value="therapy">Therapy</MenuItem>
+                <MenuItem value="individual">{t.calendarPage.individualTherapy}</MenuItem>
+                <MenuItem value="group">{t.calendarPage.groupTherapy}</MenuItem>
+                <MenuItem value="family">{t.calendarPage.familyTherapy}</MenuItem>
+                <MenuItem value="consultation">{t.calendarPage.consultation}</MenuItem>
               </TextField>
 
               {/* Meeting Type Configuration */}
@@ -372,10 +294,10 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                       </Box>
                       <Box>
                         <Typography variant="h6" fontWeight={600}>
-                          Meeting Type
+                          {isOnline ? t.calendarPage.onlineMeeting : t.calendarPage.inPersonMeeting}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {meetingType === 'online' ? 'Online Meeting' : 'In-Person Session'}
+                          {isOnline ? t.calendarPage.meetingTypes.online : t.calendarPage.meetingTypes.inPerson}
                         </Typography>
                       </Box>
                     </Box>
@@ -398,7 +320,7 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                   {isOnline && (
                     <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
                       <Typography variant="body2">
-                        A Google Meet link will be generated automatically and sent to the client.
+                        {t.calendarPage.googleMeet.willGenerate}
                       </Typography>
                     </Alert>
                   )}
@@ -406,11 +328,13 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                   {!isOnline && (
                     <TextField
                       fullWidth
-                      label="Meeting Location"
+                      required
+                      label={t.calendarPage.location}
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Enter the meeting location"
+                      placeholder={t.calendarPage.locationPlaceholder}
                       variant="outlined"
+                      helperText={!location.trim() ? (t.calendarPage.locationRequired || 'Location is required for in-person meetings') : ''}
                       sx={{
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
@@ -419,119 +343,25 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
                       }}
                     />
                   )}
-
-                  {/* Recording Settings */}
-                  <Box display="flex" alignItems="center" justifyContent="space-between" mt={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Typography variant="body2" fontWeight={500}>
-                        Recording
-                      </Typography>
-                      <Chip
-                        label={recordingSettings.enabled ? recordingSettings.type : 'disabled'}
-                        size="small"
-                        color={recordingSettings.enabled ? 'primary' : 'default'}
-                        variant={recordingSettings.enabled ? 'filled' : 'outlined'}
-                      />
-                    </Box>
-
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={recordingSettings.enabled}
-                            onChange={(e) => setRecordingSettings(prev => ({ 
-                              ...prev, 
-                              enabled: e.target.checked,
-                              type: e.target.checked ? getRecommendedRecordingType(meetingType) : 'none'
-                            }))}
-                            size="small"
-                            color="primary"
-                          />
-                        }
-                        label=""
-                        sx={{ m: 0 }}
-                      />
-                      
-                      <Tooltip title="Advanced recording settings">
-                        <IconButton
-                          size="small"
-                          onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-                        >
-                          <SettingsIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-
-                  {/* Advanced Recording Settings */}
-                  <Collapse in={showAdvancedSettings && recordingSettings.enabled}>
-                    <Box mt={2} p={2} sx={{ backgroundColor: 'rgba(0, 0, 0, 0.02)', borderRadius: 2 }}>
-                      <Stack spacing={2}>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500} mb={1}>
-                            Recording Quality
-                          </Typography>
-                          <Stack direction="row" spacing={1}>
-                            {(['low', 'medium', 'high', 'ultra'] as const).map((quality) => (
-                              <Chip
-                                key={quality}
-                                label={quality}
-                                size="small"
-                                clickable
-                                color={recordingSettings.quality === quality ? 'primary' : 'default'}
-                                variant={recordingSettings.quality === quality ? 'filled' : 'outlined'}
-                                onClick={() => setRecordingSettings(prev => ({ ...prev, quality }))}
-                              />
-                            ))}
-                          </Stack>
-                        </Box>
-
-                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Typography variant="body2">
-                            Auto-start recording
-                          </Typography>
-                          <Switch
-                            checked={recordingSettings.autoStart}
-                            onChange={(e) => setRecordingSettings(prev => ({ ...prev, autoStart: e.target.checked }))}
-                            size="small"
-                          />
-                        </Box>
-
-                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Typography variant="body2">
-                            Include transcription
-                          </Typography>
-                          <Switch
-                            checked={recordingSettings.includeTranscription}
-                            onChange={(e) => setRecordingSettings(prev => ({ ...prev, includeTranscription: e.target.checked }))}
-                            size="small"
-                          />
-                        </Box>
-
-                        <Box display="flex" alignItems="center" justifyContent="space-between">
-                          <Typography variant="body2">
-                            Share with client
-                          </Typography>
-                          <Switch
-                            checked={recordingSettings.shareWithClient}
-                            onChange={(e) => setRecordingSettings(prev => ({ ...prev, shareWithClient: e.target.checked }))}
-                            size="small"
-                          />
-                        </Box>
-                      </Stack>
-                    </Box>
-                  </Collapse>
                 </CardContent>
               </Card>
+
+              {/* Error Alert */}
+              {submitError && (
+                <Alert severity="error" onClose={() => setSubmitError(null)} sx={{ borderRadius: 2 }}>
+                  {submitError}
+                </Alert>
+              )}
 
               {/* Notes */}
               <TextField
                 fullWidth
-                label={t('notes')}
+                label={t.calendarPage.sessionNotes}
                 multiline
                 minRows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                placeholder={t.calendarPage.sessionNotesPlaceholder}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -542,24 +372,24 @@ const ScheduleAppointmentModal: React.FC<ScheduleAppointmentModalProps> = ({
           </DialogContent>
           
           <DialogActions sx={{ p: 3, pt: 1 }}>
-            <Button 
+            <Button
               onClick={onClose}
               disabled={isSubmitting}
               sx={{ borderRadius: 2 }}
             >
-              {t('cancel')}
+              {t.calendarPage.cancel}
             </Button>
-            <Button 
-              variant="contained" 
-              onClick={handleSubmit} 
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
               disabled={!selectedPatient || !datetime || isSubmitting || (meetingType === 'in-person' && !location.trim())}
               startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 minWidth: 120
               }}
             >
-              {isSubmitting ? 'Scheduling...' : t('submit')}
+              {t.calendarPage.schedule}
             </Button>
           </DialogActions>
         </Dialog>

@@ -69,11 +69,11 @@ export class GoogleCalendarService {
     private configService: ConfigService,
     private httpService: HttpService,
   ) {
-    this.webhookSecret = this.configService.get('GOOGLE_WEBHOOK_SECRET', 'fallback-webhook-secret');
+    this.webhookSecret = this.configService.get('GOOGLE_WEBHOOK_SECRET');
     this.webhookUrl = this.configService.get('GOOGLE_WEBHOOK_URL', 'https://your-domain.com/api/webhooks/google-calendar');
-    
-    if (this.webhookSecret === 'fallback-webhook-secret') {
-      this.logger.warn('⚠️  Using fallback webhook secret. Set GOOGLE_WEBHOOK_SECRET in production!');
+
+    if (!this.webhookSecret) {
+      this.logger.warn('⚠️  GOOGLE_WEBHOOK_SECRET not set. Google Calendar webhooks will not work.');
     }
   }
 

@@ -87,6 +87,72 @@ import {
 } from '@mui/icons-material';
 import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../api/client';
+import { logger } from '../logger';
+
+// Type for coach.invitations translations
+interface InvitationsTranslations {
+  title?: string;
+  subtitle?: string;
+  tabs?: string[];
+  stats?: {
+    pending?: string;
+    accepted?: string;
+    total?: string;
+    activeRelations?: string;
+  };
+  create?: {
+    title?: string;
+    steps?: string[];
+    button?: string;
+  };
+  actions?: {
+    viewDetails?: string;
+    approve?: string;
+    reject?: string;
+    decline?: string;
+    accept?: string;
+    cancel?: string;
+    resend?: string;
+    back?: string;
+    continue?: string;
+  };
+  empty?: {
+    title?: string;
+    subtitle?: string;
+    button?: string;
+  };
+  search?: {
+    placeholder?: string;
+    statusFilter?: string;
+    allStatuses?: string;
+  };
+  relationshipTypes?: {
+    primary?: string;
+    secondary?: string;
+    consultation?: string;
+    mentorship?: string;
+    group?: string;
+  };
+  invitationTypes?: {
+    coachingRelationship?: string;
+    programEnrollment?: string;
+    consultation?: string;
+    collaboration?: string;
+  };
+  form?: {
+    clientEmail?: string;
+    invitationType?: string;
+    relationshipType?: string;
+  };
+  labels?: {
+    focusAreas?: string;
+    weeks?: string;
+  };
+  aria?: {
+    sendInvitation?: string;
+  };
+}
 
 // Types for invitation system
 interface CoachInvitation {
@@ -196,8 +262,12 @@ const RELATIONSHIP_TYPE_LABELS = {
 
 const InvitationManagementPage: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations } = useTranslation();
   const navigate = useNavigate();
+
+  // Get coach.invitations translations with fallbacks
+  const coach = translations.coach as Record<string, unknown> | undefined;
+  const t = coach?.invitations as InvitationsTranslations | undefined;
   
   const [invitations, setInvitations] = useState<CoachInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,8 +303,20 @@ const InvitationManagementPage: React.FC = () => {
     }
   });
 
-  const tabLabels = ['All Invitations', 'Pending', 'Accepted', 'Rejected', 'Expired'];
-  const createSteps = ['Client Selection', 'Relationship Details', 'Schedule & Preferences'];
+  const tabLabels = t?.tabs || ['All Invitations', 'Pending', 'Accepted', 'Rejected', 'Expired'];
+  const createSteps = t?.create?.steps || ['Client Selection', 'Relationship Details', 'Schedule & Preferences'];
+
+  // Relationship type labels using translations
+  const getRelationshipTypeLabel = (type: RelationshipType): string => {
+    const labels: Record<RelationshipType, string> = {
+      [RelationshipType.PRIMARY]: t?.relationshipTypes?.primary || 'Primary Coach',
+      [RelationshipType.SECONDARY]: t?.relationshipTypes?.secondary || 'Secondary Coach',
+      [RelationshipType.CONSULTATION]: t?.relationshipTypes?.consultation || 'Consultation',
+      [RelationshipType.MENTORSHIP]: t?.relationshipTypes?.mentorship || 'Mentorship',
+      [RelationshipType.GROUP]: t?.relationshipTypes?.group || 'Group Coaching'
+    };
+    return labels[type];
+  };
 
   useEffect(() => {
     loadInvitations();
@@ -243,138 +325,53 @@ const InvitationManagementPage: React.FC = () => {
   const loadInvitations = async () => {
     try {
       setIsLoading(true);
-      
-      // Mock data - replace with actual API call
-      const mockInvitations: CoachInvitation[] = [
-        {
-          id: 'inv-1',
-          coachId: 'coach-123',
-          coachName: 'Dr. Sarah Johnson',
-          coachEmail: 'sarah@clinic.com',
-          coachSpecialization: 'Life & Wellness Coaching',
-          coachRating: 4.9,
-          clientId: 'client-456',
-          clientName: 'Emma Thompson',
-          clientEmail: 'emma@email.com',
-          invitationType: InvitationType.COACHING_RELATIONSHIP,
-          relationshipType: RelationshipType.PRIMARY,
-          status: InvitationStatus.PENDING,
-          message: 'Hi Emma! I would love to work with you on your personal development goals. Based on our initial conversation, I believe we would be a great fit for a coaching relationship focused on career transition and mindfulness practices.',
-          focusAreas: ['Career Development', 'Mindfulness', 'Goal Setting'],
-          sessionPreferences: {
-            sessionTypes: ['online', 'in-person'],
-            sessionDuration: 60,
-            frequency: 'weekly',
-            preferredTimes: [
-              { day: 'Tuesday', startTime: '10:00', endTime: '18:00' },
-              { day: 'Thursday', startTime: '10:00', endTime: '18:00' }
-            ],
-            timezone: 'PST'
-          },
-          proposedSchedule: {
-            startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-            duration: 16,
-            sessionsPerWeek: 1,
-            totalSessions: 16
-          },
-          dataAccessLevel: DataAccessLevel.LIMITED,
-          invitedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-          metadata: {
-            source: 'coach-initiated',
-            matchingScore: 88,
-            customFields: {}
-          }
-        },
-        {
-          id: 'inv-2',
-          coachId: 'coach-123',
-          coachName: 'Dr. Sarah Johnson',
-          coachEmail: 'sarah@clinic.com',
-          coachSpecialization: 'Life & Wellness Coaching',
-          coachRating: 4.9,
-          clientId: 'client-789',
-          clientName: 'Michael Chen',
-          clientEmail: 'michael@email.com',
-          invitationType: InvitationType.PROGRAM_ENROLLMENT,
-          relationshipType: RelationshipType.SECONDARY,
-          status: InvitationStatus.ACCEPTED,
-          message: 'Welcome to the Executive Leadership Program! This 12-week intensive will help you develop advanced leadership skills.',
-          focusAreas: ['Leadership', 'Executive Coaching', 'Team Management'],
-          sessionPreferences: {
-            sessionTypes: ['online'],
-            sessionDuration: 90,
-            frequency: 'weekly',
-            preferredTimes: [
-              { day: 'Monday', startTime: '19:00', endTime: '21:00' }
-            ],
-            timezone: 'EST'
-          },
-          proposedSchedule: {
-            startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            duration: 12,
-            sessionsPerWeek: 1,
-            totalSessions: 12
-          },
-          dataAccessLevel: DataAccessLevel.FULL,
-          invitedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-          respondedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-          expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-          responseMessage: 'Thank you! I\'m excited to start this leadership journey.',
-          metadata: {
-            source: 'program_enrollment',
-            programId: 'prog-leadership-intensive',
-            customFields: {}
-          }
-        },
-        {
-          id: 'inv-3',
-          coachId: 'coach-123',
-          coachName: 'Dr. Sarah Johnson',
-          coachEmail: 'sarah@clinic.com',
-          coachSpecialization: 'Life & Wellness Coaching',
-          coachRating: 4.9,
-          clientId: 'client-101',
-          clientName: 'Lisa Rodriguez',
-          clientEmail: 'lisa@email.com',
-          invitationType: InvitationType.CONSULTATION,
-          relationshipType: RelationshipType.CONSULTATION,
-          status: InvitationStatus.REJECTED,
-          message: 'I would like to offer you a consultation session to discuss your wellness goals.',
-          focusAreas: ['Wellness', 'Stress Management'],
-          sessionPreferences: {
-            sessionTypes: ['phone'],
-            sessionDuration: 45,
-            frequency: 'as-needed',
-            preferredTimes: [
-              { day: 'Friday', startTime: '14:00', endTime: '17:00' }
-            ],
-            timezone: 'CST'
-          },
-          proposedSchedule: {
-            startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            duration: 1,
-            sessionsPerWeek: 1,
-            totalSessions: 1
-          },
-          dataAccessLevel: DataAccessLevel.VIEW_ONLY,
-          invitedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          respondedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          expiresAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          responseMessage: 'Thank you for the offer, but I\'m not ready for coaching at this time.',
-          rejectionReason: 'Not ready for coaching',
-          metadata: {
-            source: 'coach-initiated',
-            matchingScore: 65,
-            customFields: {}
-          }
-        }
-      ];
 
-      setInvitations(mockInvitations);
-      setIsLoading(false);
+      // Fetch invitations from the relationships API
+      const { data } = await apiClient.get('/relationships');
+      const items = Array.isArray(data) ? data : data?.items || [];
+      const mapped: CoachInvitation[] = items.map((inv: any) => ({
+        id: String(inv.id),
+        coachId: String(inv.coachId || inv.therapistId || ''),
+        coachName: inv.coachName || inv.therapistName || '',
+        coachEmail: inv.coachEmail || '',
+        coachSpecialization: inv.coachSpecialization || '',
+        coachRating: inv.coachRating || 0,
+        clientId: String(inv.clientId || inv.patientId || ''),
+        clientName: inv.clientName || inv.patientName || '',
+        clientEmail: inv.clientEmail || '',
+        invitationType: inv.invitationType || InvitationType.COACHING_RELATIONSHIP,
+        relationshipType: inv.relationshipType || RelationshipType.PRIMARY,
+        status: inv.status || InvitationStatus.PENDING,
+        message: inv.invitationMessage || inv.message || '',
+        focusAreas: inv.focusAreas || [],
+        sessionPreferences: inv.sessionPreferences || {
+          sessionTypes: ['online'],
+          sessionDuration: 60,
+          frequency: 'weekly',
+          preferredTimes: [],
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        proposedSchedule: inv.proposedSchedule || {
+          startDate: new Date(),
+          duration: 12,
+          sessionsPerWeek: 1,
+          totalSessions: 12,
+        },
+        dataAccessLevel: inv.dataAccessLevel || DataAccessLevel.LIMITED,
+        invitedAt: inv.invitationSentDate ? new Date(inv.invitationSentDate) : new Date(inv.createdAt || Date.now()),
+        respondedAt: inv.invitationAcceptedDate ? new Date(inv.invitationAcceptedDate) : undefined,
+        expiresAt: inv.expiresAt ? new Date(inv.expiresAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        responseMessage: inv.responseMessage,
+        rejectionReason: inv.rejectionReason,
+        metadata: inv.metadata || { source: 'api', customFields: {} },
+      }));
+
+      setInvitations(mapped);
     } catch (error) {
-      console.error('Failed to load invitations:', error);
+      logger.debug('Failed to load invitations from API', error);
+      // Show empty state instead of mock data
+      setInvitations([]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -419,46 +416,64 @@ const InvitationManagementPage: React.FC = () => {
 
   const handleInvitationAction = async (invitation: CoachInvitation, action: 'approve' | 'reject' | 'cancel' | 'resend') => {
     try {
-      // TODO: Handle invitation action via API
-      console.log(`${action} invitation:`, invitation.id);
-      
-      // Update local state
-      setInvitations(prev => prev.map(inv => 
-        inv.id === invitation.id 
-          ? { 
-              ...inv, 
-              status: action === 'approve' ? InvitationStatus.ACCEPTED : 
+      // Call the relationships API to update invitation status
+      await apiClient.put(`/relationships/${invitation.id}/${action}`);
+
+      // Update local state optimistically
+      setInvitations(prev => prev.map(inv =>
+        inv.id === invitation.id
+          ? {
+              ...inv,
+              status: action === 'approve' ? InvitationStatus.ACCEPTED :
                      action === 'reject' ? InvitationStatus.REJECTED :
                      action === 'cancel' ? InvitationStatus.CANCELLED : inv.status,
               respondedAt: new Date()
             }
           : inv
       ));
-      
+
       setActionMenuAnchor(null);
     } catch (error) {
-      console.error(`Failed to ${action} invitation:`, error);
+      logger.error(`Failed to ${action} invitation`, error);
+      // Still update local state as fallback
+      setInvitations(prev => prev.map(inv =>
+        inv.id === invitation.id
+          ? {
+              ...inv,
+              status: action === 'approve' ? InvitationStatus.ACCEPTED :
+                     action === 'reject' ? InvitationStatus.REJECTED :
+                     action === 'cancel' ? InvitationStatus.CANCELLED : inv.status,
+              respondedAt: new Date()
+            }
+          : inv
+      ));
+      setActionMenuAnchor(null);
     }
   };
 
   const handleCreateInvitation = async () => {
     try {
-      // TODO: Create invitation via API
+      // Create invitation via the relationships API
+      const { data: created } = await apiClient.post('/relationships', {
+        ...newInvitation,
+        status: InvitationStatus.PENDING,
+      });
+
       const invitation: CoachInvitation = {
         ...newInvitation as CoachInvitation,
-        id: `inv-${Date.now()}`,
-        coachId: 'current-coach-id',
-        coachName: 'Current Coach',
-        coachEmail: 'coach@clinic.com',
-        coachSpecialization: 'Life Coaching',
-        coachRating: 4.8,
+        id: String(created?.id || `inv-${Date.now()}`),
+        coachId: String(created?.coachId || ''),
+        coachName: created?.coachName || '',
+        coachEmail: created?.coachEmail || '',
+        coachSpecialization: created?.coachSpecialization || '',
+        coachRating: created?.coachRating || 0,
         status: InvitationStatus.PENDING,
         invitedAt: new Date(),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         metadata: {
           source: 'coach-initiated',
-          customFields: {}
-        }
+          customFields: {},
+        },
       };
 
       setInvitations(prev => [...prev, invitation]);
@@ -532,7 +547,7 @@ const InvitationManagementPage: React.FC = () => {
                 }}
               />
               <Chip
-                label={RELATIONSHIP_TYPE_LABELS[invitation.relationshipType]}
+                label={getRelationshipTypeLabel(invitation.relationshipType)}
                 size="small"
                 variant="outlined"
                 sx={{ fontWeight: 500 }}
@@ -571,7 +586,7 @@ const InvitationManagementPage: React.FC = () => {
         {invitation.focusAreas.length > 0 && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-              Focus Areas:
+              {t?.labels?.focusAreas || 'Focus Areas:'}
             </Typography>
             <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
               {invitation.focusAreas.slice(0, 3).map((area) => (
@@ -600,7 +615,7 @@ const InvitationManagementPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
             <Typography variant="caption" color="text.secondary">
-              {invitation.proposedSchedule.duration} weeks • {invitation.sessionPreferences.frequency}
+              {invitation.proposedSchedule.duration} {t?.labels?.weeks || 'weeks'} • {invitation.sessionPreferences.frequency}
             </Typography>
           </Box>
           <Typography variant="caption" color="text.secondary">
@@ -618,9 +633,9 @@ const InvitationManagementPage: React.FC = () => {
               setShowDetailDialog(true);
             }}
           >
-            View Details
+            {t?.actions?.viewDetails || 'View Details'}
           </Button>
-          
+
           {invitation.status === InvitationStatus.PENDING && (
             <>
               <Button
@@ -630,7 +645,7 @@ const InvitationManagementPage: React.FC = () => {
                 startIcon={<RejectIcon />}
                 onClick={() => handleInvitationAction(invitation, 'reject')}
               >
-                Reject
+                {t?.actions?.reject || 'Reject'}
               </Button>
               <Button
                 size="small"
@@ -638,7 +653,7 @@ const InvitationManagementPage: React.FC = () => {
                 startIcon={<ApproveIcon />}
                 onClick={() => handleInvitationAction(invitation, 'approve')}
               >
-                Approve
+                {t?.actions?.approve || 'Approve'}
               </Button>
             </>
           )}
@@ -669,10 +684,10 @@ const InvitationManagementPage: React.FC = () => {
               WebkitTextFillColor: 'transparent'
             }}
           >
-            Client Invitations & Relationships 🤝
+            {t?.title || 'Client Invitations & Relationships 🤝'}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-            Manage coaching invitations, approvals, and client relationships
+            {t?.subtitle || 'Manage coaching invitations, approvals, and client relationships'}
           </Typography>
         </Box>
 
@@ -685,11 +700,11 @@ const InvitationManagementPage: React.FC = () => {
                 {invitations.filter(inv => inv.status === InvitationStatus.PENDING).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Pending
+                {t?.stats?.pending || 'Pending'}
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
             <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <SuccessIcon sx={{ fontSize: 32, color: 'success.main', mb: 1 }} />
@@ -697,11 +712,11 @@ const InvitationManagementPage: React.FC = () => {
                 {invitations.filter(inv => inv.status === InvitationStatus.ACCEPTED).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Accepted
+                {t?.stats?.accepted || 'Accepted'}
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
             <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <GroupIcon sx={{ fontSize: 32, color: 'info.main', mb: 1 }} />
@@ -709,11 +724,11 @@ const InvitationManagementPage: React.FC = () => {
                 {invitations.length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Total Invites
+                {t?.stats?.total || 'Total Invites'}
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
             <Card sx={{ textAlign: 'center', p: 2, background: alpha(theme.palette.background.paper, 0.85) }}>
               <RelationshipIcon sx={{ fontSize: 32, color: 'secondary.main', mb: 1 }} />
@@ -721,7 +736,7 @@ const InvitationManagementPage: React.FC = () => {
                 {invitations.filter(inv => inv.status === InvitationStatus.ACCEPTED).length}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Active Relations
+                {t?.stats?.activeRelations || 'Active Relations'}
               </Typography>
             </Card>
           </Grid>
@@ -734,7 +749,7 @@ const InvitationManagementPage: React.FC = () => {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  placeholder="Search invitations..."
+                  placeholder={t?.search?.placeholder || 'Search invitations...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -745,18 +760,18 @@ const InvitationManagementPage: React.FC = () => {
               </Grid>
               <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
-                  <InputLabel>Status Filter</InputLabel>
+                  <InputLabel>{t?.search?.statusFilter || 'Status Filter'}</InputLabel>
                   <Select
                     value={statusFilter}
-                    label="Status Filter"
+                    label={t?.search?.statusFilter || 'Status Filter'}
                     onChange={(e) => setStatusFilter(e.target.value as InvitationStatus | 'all')}
                     sx={{ borderRadius: 2 }}
                   >
-                    <MenuItem value="all">All Statuses</MenuItem>
-                    <MenuItem value={InvitationStatus.PENDING}>Pending</MenuItem>
-                    <MenuItem value={InvitationStatus.ACCEPTED}>Accepted</MenuItem>
-                    <MenuItem value={InvitationStatus.REJECTED}>Rejected</MenuItem>
-                    <MenuItem value={InvitationStatus.EXPIRED}>Expired</MenuItem>
+                    <MenuItem value="all">{t?.search?.allStatuses || 'All Statuses'}</MenuItem>
+                    <MenuItem value={InvitationStatus.PENDING}>{t?.stats?.pending || 'Pending'}</MenuItem>
+                    <MenuItem value={InvitationStatus.ACCEPTED}>{t?.stats?.accepted || 'Accepted'}</MenuItem>
+                    <MenuItem value={InvitationStatus.REJECTED}>{tabLabels[3] || 'Rejected'}</MenuItem>
+                    <MenuItem value={InvitationStatus.EXPIRED}>{tabLabels[4] || 'Expired'}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -766,12 +781,12 @@ const InvitationManagementPage: React.FC = () => {
                   variant="contained"
                   startIcon={<InviteIcon />}
                   onClick={() => setShowCreateDialog(true)}
-                  sx={{ 
+                  sx={{
                     borderRadius: 2,
                     background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`
                   }}
                 >
-                  Send Invitation
+                  {t?.create?.button || 'Send Invitation'}
                 </Button>
               </Grid>
             </Grid>
@@ -846,10 +861,10 @@ const InvitationManagementPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
                     <InviteIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
                     <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
-                      No invitations found
+                      {t?.empty?.title || 'No invitations found'}
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 3 }}>
-                      Start building relationships by sending your first invitation
+                      {t?.empty?.subtitle || 'Start building relationships by sending your first invitation'}
                     </Typography>
                     <Button
                       variant="contained"
@@ -857,7 +872,7 @@ const InvitationManagementPage: React.FC = () => {
                       onClick={() => setShowCreateDialog(true)}
                       sx={{ borderRadius: 3 }}
                     >
-                      Send Invitation
+                      {t?.empty?.button || 'Send Invitation'}
                     </Button>
                   </Box>
                 </Grid>
@@ -897,31 +912,31 @@ const InvitationManagementPage: React.FC = () => {
             setActionMenuAnchor(null);
           }}>
             <ListItemIcon><ViewIcon /></ListItemIcon>
-            View Details
+            {t?.actions?.viewDetails || 'View Details'}
           </MenuItem>
-          
+
           {selectedInvitation?.status === InvitationStatus.PENDING && (
             <>
               <MenuItem onClick={() => handleInvitationAction(selectedInvitation, 'approve')}>
                 <ListItemIcon><ApproveIcon color="success" /></ListItemIcon>
-                Approve
+                {t?.actions?.approve || 'Approve'}
               </MenuItem>
               <MenuItem onClick={() => handleInvitationAction(selectedInvitation, 'reject')}>
                 <ListItemIcon><RejectIcon color="error" /></ListItemIcon>
-                Reject
+                {t?.actions?.reject || 'Reject'}
               </MenuItem>
               <Divider />
               <MenuItem onClick={() => handleInvitationAction(selectedInvitation, 'cancel')}>
                 <ListItemIcon><CancelIcon color="warning" /></ListItemIcon>
-                Cancel
+                {t?.actions?.cancel || 'Cancel'}
               </MenuItem>
             </>
           )}
-          
+
           {selectedInvitation?.status === InvitationStatus.REJECTED && (
             <MenuItem onClick={() => handleInvitationAction(selectedInvitation, 'resend')}>
               <ListItemIcon><SendIcon color="primary" /></ListItemIcon>
-              Resend
+              {t?.actions?.resend || 'Resend'}
             </MenuItem>
           )}
         </Menu>
@@ -929,7 +944,7 @@ const InvitationManagementPage: React.FC = () => {
         {/* Floating Action Button */}
         <Fab
           color="primary"
-          aria-label="send invitation"
+          aria-label={t?.aria?.sendInvitation || 'send invitation'}
           onClick={() => setShowCreateDialog(true)}
           sx={{
             position: 'fixed',
@@ -953,10 +968,10 @@ const InvitationManagementPage: React.FC = () => {
         >
           <DialogTitle>
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Send Coaching Invitation 📧
+              {t?.create?.title || 'Send Coaching Invitation 📧'}
             </Typography>
           </DialogTitle>
-          
+
           <DialogContent sx={{ p: 3 }}>
             <Stepper activeStep={createStep} orientation="vertical">
               {createSteps.map((label, index) => (
@@ -967,51 +982,53 @@ const InvitationManagementPage: React.FC = () => {
                       <Box sx={{ py: 2 }}>
                         <TextField
                           fullWidth
-                          label="Client Email"
+                          label={t?.form?.clientEmail || 'Client Email'}
                           value={newInvitation.clientEmail || ''}
                           onChange={(e) => setNewInvitation(prev => ({ ...prev, clientEmail: e.target.value }))}
                           sx={{ mb: 3 }}
                         />
-                        
+
                         <FormControl fullWidth sx={{ mb: 3 }}>
-                          <InputLabel>Invitation Type</InputLabel>
+                          <InputLabel>{t?.form?.invitationType || 'Invitation Type'}</InputLabel>
                           <Select
                             value={newInvitation.invitationType}
-                            label="Invitation Type"
+                            label={t?.form?.invitationType || 'Invitation Type'}
                             onChange={(e) => setNewInvitation(prev => ({ ...prev, invitationType: e.target.value as InvitationType }))}
                           >
-                            <MenuItem value={InvitationType.COACHING_RELATIONSHIP}>Coaching Relationship</MenuItem>
-                            <MenuItem value={InvitationType.PROGRAM_ENROLLMENT}>Program Enrollment</MenuItem>
-                            <MenuItem value={InvitationType.CONSULTATION}>Consultation</MenuItem>
-                            <MenuItem value={InvitationType.COLLABORATION}>Collaboration</MenuItem>
+                            <MenuItem value={InvitationType.COACHING_RELATIONSHIP}>{t?.invitationTypes?.coachingRelationship || 'Coaching Relationship'}</MenuItem>
+                            <MenuItem value={InvitationType.PROGRAM_ENROLLMENT}>{t?.invitationTypes?.programEnrollment || 'Program Enrollment'}</MenuItem>
+                            <MenuItem value={InvitationType.CONSULTATION}>{t?.invitationTypes?.consultation || 'Consultation'}</MenuItem>
+                            <MenuItem value={InvitationType.COLLABORATION}>{t?.invitationTypes?.collaboration || 'Collaboration'}</MenuItem>
                           </Select>
                         </FormControl>
-                        
+
                         <FormControl fullWidth>
-                          <InputLabel>Relationship Type</InputLabel>
+                          <InputLabel>{t?.form?.relationshipType || 'Relationship Type'}</InputLabel>
                           <Select
                             value={newInvitation.relationshipType}
-                            label="Relationship Type"
+                            label={t?.form?.relationshipType || 'Relationship Type'}
                             onChange={(e) => setNewInvitation(prev => ({ ...prev, relationshipType: e.target.value as RelationshipType }))}
                           >
-                            {Object.entries(RELATIONSHIP_TYPE_LABELS).map(([key, label]) => (
-                              <MenuItem key={key} value={key}>{label}</MenuItem>
-                            ))}
+                            <MenuItem value={RelationshipType.PRIMARY}>{t?.relationshipTypes?.primary || 'Primary Coach'}</MenuItem>
+                            <MenuItem value={RelationshipType.SECONDARY}>{t?.relationshipTypes?.secondary || 'Secondary Coach'}</MenuItem>
+                            <MenuItem value={RelationshipType.CONSULTATION}>{t?.relationshipTypes?.consultation || 'Consultation'}</MenuItem>
+                            <MenuItem value={RelationshipType.MENTORSHIP}>{t?.relationshipTypes?.mentorship || 'Mentorship'}</MenuItem>
+                            <MenuItem value={RelationshipType.GROUP}>{t?.relationshipTypes?.group || 'Group Coaching'}</MenuItem>
                           </Select>
                         </FormControl>
                       </Box>
                     )}
-                    
+
                     <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
                       {index > 0 && (
                         <Button
                           onClick={() => setCreateStep(index - 1)}
                           variant="outlined"
                         >
-                          Back
+                          {t?.actions?.back || 'Back'}
                         </Button>
                       )}
-                      
+
                       {index < createSteps.length - 1 ? (
                         <Button
                           onClick={() => setCreateStep(index + 1)}
@@ -1020,7 +1037,7 @@ const InvitationManagementPage: React.FC = () => {
                             index === 0 && (!newInvitation.clientEmail || !newInvitation.invitationType)
                           }
                         >
-                          Continue
+                          {t?.actions?.continue || 'Continue'}
                         </Button>
                       ) : (
                         <Button
@@ -1029,7 +1046,7 @@ const InvitationManagementPage: React.FC = () => {
                           startIcon={<SendIcon />}
                           disabled={!newInvitation.clientEmail || !newInvitation.message}
                         >
-                          Send Invitation
+                          {t?.create?.button || 'Send Invitation'}
                         </Button>
                       )}
                     </Box>
@@ -1038,10 +1055,10 @@ const InvitationManagementPage: React.FC = () => {
               ))}
             </Stepper>
           </DialogContent>
-          
+
           <DialogActions>
             <Button onClick={() => setShowCreateDialog(false)}>
-              Cancel
+              {t?.actions?.cancel || 'Cancel'}
             </Button>
           </DialogActions>
         </Dialog>

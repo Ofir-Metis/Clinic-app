@@ -72,6 +72,139 @@ import {
   Shield as ShieldIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
+
+// Translation interface for API Management page
+interface AdminApiTranslations {
+  title?: string;
+  accessDenied?: string;
+  tabs?: {
+    overview?: string;
+    apiKeys?: string;
+    rateLimits?: string;
+    clients?: string;
+    analytics?: string;
+    security?: string;
+  };
+  overview?: {
+    apiKeys?: string;
+    totalKeys?: string;
+    activeClients?: string;
+    totalClients?: string;
+    requestsToday?: string;
+    thisMonth?: string;
+    systemHealth?: string;
+    avgResponse?: string;
+    rateLimitingStatus?: string;
+    activeRules?: string;
+    blockedToday?: string;
+    blockRate?: string;
+    reqPerSec?: string;
+    topClients?: string;
+    requests?: string;
+    recentActivity?: string;
+  };
+  apiKeysTab?: {
+    title?: string;
+    createButton?: string;
+    tableHeaders?: {
+      name?: string;
+      keyPreview?: string;
+      client?: string;
+      usage?: string;
+      rateLimits?: string;
+      status?: string;
+      actions?: string;
+    };
+    created?: string;
+    thisMonth?: string;
+    lastUsed?: string;
+    perMin?: string;
+    perDay?: string;
+  };
+  rateLimitsTab?: {
+    title?: string;
+    createButton?: string;
+    rateLimits?: string;
+    perSec?: string;
+    perMin?: string;
+    perHour?: string;
+    burst?: string;
+    priority?: string;
+    active?: string;
+    disabled?: string;
+    edit?: string;
+    analytics?: string;
+  };
+  clientsTab?: {
+    title?: string;
+    addButton?: string;
+    organization?: string;
+    quotas?: string;
+    perDay?: string;
+    perMonth?: string;
+    transferLimit?: string;
+    typeAndAccess?: string;
+    apiKeys?: string;
+    services?: string;
+    edit?: string;
+    usage?: string;
+  };
+  analyticsTab?: {
+    title?: string;
+    totalRequests?: string;
+    successRate?: string;
+    avgResponseTime?: string;
+    rateLimited?: string;
+    topEndpoints?: string;
+    endpoint?: string;
+    requests?: string;
+    avgTime?: string;
+    errorRate?: string;
+    responseTimeDistribution?: string;
+    errorBreakdown?: string;
+  };
+  securityTab?: {
+    threatDetection?: string;
+    blockIpButton?: string;
+    threatsDetected?: string;
+    blockedIps?: string;
+    recentThreats?: string;
+    blockedIpAddresses?: string;
+    tableHeaders?: {
+      ipAddress?: string;
+      reason?: string;
+      blocked?: string;
+      actions?: string;
+    };
+    attempts?: string;
+    by?: string;
+  };
+  createKeyDialog?: {
+    title?: string;
+    keyName?: string;
+    keyNamePlaceholder?: string;
+    clientApplication?: string;
+    requestsPerMinute?: string;
+    requestsPerDay?: string;
+    permissions?: string;
+    permissionsPlaceholder?: string;
+    cancel?: string;
+    createButton?: string;
+  };
+  blockIpDialog?: {
+    title?: string;
+    ipAddress?: string;
+    ipPlaceholder?: string;
+    reason?: string;
+    reasonPlaceholder?: string;
+    duration?: string;
+    durationPlaceholder?: string;
+    durationHelperText?: string;
+    cancel?: string;
+    blockButton?: string;
+  };
+}
 
 interface ApiOverview {
   totalApiKeys: number;
@@ -134,6 +267,8 @@ interface ApiKey {
 
 const ApiManagementPage: React.FC = () => {
   const { user, accessToken } = useAuth();
+  const { translations } = useTranslation();
+  const t = translations.adminApi as AdminApiTranslations | undefined;
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,7 +352,7 @@ const ApiManagementPage: React.FC = () => {
         setThreatDetection(threatsData.data);
       }
     } catch (err) {
-      setError('Failed to load API management data');
+      setError(t?.errors?.loadFailed || 'Failed to load API management data');
       console.error('API management data loading error:', err);
     } finally {
       setLoading(false);
@@ -332,7 +467,7 @@ const ApiManagementPage: React.FC = () => {
     return (
       <Box p={3}>
         <Alert severity="error">
-          Access denied. Admin privileges required.
+          {t?.accessDenied || 'Access denied. Admin privileges required.'}
         </Alert>
       </Box>
     );
@@ -350,7 +485,7 @@ const ApiManagementPage: React.FC = () => {
     <Box p={3}>
       <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <ApiIcon fontSize="large" />
-        API Management & Rate Limiting
+        {t?.title || 'API Management & Rate Limiting'}
       </Typography>
 
       {error && (
@@ -360,12 +495,12 @@ const ApiManagementPage: React.FC = () => {
       )}
 
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        <Tab label="Overview" icon={<ApiIcon />} />
-        <Tab label="API Keys" icon={<KeyIcon />} />
-        <Tab label="Rate Limits" icon={<RateLimitIcon />} />
-        <Tab label="Clients" icon={<ClientsIcon />} />
-        <Tab label="Analytics" icon={<AnalyticsIcon />} />
-        <Tab label="Security" icon={<SecurityIcon />} />
+        <Tab label={t?.tabs?.overview || 'Overview'} icon={<ApiIcon />} />
+        <Tab label={t?.tabs?.apiKeys || 'API Keys'} icon={<KeyIcon />} />
+        <Tab label={t?.tabs?.rateLimits || 'Rate Limits'} icon={<RateLimitIcon />} />
+        <Tab label={t?.tabs?.clients || 'Clients'} icon={<ClientsIcon />} />
+        <Tab label={t?.tabs?.analytics || 'Analytics'} icon={<AnalyticsIcon />} />
+        <Tab label={t?.tabs?.security || 'Security'} icon={<SecurityIcon />} />
       </Tabs>
 
       {/* Overview Tab */}
@@ -374,12 +509,12 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>API Keys</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.apiKeys || 'API Keys'}</Typography>
                 <Typography variant="h3" color="primary">
                   {apiOverview.activeApiKeys}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {apiOverview.totalApiKeys} total keys
+                  {apiOverview.totalApiKeys} {t?.overview?.totalKeys || 'total keys'}
                 </Typography>
               </CardContent>
             </Card>
@@ -388,12 +523,12 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Active Clients</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.activeClients || 'Active Clients'}</Typography>
                 <Typography variant="h3" color="success.main">
                   {apiOverview.activeClients}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {apiOverview.totalClients} total clients
+                  {apiOverview.totalClients} {t?.overview?.totalClients || 'total clients'}
                 </Typography>
               </CardContent>
             </Card>
@@ -402,12 +537,12 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Requests Today</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.requestsToday || 'Requests Today'}</Typography>
                 <Typography variant="h3" color="info.main">
                   {apiOverview.totalRequests.today.toLocaleString()}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {apiOverview.totalRequests.thisMonth.toLocaleString()} this month
+                  {apiOverview.totalRequests.thisMonth.toLocaleString()} {t?.overview?.thisMonth || 'this month'}
                 </Typography>
               </CardContent>
             </Card>
@@ -416,12 +551,12 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>System Health</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.systemHealth || 'System Health'}</Typography>
                 <Typography variant="h3" color="success.main">
                   {apiOverview.systemHealth.uptime}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {apiOverview.systemHealth.responseTime}ms avg response
+                  {apiOverview.systemHealth.responseTime}ms {t?.overview?.avgResponse || 'avg response'}
                 </Typography>
               </CardContent>
             </Card>
@@ -430,7 +565,7 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={8}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Rate Limiting Status</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.rateLimitingStatus || 'Rate Limiting Status'}</Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6} md={3}>
                     <Box textAlign="center">
@@ -438,7 +573,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiOverview.rateLimitStatus.activeRules}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Active Rules
+                        {t?.overview?.activeRules || 'Active Rules'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -448,7 +583,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiOverview.rateLimitStatus.blockedRequests}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Blocked Today
+                        {t?.overview?.blockedToday || 'Blocked Today'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -458,7 +593,7 @@ const ApiManagementPage: React.FC = () => {
                         {(apiOverview.rateLimitStatus.averageBlockRate * 100).toFixed(2)}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Block Rate
+                        {t?.overview?.blockRate || 'Block Rate'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -468,7 +603,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiOverview.systemHealth.throughput}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Req/sec
+                        {t?.overview?.reqPerSec || 'Req/sec'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -480,13 +615,13 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Top Clients</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.topClients || 'Top Clients'}</Typography>
                 <List dense>
                   {apiOverview.topClients.map((client) => (
                     <ListItem key={client.id}>
                       <ListItemText
                         primary={client.name}
-                        secondary={`${client.requestCount.toLocaleString()} requests`}
+                        secondary={`${client.requestCount.toLocaleString()} ${t?.overview?.requests || 'requests'}`}
                       />
                       <ListItemSecondaryAction>
                         <Typography variant="body2" color="text.secondary">
@@ -503,7 +638,7 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Recent Activity</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.recentActivity || 'Recent Activity'}</Typography>
                 <List>
                   {apiOverview.recentActivity.map((activity, index) => (
                     <ListItem key={index}>
@@ -540,13 +675,13 @@ const ApiManagementPage: React.FC = () => {
       {currentTab === 1 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">API Key Management</Typography>
+            <Typography variant="h6">{t?.apiKeysTab?.title || 'API Key Management'}</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateKeyOpen(true)}
             >
-              Create API Key
+              {t?.apiKeysTab?.createButton || 'Create API Key'}
             </Button>
           </Box>
 
@@ -555,13 +690,13 @@ const ApiManagementPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Key Preview</TableCell>
-                    <TableCell>Client</TableCell>
-                    <TableCell>Usage</TableCell>
-                    <TableCell>Rate Limits</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.name || 'Name'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.keyPreview || 'Key Preview'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.client || 'Client'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.usage || 'Usage'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.rateLimits || 'Rate Limits'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.status || 'Status'}</TableCell>
+                    <TableCell>{t?.apiKeysTab?.tableHeaders?.actions || 'Actions'}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -572,25 +707,25 @@ const ApiManagementPage: React.FC = () => {
                           {key.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Created: {new Date(key.createdAt).toLocaleDateString()}
+                          {t?.apiKeysTab?.created || 'Created:'} {new Date(key.createdAt).toLocaleDateString()}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Box display="flex" alignItems="center" gap={1}>
-                          <Typography 
-                            variant="body2" 
+                          <Typography
+                            variant="body2"
                             sx={{ fontFamily: 'monospace' }}
                           >
                             {showApiKey === key.id ? key.keyPreview.replace('...', 'abc123def456') : key.keyPreview}
                           </Typography>
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => setShowApiKey(showApiKey === key.id ? null : key.id)}
                           >
                             {showApiKey === key.id ? <VisibilityOff /> : <ViewIcon />}
                           </IconButton>
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => copyToClipboard(key.keyPreview)}
                           >
                             <CopyIcon />
@@ -608,20 +743,20 @@ const ApiManagementPage: React.FC = () => {
                           {key.usage.requestsThisMonth.toLocaleString()}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          This month
+                          {t?.apiKeysTab?.thisMonth || 'This month'}
                         </Typography>
                         {key.usage.lastUsed && (
                           <Typography variant="caption" display="block" color="text.secondary">
-                            Last used: {new Date(key.usage.lastUsed).toLocaleDateString()}
+                            {t?.apiKeysTab?.lastUsed || 'Last used:'} {new Date(key.usage.lastUsed).toLocaleDateString()}
                           </Typography>
                         )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="caption" display="block">
-                          {key.rateLimits.requestsPerMinute}/min
+                          {key.rateLimits.requestsPerMinute}{t?.apiKeysTab?.perMin || '/min'}
                         </Typography>
                         <Typography variant="caption" display="block">
-                          {key.rateLimits.requestsPerDay}/day
+                          {key.rateLimits.requestsPerDay}{t?.apiKeysTab?.perDay || '/day'}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -659,13 +794,13 @@ const ApiManagementPage: React.FC = () => {
       {currentTab === 2 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Rate Limiting Rules</Typography>
+            <Typography variant="h6">{t?.rateLimitsTab?.title || 'Rate Limiting Rules'}</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateRuleOpen(true)}
             >
-              Create Rule
+              {t?.rateLimitsTab?.createButton || 'Create Rule'}
             </Button>
           </Box>
 
@@ -681,52 +816,52 @@ const ApiManagementPage: React.FC = () => {
                         onChange={(e) => toggleRateLimitRule(rule.id, e.target.checked)}
                       />
                     </Box>
-                    
+
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       Pattern: {rule.pattern} | Type: {rule.type}
                     </Typography>
-                    
+
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Rate Limits</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.rateLimitsTab?.rateLimits || 'Rate Limits'}</Typography>
                       <Grid container spacing={1}>
                         <Grid item xs={6}>
                           <Typography variant="body2">
-                            {rule.limits.requestsPerSecond}/sec
+                            {rule.limits.requestsPerSecond}{t?.rateLimitsTab?.perSec || '/sec'}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
                           <Typography variant="body2">
-                            {rule.limits.requestsPerMinute}/min
+                            {rule.limits.requestsPerMinute}{t?.rateLimitsTab?.perMin || '/min'}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
                           <Typography variant="body2">
-                            {rule.limits.requestsPerHour}/hour
+                            {rule.limits.requestsPerHour}{t?.rateLimitsTab?.perHour || '/hour'}
                           </Typography>
                         </Grid>
                         <Grid item xs={6}>
                           <Typography variant="body2">
-                            Burst: {rule.limits.burstLimit}
+                            {t?.rateLimitsTab?.burst || 'Burst:'} {rule.limits.burstLimit}
                           </Typography>
                         </Grid>
                       </Grid>
                     </Box>
 
                     <Box mt={2} display="flex" gap={1}>
-                      <Chip label={`Priority ${rule.priority}`} size="small" />
-                      <Chip 
-                        label={rule.enabled ? 'Active' : 'Disabled'} 
+                      <Chip label={`${t?.rateLimitsTab?.priority || 'Priority'} ${rule.priority}`} size="small" />
+                      <Chip
+                        label={rule.enabled ? (t?.rateLimitsTab?.active || 'Active') : (t?.rateLimitsTab?.disabled || 'Disabled')}
                         color={rule.enabled ? 'success' : 'default'}
-                        size="small" 
+                        size="small"
                       />
                     </Box>
 
                     <Box mt={2} display="flex" gap={1}>
                       <Button size="small" startIcon={<EditIcon />}>
-                        Edit
+                        {t?.rateLimitsTab?.edit || 'Edit'}
                       </Button>
                       <Button size="small" startIcon={<AnalyticsIcon />}>
-                        Analytics
+                        {t?.rateLimitsTab?.analytics || 'Analytics'}
                       </Button>
                     </Box>
                   </CardContent>
@@ -741,13 +876,13 @@ const ApiManagementPage: React.FC = () => {
       {currentTab === 3 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Client Applications</Typography>
+            <Typography variant="h6">{t?.clientsTab?.title || 'Client Applications'}</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateClientOpen(true)}
             >
-              Add Client
+              {t?.clientsTab?.addButton || 'Add Client'}
             </Button>
           </Box>
 
@@ -764,13 +899,13 @@ const ApiManagementPage: React.FC = () => {
                         size="small"
                       />
                     </Box>
-                    
+
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {client.description}
                     </Typography>
-                    
+
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Organization</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.clientsTab?.organization || 'Organization'}</Typography>
                       <Typography variant="body2">{client.organization}</Typography>
                       <Typography variant="body2" color="text.secondary">
                         {client.contactEmail}
@@ -778,36 +913,36 @@ const ApiManagementPage: React.FC = () => {
                     </Box>
 
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Quotas</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.clientsTab?.quotas || 'Quotas'}</Typography>
                       <Typography variant="body2">
-                        {client.quotas.requestsPerDay.toLocaleString()}/day
+                        {client.quotas.requestsPerDay.toLocaleString()}{t?.clientsTab?.perDay || '/day'}
                       </Typography>
                       <Typography variant="body2">
-                        {client.quotas.requestsPerMonth.toLocaleString()}/month
+                        {client.quotas.requestsPerMonth.toLocaleString()}{t?.clientsTab?.perMonth || '/month'}
                       </Typography>
                       <Typography variant="body2">
-                        {client.quotas.dataTransferLimitMB}MB transfer limit
+                        {client.quotas.dataTransferLimitMB}MB {t?.clientsTab?.transferLimit || 'transfer limit'}
                       </Typography>
                     </Box>
 
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Type & Access</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.clientsTab?.typeAndAccess || 'Type & Access'}</Typography>
                       <Box display="flex" gap={1} flexWrap="wrap">
                         <Chip label={client.type} size="small" />
-                        <Chip label={`${client.apiKeys.length} API Keys`} size="small" />
-                        <Chip label={`${client.permissions.allowedServices.length} Services`} size="small" />
+                        <Chip label={`${client.apiKeys.length} ${t?.clientsTab?.apiKeys || 'API Keys'}`} size="small" />
+                        <Chip label={`${client.permissions.allowedServices.length} ${t?.clientsTab?.services || 'Services'}`} size="small" />
                       </Box>
                     </Box>
 
                     <Box mt={2} display="flex" gap={1}>
                       <Button size="small" startIcon={<EditIcon />}>
-                        Edit
+                        {t?.clientsTab?.edit || 'Edit'}
                       </Button>
                       <Button size="small" startIcon={<KeyIcon />}>
-                        API Keys
+                        {t?.clientsTab?.apiKeys || 'API Keys'}
                       </Button>
                       <Button size="small" startIcon={<AnalyticsIcon />}>
-                        Usage
+                        {t?.clientsTab?.usage || 'Usage'}
                       </Button>
                     </Box>
                   </CardContent>
@@ -824,7 +959,7 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>API Usage Overview</Typography>
+                <Typography variant="h6" gutterBottom>{t?.analyticsTab?.title || 'API Usage Overview'}</Typography>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={6} md={3}>
                     <Box textAlign="center">
@@ -832,7 +967,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiAnalytics.overview.totalRequests.toLocaleString()}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Total Requests
+                        {t?.analyticsTab?.totalRequests || 'Total Requests'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -842,7 +977,7 @@ const ApiManagementPage: React.FC = () => {
                         {((apiAnalytics.overview.successfulRequests / apiAnalytics.overview.totalRequests) * 100).toFixed(1)}%
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Success Rate
+                        {t?.analyticsTab?.successRate || 'Success Rate'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -852,7 +987,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiAnalytics.overview.averageResponseTime}ms
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Avg Response Time
+                        {t?.analyticsTab?.avgResponseTime || 'Avg Response Time'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -862,7 +997,7 @@ const ApiManagementPage: React.FC = () => {
                         {apiAnalytics.overview.rateLimitedRequests.toLocaleString()}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Rate Limited
+                        {t?.analyticsTab?.rateLimited || 'Rate Limited'}
                       </Typography>
                     </Box>
                   </Grid>
@@ -874,14 +1009,14 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Top Endpoints</Typography>
+                <Typography variant="h6" gutterBottom>{t?.analyticsTab?.topEndpoints || 'Top Endpoints'}</Typography>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Endpoint</TableCell>
-                      <TableCell>Requests</TableCell>
-                      <TableCell>Avg Time</TableCell>
-                      <TableCell>Error Rate</TableCell>
+                      <TableCell>{t?.analyticsTab?.endpoint || 'Endpoint'}</TableCell>
+                      <TableCell>{t?.analyticsTab?.requests || 'Requests'}</TableCell>
+                      <TableCell>{t?.analyticsTab?.avgTime || 'Avg Time'}</TableCell>
+                      <TableCell>{t?.analyticsTab?.errorRate || 'Error Rate'}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -912,16 +1047,16 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Response Time Distribution</Typography>
+                <Typography variant="h6" gutterBottom>{t?.analyticsTab?.responseTimeDistribution || 'Response Time Distribution'}</Typography>
                 {apiAnalytics.responseTimeDistribution.map((dist: any, index: number) => (
                   <Box key={index} mb={1}>
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Typography variant="body2">{dist.range}</Typography>
                       <Typography variant="body2">{dist.percentage}%</Typography>
                     </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={dist.percentage} 
+                    <LinearProgress
+                      variant="determinate"
+                      value={dist.percentage}
                       sx={{ height: 8, borderRadius: 4 }}
                     />
                   </Box>
@@ -933,7 +1068,7 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Error Breakdown</Typography>
+                <Typography variant="h6" gutterBottom>{t?.analyticsTab?.errorBreakdown || 'Error Breakdown'}</Typography>
                 <Grid container spacing={2}>
                   {apiAnalytics.errorBreakdown.map((error: any, index: number) => (
                     <Grid item xs={12} sm={6} md={2.4} key={index}>
@@ -961,17 +1096,17 @@ const ApiManagementPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Threat Detection</Typography>
+                  <Typography variant="h6">{t?.securityTab?.threatDetection || 'Threat Detection'}</Typography>
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={<BlockIcon />}
                     onClick={() => setBlockIpOpen(true)}
                   >
-                    Block IP
+                    {t?.securityTab?.blockIpButton || 'Block IP'}
                   </Button>
                 </Box>
-                
+
                 {threatDetection && (
                   <Box>
                     <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -980,7 +1115,7 @@ const ApiManagementPage: React.FC = () => {
                           {threatDetection.overview.threatsDetected}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Threats Detected
+                          {t?.securityTab?.threatsDetected || 'Threats Detected'}
                         </Typography>
                       </Grid>
                       <Grid item xs={6}>
@@ -988,12 +1123,12 @@ const ApiManagementPage: React.FC = () => {
                           {threatDetection.overview.blockedIps}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Blocked IPs
+                          {t?.securityTab?.blockedIps || 'Blocked IPs'}
                         </Typography>
                       </Grid>
                     </Grid>
 
-                    <Typography variant="subtitle2" gutterBottom>Recent Threats</Typography>
+                    <Typography variant="subtitle2" gutterBottom>{t?.securityTab?.recentThreats || 'Recent Threats'}</Typography>
                     <List dense>
                       {threatDetection.recentThreats.map((threat: any, index: number) => (
                         <ListItem key={index}>
@@ -1022,14 +1157,14 @@ const ApiManagementPage: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Blocked IP Addresses</Typography>
+                <Typography variant="h6" gutterBottom>{t?.securityTab?.blockedIpAddresses || 'Blocked IP Addresses'}</Typography>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>IP Address</TableCell>
-                      <TableCell>Reason</TableCell>
-                      <TableCell>Blocked</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell>{t?.securityTab?.tableHeaders?.ipAddress || 'IP Address'}</TableCell>
+                      <TableCell>{t?.securityTab?.tableHeaders?.reason || 'Reason'}</TableCell>
+                      <TableCell>{t?.securityTab?.tableHeaders?.blocked || 'Blocked'}</TableCell>
+                      <TableCell>{t?.securityTab?.tableHeaders?.actions || 'Actions'}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1041,7 +1176,7 @@ const ApiManagementPage: React.FC = () => {
                         <TableCell>
                           <Typography variant="body2">{ip.reason}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {ip.attempts} attempts
+                            {ip.attempts} {t?.securityTab?.attempts || 'attempts'}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -1049,7 +1184,7 @@ const ApiManagementPage: React.FC = () => {
                             {new Date(ip.blockedAt).toLocaleDateString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            by {ip.blockedBy}
+                            {t?.securityTab?.by || 'by'} {ip.blockedBy}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -1069,20 +1204,20 @@ const ApiManagementPage: React.FC = () => {
 
       {/* Create API Key Dialog */}
       <Dialog open={createKeyOpen} onClose={() => setCreateKeyOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Create API Key</DialogTitle>
+        <DialogTitle>{t?.createKeyDialog?.title || 'Create API Key'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Key Name"
+                label={t?.createKeyDialog?.keyName || 'Key Name'}
                 fullWidth
-                placeholder="e.g., Production Mobile App Key"
+                placeholder={t?.createKeyDialog?.keyNamePlaceholder || 'e.g., Production Mobile App Key'}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Client Application</InputLabel>
-                <Select value="" label="Client Application">
+                <InputLabel>{t?.createKeyDialog?.clientApplication || 'Client Application'}</InputLabel>
+                <Select value="" label={t?.createKeyDialog?.clientApplication || 'Client Application'}>
                   {clientApplications.map((client) => (
                     <MenuItem key={client.id} value={client.id}>
                       {client.name}
@@ -1093,7 +1228,7 @@ const ApiManagementPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Requests per Minute"
+                label={t?.createKeyDialog?.requestsPerMinute || 'Requests per Minute'}
                 type="number"
                 fullWidth
                 defaultValue={100}
@@ -1101,7 +1236,7 @@ const ApiManagementPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Requests per Day"
+                label={t?.createKeyDialog?.requestsPerDay || 'Requests per Day'}
                 type="number"
                 fullWidth
                 defaultValue={100000}
@@ -1109,51 +1244,51 @@ const ApiManagementPage: React.FC = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Permissions (comma-separated)"
+                label={t?.createKeyDialog?.permissions || 'Permissions (comma-separated)'}
                 fullWidth
-                placeholder="read:patients, write:appointments, read:files"
+                placeholder={t?.createKeyDialog?.permissionsPlaceholder || 'read:patients, write:appointments, read:files'}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateKeyOpen(false)}>Cancel</Button>
+          <Button onClick={() => setCreateKeyOpen(false)}>{t?.createKeyDialog?.cancel || 'Cancel'}</Button>
           <Button variant="contained" onClick={() => createApiKey({})}>
-            Create API Key
+            {t?.createKeyDialog?.createButton || 'Create API Key'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Block IP Dialog */}
       <Dialog open={blockIpOpen} onClose={() => setBlockIpOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Block IP Address</DialogTitle>
+        <DialogTitle>{t?.blockIpDialog?.title || 'Block IP Address'}</DialogTitle>
         <DialogContent>
           <TextField
-            label="IP Address"
+            label={t?.blockIpDialog?.ipAddress || 'IP Address'}
             fullWidth
             sx={{ mb: 2, mt: 1 }}
-            placeholder="192.168.1.100"
+            placeholder={t?.blockIpDialog?.ipPlaceholder || '192.168.1.100'}
           />
           <TextField
-            label="Reason"
+            label={t?.blockIpDialog?.reason || 'Reason'}
             fullWidth
             multiline
             rows={3}
             sx={{ mb: 2 }}
-            placeholder="Describe why this IP should be blocked"
+            placeholder={t?.blockIpDialog?.reasonPlaceholder || 'Describe why this IP should be blocked'}
           />
           <TextField
-            label="Duration (minutes)"
+            label={t?.blockIpDialog?.duration || 'Duration (minutes)'}
             type="number"
             fullWidth
-            placeholder="Leave empty for permanent block"
-            helperText="0 or empty for permanent block"
+            placeholder={t?.blockIpDialog?.durationPlaceholder || 'Leave empty for permanent block'}
+            helperText={t?.blockIpDialog?.durationHelperText || '0 or empty for permanent block'}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBlockIpOpen(false)}>Cancel</Button>
+          <Button onClick={() => setBlockIpOpen(false)}>{t?.blockIpDialog?.cancel || 'Cancel'}</Button>
           <Button variant="contained" color="error" onClick={() => blockIpAddress({})}>
-            Block IP
+            {t?.blockIpDialog?.blockButton || 'Block IP'}
           </Button>
         </DialogActions>
       </Dialog>

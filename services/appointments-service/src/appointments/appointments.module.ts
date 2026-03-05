@@ -4,13 +4,16 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppointmentsService } from './appointments.service';
 import { AppointmentsController } from './appointments.controller';
 import { Appointment } from './appointment.entity';
+import { SessionRecording } from '../recording/recording.entity';
+import { RecordingService } from '../recording/recording.service';
+import { RecordingController } from '../recording/recording.controller';
 import { MeetingManagerService } from '../meetings/meeting-manager.service';
 import { RecordingOrchestratorService } from '../recording/recording-orchestrator.service';
 import { MockJwtService } from '../mock-jwt.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Appointment]),
+    TypeOrmModule.forFeature([Appointment, SessionRecording]),
     ClientsModule.register([
       {
         name: 'GOOGLE_INTEGRATION_SERVICE',
@@ -39,13 +42,15 @@ import { MockJwtService } from '../mock-jwt.service';
     AppointmentsService,
     MeetingManagerService,
     RecordingOrchestratorService,
-    MockJwtService
+    MockJwtService,
+    RecordingService
   ],
-  controllers: [AppointmentsController],
+  controllers: [AppointmentsController, RecordingController],
   exports: [
     AppointmentsService,
     MeetingManagerService,
-    RecordingOrchestratorService
+    RecordingOrchestratorService,
+    RecordingService
   ]
 })
-export class AppointmentsModule {}
+export class AppointmentsModule { }

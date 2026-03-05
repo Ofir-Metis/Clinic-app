@@ -267,7 +267,7 @@ const CoachDiscovery: React.FC = () => {
           firstName: 'Dr. Aisha',
           lastName: 'Patel',
           professionalTitle: 'Wellness & Mindfulness Coach',
-          bio: 'Licensed therapist and certified mindfulness instructor with expertise in stress management and mental wellness. I combine evidence-based therapeutic approaches with ancient mindfulness practices.',
+          bio: 'Certified wellness coach and mindfulness instructor with expertise in stress management and mental wellness. I combine evidence-based coaching approaches with ancient mindfulness practices.',
           specializations: ['Health & Wellness', 'Mindfulness & Meditation', 'Stress Management'],
           yearsOfExperience: 6,
           location: 'Austin, TX',
@@ -469,6 +469,7 @@ const CoachDiscovery: React.FC = () => {
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography
             variant="h3"
+            data-testid="coach-discovery-heading"
             sx={{
               fontWeight: 700,
               mb: 2,
@@ -529,18 +530,20 @@ const CoachDiscovery: React.FC = () => {
             
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
-                <TextField  
+                <TextField
                   fullWidth
                   placeholder="Search coaches, specializations..."
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
+                  data-testid="coach-search-input"
+                  inputProps={{ 'data-testid': 'coach-search-input-field', role: 'searchbox' }}
                   InputProps={{
                     startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
                   }}
                   sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                 />
               </Grid>
-              
+
               <Grid item xs={12} sm={6} md={2}>
                 <FormControl fullWidth>
                   <InputLabel>Specialization</InputLabel>
@@ -549,6 +552,7 @@ const CoachDiscovery: React.FC = () => {
                     value={filters.specializations}
                     label="Specialization"
                     onChange={(e) => handleFilterChange('specializations', e.target.value)}
+                    data-testid="coach-specialization-filter"
                     sx={{ borderRadius: 2 }}
                   >
                     {SPECIALIZATION_OPTIONS.map((spec) => (
@@ -627,11 +631,13 @@ const CoachDiscovery: React.FC = () => {
                   precision={0.5}
                 />
               </Box>
-              
+
+
               <Chip
                 label={`${filteredCoaches.length} coaches found`}
                 color="primary"
                 variant="outlined"
+                data-testid="coach-count-chip"
                 sx={{ ml: 'auto' }}
               />
             </Box>
@@ -644,6 +650,9 @@ const CoachDiscovery: React.FC = () => {
             filteredCoaches.map((coach) => (
               <Grid item xs={12} md={6} lg={4} key={coach.id}>
                 <Card
+                  data-testid={`coach-card-${coach.id}`}
+                  className="coach-card"
+                  onClick={() => handleViewProfile(coach)}
                   sx={{
                     background: alpha(theme.palette.background.paper, 0.85),
                     backdropFilter: 'blur(20px)',
@@ -788,7 +797,10 @@ const CoachDiscovery: React.FC = () => {
                       <Button
                         variant="outlined"
                         size="small"
-                        onClick={() => handleViewProfile(coach)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewProfile(coach);
+                        }}
                         sx={{ flex: 1, borderRadius: 2 }}
                       >
                         View Profile
@@ -796,7 +808,10 @@ const CoachDiscovery: React.FC = () => {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => handleConnectWithCoach(coach)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConnectWithCoach(coach);
+                        }}
                         startIcon={<SendIcon />}
                         disabled={!coach.acceptingNewClients}
                         sx={{
@@ -814,13 +829,13 @@ const CoachDiscovery: React.FC = () => {
             ))
           ) : (
             <Grid item xs={12}>
-              <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+              <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }} data-testid="empty-state-container">
                 <SearchIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
-                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }} data-testid="no-coaches-message">
                   No coaches found
                 </Typography>
-                <Typography variant="body1" sx={{ mb: 3 }}>
-                  Try adjusting your filters to find more coaches
+                <Typography variant="body1" sx={{ mb: 3 }} data-testid="empty-state-description">
+                  No results match your search. Try different filters to find coaches.
                 </Typography>
                 <Button
                   variant="outlined"
@@ -888,35 +903,142 @@ const CoachDiscovery: React.FC = () => {
               </DialogTitle>
               
               <DialogContent sx={{ pt: 0 }}>
-                {/* Detailed coach profile content would go here */}
-                <Typography paragraph>{selectedCoach.bio || 'No bio available.'}</Typography>
-                
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                  Specializations
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" gap={1} sx={{ mb: 3 }}>
-                  {selectedCoach.specializations.map((spec) => (
-                    <Chip key={spec} label={spec} />
-                  ))}
-                </Stack>
+                {/* About Section */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SpecializationIcon /> About
+                  </Typography>
+                  <Typography paragraph>{selectedCoach.bio || 'No bio available.'}</Typography>
+                </Box>
 
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                  Credentials
-                </Typography>
-                <List>
-                  {selectedCoach.credentials.map((cred, index) => (
-                    <ListItem key={index}>
-                      <ListItemIcon>
-                        <EducationIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={cred.name}
-                        secondary={cred.issuingOrganization}
-                      />
-                      {cred.isVerified && <VerifiedIcon color="success" />}
-                    </ListItem>
-                  ))}
-                </List>
+                <Divider sx={{ my: 3 }} />
+
+                {/* Specializations */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    Specializations
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                    {selectedCoach.specializations.map((spec) => (
+                      <Chip key={spec} label={spec} color="primary" variant="outlined" />
+                    ))}
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Experience & Details */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    Experience & Details
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <ExperienceIcon color="action" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Years of Experience</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedCoach.yearsOfExperience} years</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <LocationIcon color="action" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Location</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedCoach.location}</Typography>
+                      </Box>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <LanguageIcon color="action" />
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">Languages</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>{selectedCoach.languages.join(', ')}</Typography>
+                      </Box>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Availability */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ScheduleIcon /> Availability
+                  </Typography>
+                  <Box sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.1), borderRadius: 2 }}>
+                    <Typography variant="body1" color="success.main" sx={{ fontWeight: 500 }}>
+                      {getAvailabilityText(selectedCoach)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      Timezone: {selectedCoach.availability.timezone}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Pricing */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PriceIcon /> Session Pricing
+                  </Typography>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                      <Typography variant="body1">Individual Session</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        ${selectedCoach.pricingStructure.sessionRates.individual}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
+                      <Typography variant="body1">Package Rate</Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        ${selectedCoach.pricingStructure.sessionRates.package}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Session Types */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    Session Formats
+                  </Typography>
+                  <Stack direction="row" spacing={2}>
+                    {selectedCoach.sessionTypes.online && (
+                      <Chip icon={<OnlineIcon />} label="Online" color="primary" />
+                    )}
+                    {selectedCoach.sessionTypes.inPerson && (
+                      <Chip icon={<InPersonIcon />} label="In-Person" color="primary" />
+                    )}
+                    {selectedCoach.sessionTypes.phone && (
+                      <Chip icon={<PhoneIcon />} label="Phone" color="primary" />
+                    )}
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 3 }} />
+
+                {/* Credentials */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                    Credentials
+                  </Typography>
+                  <List>
+                    {selectedCoach.credentials.map((cred, index) => (
+                      <ListItem key={index}>
+                        <ListItemIcon>
+                          <EducationIcon />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={cred.name}
+                          secondary={cred.issuingOrganization}
+                        />
+                        {cred.isVerified && <VerifiedIcon color="success" />}
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
               </DialogContent>
               
               <DialogActions>
@@ -933,8 +1055,9 @@ const CoachDiscovery: React.FC = () => {
                     handleConnectWithCoach(selectedCoach);
                   }}
                   startIcon={<SendIcon />}
+                  disabled={!selectedCoach.acceptingNewClients}
                 >
-                  Connect with Coach
+                  Request Connection
                 </Button>
               </DialogActions>
             </>

@@ -16,24 +16,25 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   useEffect(() => {
     // Public routes that don't require authentication
-    const publicRoutes = ['/login', '/register', '/reset/request', '/reset/confirm', '/auth', '/client/login', '/client/register'];
+    const publicRoutes = ['/login', '/register', '/reset/request', '/reset/confirm', '/auth', '/client/login', '/client/register', '/client/forgot-password'];
     const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
 
     if (!isPublicRoute) {
       // Check authentication
-      const accessToken = localStorage.getItem('accessToken') || 
+      const accessToken = localStorage.getItem('accessToken') ||
                          localStorage.getItem('clinic_access_token') ||
                          localStorage.getItem('authToken') ||
                          localStorage.getItem('token');
-      
-      const userData = localStorage.getItem('user') || 
+
+      const userData = localStorage.getItem('user') ||
                       localStorage.getItem('clinic_user');
 
       const isAuthenticated = !!(accessToken && userData);
 
       if (!isAuthenticated) {
-        // Not authenticated, redirect to login
-        navigate('/login', { replace: true, state: { from: location.pathname } });
+        // Redirect to appropriate login page based on current path
+        const loginPath = location.pathname.startsWith('/client') ? '/client/login' : '/login';
+        navigate(loginPath, { replace: true, state: { from: location.pathname } });
         return;
       }
     }

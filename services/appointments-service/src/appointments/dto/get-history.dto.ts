@@ -4,10 +4,9 @@ import { IsInt, IsOptional } from 'class-validator';
  * Query parameters for appointment history.
  */
 export class GetHistoryDto {
-  therapistId!: number;
+  therapistId!: string;
 
   @IsOptional()
-  @IsInt()
   page?: number;
 
   @IsOptional()

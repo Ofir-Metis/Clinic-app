@@ -39,7 +39,16 @@ const NotificationsPage: React.FC = () => {
         setItems(data);
         setError('');
       })
-      .catch(() => setError('failed'))
+      .catch((err) => {
+        // If API returns 404, show empty state instead of error
+        // (endpoint not yet implemented - graceful degradation)
+        if (err?.response?.status === 404) {
+          setItems([]);
+          setError('');
+        } else {
+          setError('failed');
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 

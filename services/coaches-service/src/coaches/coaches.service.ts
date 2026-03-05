@@ -53,50 +53,86 @@ export class CoachesService {
   }
 
   /**
-   * Search coaches by specialization, location, etc.
+   * Search coaches by specialization, language, text search, etc.
    */
-  async searchCoachs(criteria: {
+  async searchCoaches(criteria: {
+    search?: string;
     specializations?: CoachSpecialization[];
     languages?: string[];
     acceptingNewClients?: boolean;
+    sortBy?: 'rating' | 'experience' | 'name' | 'updated';
+    page?: number;
     limit?: number;
-    offset?: number;
-  }): Promise<{ profiles: any[]; total: number }> {
+  }): Promise<{ profiles: any[]; total: number; page: number; limit: number }> {
     this.logger.log('Searching coaches with criteria:', criteria);
-    
+
+    const page = criteria.page || 1;
+    const limit = Math.min(criteria.limit || 20, 100);
+    const offset = (page - 1) * limit;
+
     const queryBuilder = this.profileRepository
       .createQueryBuilder('profile')
       .where('profile.isActive = :isActive', { isActive: true })
       .andWhere('profile.isPublic = :isPublic', { isPublic: true });
-    
+
+    // Text search on name and bio
+    if (criteria.search) {
+      const escapedSearch = criteria.search.replace(/[%_\\]/g, '\\$&');
+      queryBuilder.andWhere(
+        '(profile.name ILIKE :search OR profile.bio ILIKE :search)',
+        { search: `%${escapedSearch}%` }
+      );
+    }
+
+    // Filter by specializations (array overlap)
     if (criteria.specializations?.length) {
       queryBuilder.andWhere('profile.specializations && :specializations', {
         specializations: criteria.specializations
       });
     }
-    
+
+    // Filter by languages (array overlap)
     if (criteria.languages?.length) {
       queryBuilder.andWhere('profile.languages && :languages', {
         languages: criteria.languages
       });
     }
-    
+
+    // Filter by accepting new clients
     if (criteria.acceptingNewClients !== undefined) {
       queryBuilder.andWhere('profile.acceptingNewClients = :accepting', {
         accepting: criteria.acceptingNewClients
       });
     }
-    
-    queryBuilder
-      .orderBy('profile.updatedAt', 'DESC')
-      .limit(criteria.limit || 20)
-      .offset(criteria.offset || 0);
-    
+
+    // Apply sorting
+    switch (criteria.sortBy) {
+      case 'experience':
+        queryBuilder.orderBy('profile.yearsOfExperience', 'DESC', 'NULLS LAST');
+        break;
+      case 'name':
+        queryBuilder.orderBy('profile.name', 'ASC');
+        break;
+      case 'rating':
+        // Rating would require join to reviews/testimonials table - placeholder for now
+        queryBuilder.orderBy('profile.updatedAt', 'DESC');
+        break;
+      case 'updated':
+      default:
+        queryBuilder.orderBy('profile.updatedAt', 'DESC');
+        break;
+    }
+
+    // Apply pagination
+    queryBuilder.limit(limit).offset(offset);
+
     const [profiles, total] = await queryBuilder.getManyAndCount();
-    
+
     return {
       profiles: profiles.map(p => p.toPublicProfile()),
-      total
+      total,
+      page,
+      limit
     };
   }
 

@@ -16,7 +16,7 @@ describe('NotesService', () => {
 
   it('fetches recent notes', async () => {
     repo.find.mockResolvedValue([]);
-    const result = await service.recent(1, 3);
+    const result = await service.recent('coach-uuid-123', 3);
     expect(repo.find).toHaveBeenCalled();
     expect(result).toEqual([]);
   });

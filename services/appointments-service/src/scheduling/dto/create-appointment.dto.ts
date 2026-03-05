@@ -4,7 +4,7 @@ import { IsDateString, IsOptional, IsString } from 'class-validator';
  * DTO validating appointment creation payload.
  */
 export class CreateAppointmentDto {
-  patientId!: number;
+  patientId!: string;
 
   @IsDateString()
   datetime!: string;

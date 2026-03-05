@@ -69,6 +69,149 @@ import {
   Restore as RestoreIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
+
+// Type for adminConfig translations
+interface AdminConfigTranslations {
+  title?: string;
+  accessDenied?: string;
+  tabs?: {
+    overview?: string;
+    configurations?: string;
+    environments?: string;
+    deployments?: string;
+    featureFlags?: string;
+    templates?: string;
+    history?: string;
+  };
+  overview?: {
+    totalConfigurations?: string;
+    acrossEnvironments?: string;
+    configurationHealth?: string;
+    issuesDetected?: string;
+    activeDeployments?: string;
+    currentlyRunning?: string;
+    featureFlags?: string;
+    configDrift?: string;
+    environmentStatus?: string;
+    configs?: string;
+    lastDeploy?: string;
+    recentChanges?: string;
+  };
+  configurations?: {
+    environment?: string;
+    production?: string;
+    staging?: string;
+    development?: string;
+    validateConfig?: string;
+    addConfiguration?: string;
+    tableHeaders?: {
+      key?: string;
+      value?: string;
+      type?: string;
+      service?: string;
+      category?: string;
+      lastModified?: string;
+      actions?: string;
+    };
+    secret?: string;
+    global?: string;
+    by?: string;
+  };
+  environments?: {
+    title?: string;
+    createEnvironment?: string;
+    resources?: string;
+    deploymentConfig?: string;
+    autoDeploy?: string;
+    approvalRequired?: string;
+    rollbackEnabled?: string;
+    deploy?: string;
+    edit?: string;
+  };
+  deployments?: {
+    title?: string;
+    newDeployment?: string;
+    tableHeaders?: {
+      environment?: string;
+      services?: string;
+      version?: string;
+      status?: string;
+      initiatedBy?: string;
+      started?: string;
+      duration?: string;
+      actions?: string;
+    };
+    more?: string;
+    running?: string;
+  };
+  featureFlags?: {
+    title?: string;
+    createFeatureFlag?: string;
+    environments?: string;
+    rules?: string;
+    rollout?: string;
+    users?: string;
+    edit?: string;
+    analytics?: string;
+  };
+  templates?: {
+    title?: string;
+    createTemplate?: string;
+    templateVariables?: string;
+    apply?: string;
+    edit?: string;
+  };
+  history?: {
+    title?: string;
+    infoMessage?: string;
+    recentChanges?: string;
+    trackingDescription?: string;
+    keyChanges?: string;
+    valueModifications?: string;
+    userAttribution?: string;
+    deploymentCorrelation?: string;
+    rollbackCapabilities?: string;
+  };
+  createConfigDialog?: {
+    title?: string;
+    configKey?: string;
+    configKeyPlaceholder?: string;
+    type?: string;
+    types?: {
+      string?: string;
+      number?: string;
+      boolean?: string;
+      json?: string;
+      encrypted?: string;
+    };
+    value?: string;
+    environment?: string;
+    service?: string;
+    servicePlaceholder?: string;
+    description?: string;
+    descriptionPlaceholder?: string;
+    secretValue?: string;
+    cancel?: string;
+    createConfiguration?: string;
+  };
+  deployDialog?: {
+    title?: string;
+    targetEnvironment?: string;
+    servicesToDeploy?: string;
+    servicesToDeployPlaceholder?: string;
+    versionTag?: string;
+    versionTagPlaceholder?: string;
+    enableRollback?: string;
+    deploymentNotes?: string;
+    deploymentNotesPlaceholder?: string;
+    cancel?: string;
+    deploy?: string;
+  };
+  errors?: {
+    loadFailed?: string;
+  };
+}
 
 interface ConfigOverview {
   totalConfigurations: number;
@@ -112,9 +255,13 @@ interface ConfigItem {
 
 const ConfigurationManagementPage: React.FC = () => {
   const { user, accessToken } = useAuth();
+  const { translations } = useTranslation();
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get adminConfig translations
+  const t = translations.adminConfig as AdminConfigTranslations | undefined;
 
   // State for different sections
   const [configOverview, setConfigOverview] = useState<ConfigOverview | null>(null);
@@ -187,7 +334,7 @@ const ConfigurationManagementPage: React.FC = () => {
         setTemplates(templatesData.data || []);
       }
     } catch (err) {
-      setError('Failed to load configuration data');
+      setError(t?.errors?.loadFailed || 'Failed to load configuration data');
       console.error('Configuration data loading error:', err);
     } finally {
       setLoading(false);
@@ -263,7 +410,7 @@ const ConfigurationManagementPage: React.FC = () => {
     return (
       <Box p={3}>
         <Alert severity="error">
-          Access denied. Admin privileges required.
+          {t?.accessDenied || 'Access denied. Admin privileges required.'}
         </Alert>
       </Box>
     );
@@ -281,7 +428,7 @@ const ConfigurationManagementPage: React.FC = () => {
     <Box p={3}>
       <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <SettingsIcon fontSize="large" />
-        Configuration Management
+        {t?.title || 'Configuration Management'}
       </Typography>
 
       {error && (
@@ -291,13 +438,13 @@ const ConfigurationManagementPage: React.FC = () => {
       )}
 
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        <Tab label="Overview" icon={<SettingsIcon />} />
-        <Tab label="Configurations" icon={<CodeIcon />} />
-        <Tab label="Environments" icon={<EnvIcon />} />
-        <Tab label="Deployments" icon={<DeployIcon />} />
-        <Tab label="Feature Flags" icon={<FlagIcon />} />
-        <Tab label="Templates" icon={<TemplateIcon />} />
-        <Tab label="History" icon={<HistoryIcon />} />
+        <Tab label={t?.tabs?.overview || 'Overview'} icon={<SettingsIcon />} />
+        <Tab label={t?.tabs?.configurations || 'Configurations'} icon={<CodeIcon />} />
+        <Tab label={t?.tabs?.environments || 'Environments'} icon={<EnvIcon />} />
+        <Tab label={t?.tabs?.deployments || 'Deployments'} icon={<DeployIcon />} />
+        <Tab label={t?.tabs?.featureFlags || 'Feature Flags'} icon={<FlagIcon />} />
+        <Tab label={t?.tabs?.templates || 'Templates'} icon={<TemplateIcon />} />
+        <Tab label={t?.tabs?.history || 'History'} icon={<HistoryIcon />} />
       </Tabs>
 
       {/* Overview Tab */}
@@ -306,12 +453,12 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Total Configurations</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.totalConfigurations || 'Total Configurations'}</Typography>
                 <Typography variant="h3" color="primary">
                   {configOverview.totalConfigurations}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Across {configOverview.environments} environments
+                  {(t?.overview?.acrossEnvironments || 'Across {count} environments').replace('{count}', String(configOverview.environments))}
                 </Typography>
               </CardContent>
             </Card>
@@ -320,12 +467,12 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Configuration Health</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.configurationHealth || 'Configuration Health'}</Typography>
                 <Typography variant="h3" color="success.main">
                   {Math.round((configOverview.configurationHealth.validConfigurations / configOverview.totalConfigurations) * 100)}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {configOverview.configurationHealth.invalidConfigurations} issues detected
+                  {(t?.overview?.issuesDetected || '{count} issues detected').replace('{count}', String(configOverview.configurationHealth.invalidConfigurations))}
                 </Typography>
               </CardContent>
             </Card>
@@ -334,12 +481,12 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Active Deployments</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.activeDeployments || 'Active Deployments'}</Typography>
                 <Typography variant="h3" color="warning.main">
                   {configOverview.activeDeployments}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Currently running
+                  {t?.overview?.currentlyRunning || 'Currently running'}
                 </Typography>
               </CardContent>
             </Card>
@@ -348,12 +495,12 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={3}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Feature Flags</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.featureFlags || 'Feature Flags'}</Typography>
                 <Typography variant="h3" color="info.main">
                   {configOverview.featureFlags}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Configuration drift: {configOverview.configurationHealth.driftDetected}
+                  {(t?.overview?.configDrift || 'Configuration drift: {count}').replace('{count}', String(configOverview.configurationHealth.driftDetected))}
                 </Typography>
               </CardContent>
             </Card>
@@ -362,7 +509,7 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={8}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Environment Status</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.environmentStatus || 'Environment Status'}</Typography>
                 <Grid container spacing={2}>
                   {Object.entries(configOverview.environmentStatus).map(([env, status]) => (
                     <Grid item xs={12} sm={6} md={3} key={env}>
@@ -374,10 +521,10 @@ const ConfigurationManagementPage: React.FC = () => {
                           </Typography>
                         </Box>
                         <Typography variant="body2" color="text.secondary">
-                          {status.configCount} configs
+                          {status.configCount} {t?.overview?.configs || 'configs'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Last deploy: {new Date(status.lastDeployment).toLocaleDateString()}
+                          {t?.overview?.lastDeploy || 'Last deploy:'} {new Date(status.lastDeployment).toLocaleDateString()}
                         </Typography>
                       </Box>
                     </Grid>
@@ -390,7 +537,7 @@ const ConfigurationManagementPage: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Recent Changes</Typography>
+                <Typography variant="h6" gutterBottom>{t?.overview?.recentChanges || 'Recent Changes'}</Typography>
                 <List dense>
                   {configOverview.recentChanges.map((change, index) => (
                     <ListItem key={index}>
@@ -413,20 +560,20 @@ const ConfigurationManagementPage: React.FC = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
             <Box display="flex" gap={2} alignItems="center">
               <FormControl size="small">
-                <InputLabel>Environment</InputLabel>
+                <InputLabel>{t?.configurations?.environment || 'Environment'}</InputLabel>
                 <Select
                   value={selectedEnvironment}
                   onChange={(e) => setSelectedEnvironment(e.target.value)}
-                  label="Environment"
+                  label={t?.configurations?.environment || 'Environment'}
                   sx={{ minWidth: 150 }}
                 >
-                  <MenuItem value="production">Production</MenuItem>
-                  <MenuItem value="staging">Staging</MenuItem>
-                  <MenuItem value="development">Development</MenuItem>
+                  <MenuItem value="production">{t?.configurations?.production || 'Production'}</MenuItem>
+                  <MenuItem value="staging">{t?.configurations?.staging || 'Staging'}</MenuItem>
+                  <MenuItem value="development">{t?.configurations?.development || 'Development'}</MenuItem>
                 </Select>
               </FormControl>
               <Button variant="outlined" startIcon={<SyncIcon />}>
-                Validate Config
+                {t?.configurations?.validateConfig || 'Validate Config'}
               </Button>
             </Box>
             <Button
@@ -434,7 +581,7 @@ const ConfigurationManagementPage: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => setCreateConfigOpen(true)}
             >
-              Add Configuration
+              {t?.configurations?.addConfiguration || 'Add Configuration'}
             </Button>
           </Box>
 
@@ -443,13 +590,13 @@ const ConfigurationManagementPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Key</TableCell>
-                    <TableCell>Value</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Service</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Last Modified</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.key || 'Key'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.value || 'Value'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.type || 'Type'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.service || 'Service'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.category || 'Category'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.lastModified || 'Last Modified'}</TableCell>
+                    <TableCell>{t?.configurations?.tableHeaders?.actions || 'Actions'}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -460,7 +607,7 @@ const ConfigurationManagementPage: React.FC = () => {
                           <Typography variant="body2" fontWeight="medium">
                             {item.key}
                           </Typography>
-                          {item.isSecret && <Chip label="Secret" size="small" color="warning" />}
+                          {item.isSecret && <Chip label={t?.configurations?.secret || 'Secret'} size="small" color="warning" />}
                         </Box>
                       </TableCell>
                       <TableCell>
@@ -480,7 +627,7 @@ const ConfigurationManagementPage: React.FC = () => {
                       <TableCell>
                         <Chip label={item.type} size="small" variant="outlined" />
                       </TableCell>
-                      <TableCell>{item.service || 'Global'}</TableCell>
+                      <TableCell>{item.service || t?.configurations?.global || 'Global'}</TableCell>
                       <TableCell>
                         <Chip label={item.category} size="small" />
                       </TableCell>
@@ -489,7 +636,7 @@ const ConfigurationManagementPage: React.FC = () => {
                           {new Date(item.lastModified).toLocaleDateString()}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          by {item.modifiedBy}
+                          {t?.configurations?.by || 'by'} {item.modifiedBy}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -513,13 +660,13 @@ const ConfigurationManagementPage: React.FC = () => {
       {currentTab === 2 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Environment Management</Typography>
+            <Typography variant="h6">{t?.environments?.title || 'Environment Management'}</Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setCreateEnvOpen(true)}
             >
-              Create Environment
+              {t?.environments?.createEnvironment || 'Create Environment'}
             </Button>
           </Box>
 
@@ -539,9 +686,9 @@ const ConfigurationManagementPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {env.description}
                     </Typography>
-                    
+
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Resources</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.environments?.resources || 'Resources'}</Typography>
                       <Typography variant="body2">
                         CPU: {env.resources.cpu} | Memory: {env.resources.memory}
                       </Typography>
@@ -551,26 +698,26 @@ const ConfigurationManagementPage: React.FC = () => {
                     </Box>
 
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Deployment Config</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.environments?.deploymentConfig || 'Deployment Config'}</Typography>
                       <Box display="flex" gap={1} flexWrap="wrap">
                         {env.deploymentConfig.autoDeployment && (
-                          <Chip label="Auto Deploy" size="small" />
+                          <Chip label={t?.environments?.autoDeploy || 'Auto Deploy'} size="small" />
                         )}
                         {env.deploymentConfig.approvalRequired && (
-                          <Chip label="Approval Required" size="small" />
+                          <Chip label={t?.environments?.approvalRequired || 'Approval Required'} size="small" />
                         )}
                         {env.deploymentConfig.rollbackEnabled && (
-                          <Chip label="Rollback Enabled" size="small" />
+                          <Chip label={t?.environments?.rollbackEnabled || 'Rollback Enabled'} size="small" />
                         )}
                       </Box>
                     </Box>
 
                     <Box mt={2} display="flex" gap={1}>
                       <Button size="small" startIcon={<DeployIcon />}>
-                        Deploy
+                        {t?.environments?.deploy || 'Deploy'}
                       </Button>
                       <Button size="small" startIcon={<EditIcon />}>
-                        Edit
+                        {t?.environments?.edit || 'Edit'}
                       </Button>
                     </Box>
                   </CardContent>
@@ -585,13 +732,13 @@ const ConfigurationManagementPage: React.FC = () => {
       {currentTab === 3 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Deployment History</Typography>
+            <Typography variant="h6">{t?.deployments?.title || 'Deployment History'}</Typography>
             <Button
               variant="contained"
               startIcon={<DeployIcon />}
               onClick={() => setDeployDialogOpen(true)}
             >
-              New Deployment
+              {t?.deployments?.newDeployment || 'New Deployment'}
             </Button>
           </Box>
 
@@ -600,14 +747,14 @@ const ConfigurationManagementPage: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Environment</TableCell>
-                    <TableCell>Services</TableCell>
-                    <TableCell>Version</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Initiated By</TableCell>
-                    <TableCell>Started</TableCell>
-                    <TableCell>Duration</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.environment || 'Environment'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.services || 'Services'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.version || 'Version'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.status || 'Status'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.initiatedBy || 'Initiated By'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.started || 'Started'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.duration || 'Duration'}</TableCell>
+                    <TableCell>{t?.deployments?.tableHeaders?.actions || 'Actions'}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -620,7 +767,7 @@ const ConfigurationManagementPage: React.FC = () => {
                             <Chip key={service} label={service} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
                           ))}
                           {deployment.services.length > 2 && (
-                            <Chip label={`+${deployment.services.length - 2} more`} size="small" />
+                            <Chip label={(t?.deployments?.more || '+{count} more').replace('{count}', String(deployment.services.length - 2))} size="small" />
                           )}
                         </Box>
                       </TableCell>
@@ -640,9 +787,9 @@ const ConfigurationManagementPage: React.FC = () => {
                         {new Date(deployment.initiatedAt).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        {deployment.completedAt 
+                        {deployment.completedAt
                           ? `${Math.round((new Date(deployment.completedAt).getTime() - new Date(deployment.initiatedAt).getTime()) / 60000)}m`
-                          : 'Running'
+                          : t?.deployments?.running || 'Running'
                         }
                       </TableCell>
                       <TableCell>
@@ -668,9 +815,9 @@ const ConfigurationManagementPage: React.FC = () => {
       {currentTab === 4 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Feature Flags</Typography>
+            <Typography variant="h6">{t?.featureFlags?.title || 'Feature Flags'}</Typography>
             <Button variant="contained" startIcon={<AddIcon />}>
-              Create Feature Flag
+              {t?.featureFlags?.createFeatureFlag || 'Create Feature Flag'}
             </Button>
           </Box>
 
@@ -691,7 +838,7 @@ const ConfigurationManagementPage: React.FC = () => {
                     </Typography>
                     
                     <Box mt={2}>
-                      <Typography variant="subtitle2" gutterBottom>Environments</Typography>
+                      <Typography variant="subtitle2" gutterBottom>{t?.featureFlags?.environments || 'Environments'}</Typography>
                       <Box display="flex" gap={1} flexWrap="wrap">
                         {flag.environments.map((env: string) => (
                           <Chip key={env} label={env} size="small" />
@@ -701,11 +848,11 @@ const ConfigurationManagementPage: React.FC = () => {
 
                     {flag.rules.length > 0 && (
                       <Box mt={2}>
-                        <Typography variant="subtitle2" gutterBottom>Rules</Typography>
+                        <Typography variant="subtitle2" gutterBottom>{t?.featureFlags?.rules || 'Rules'}</Typography>
                         {flag.rules.map((rule: any, index: number) => (
                           <Typography key={index} variant="body2" color="text.secondary">
-                            {rule.condition === 'percentage' && `${rule.percentage}% rollout`}
-                            {rule.condition === 'user_segment' && `${rule.userSegments?.join(', ')} users`}
+                            {rule.condition === 'percentage' && (t?.featureFlags?.rollout || '{percent}% rollout').replace('{percent}', String(rule.percentage))}
+                            {rule.condition === 'user_segment' && (t?.featureFlags?.users || '{segments} users').replace('{segments}', rule.userSegments?.join(', '))}
                           </Typography>
                         ))}
                       </Box>
@@ -713,10 +860,10 @@ const ConfigurationManagementPage: React.FC = () => {
 
                     <Box mt={2} display="flex" gap={1}>
                       <Button size="small" startIcon={<EditIcon />}>
-                        Edit
+                        {t?.featureFlags?.edit || 'Edit'}
                       </Button>
                       <Button size="small" startIcon={<ViewIcon />}>
-                        Analytics
+                        {t?.featureFlags?.analytics || 'Analytics'}
                       </Button>
                     </Box>
                   </CardContent>
@@ -731,9 +878,9 @@ const ConfigurationManagementPage: React.FC = () => {
       {currentTab === 5 && (
         <Box>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h6">Configuration Templates</Typography>
+            <Typography variant="h6">{t?.templates?.title || 'Configuration Templates'}</Typography>
             <Button variant="contained" startIcon={<AddIcon />}>
-              Create Template
+              {t?.templates?.createTemplate || 'Create Template'}
             </Button>
           </Box>
 
@@ -752,7 +899,7 @@ const ConfigurationManagementPage: React.FC = () => {
                     <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography variant="subtitle2">
-                          Template Variables ({template.variables.length})
+                          {(t?.templates?.templateVariables || 'Template Variables ({count})').replace('{count}', String(template.variables.length))}
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
@@ -774,10 +921,10 @@ const ConfigurationManagementPage: React.FC = () => {
 
                     <Box mt={2} display="flex" gap={1}>
                       <Button size="small" startIcon={<StartIcon />}>
-                        Apply
+                        {t?.templates?.apply || 'Apply'}
                       </Button>
                       <Button size="small" startIcon={<EditIcon />}>
-                        Edit
+                        {t?.templates?.edit || 'Edit'}
                       </Button>
                     </Box>
                   </CardContent>
@@ -791,24 +938,23 @@ const ConfigurationManagementPage: React.FC = () => {
       {/* History Tab */}
       {currentTab === 6 && (
         <Box>
-          <Typography variant="h6" gutterBottom>Configuration History</Typography>
+          <Typography variant="h6" gutterBottom>{t?.history?.title || 'Configuration History'}</Typography>
           <Alert severity="info" sx={{ mb: 3 }}>
-            Configuration history tracking shows all changes made to configuration items,
-            including who made the change, when, and what was modified.
+            {t?.history?.infoMessage || 'Configuration history tracking shows all changes made to configuration items, including who made the change, when, and what was modified.'}
           </Alert>
-          
+
           <Card>
             <CardContent>
-              <Typography variant="subtitle1" gutterBottom>Recent Configuration Changes</Typography>
+              <Typography variant="subtitle1" gutterBottom>{t?.history?.recentChanges || 'Recent Configuration Changes'}</Typography>
               <Typography variant="body2" color="text.secondary">
-                History tracking and audit logs will be displayed here, showing:
+                {t?.history?.trackingDescription || 'History tracking and audit logs will be displayed here, showing:'}
               </Typography>
               <Box component="ul" sx={{ mt: 1 }}>
-                <Typography component="li" variant="body2">Configuration key changes</Typography>
-                <Typography component="li" variant="body2">Value modifications with before/after comparison</Typography>
-                <Typography component="li" variant="body2">User attribution and timestamps</Typography>
-                <Typography component="li" variant="body2">Deployment correlation</Typography>
-                <Typography component="li" variant="body2">Rollback capabilities</Typography>
+                <Typography component="li" variant="body2">{t?.history?.keyChanges || 'Configuration key changes'}</Typography>
+                <Typography component="li" variant="body2">{t?.history?.valueModifications || 'Value modifications with before/after comparison'}</Typography>
+                <Typography component="li" variant="body2">{t?.history?.userAttribution || 'User attribution and timestamps'}</Typography>
+                <Typography component="li" variant="body2">{t?.history?.deploymentCorrelation || 'Deployment correlation'}</Typography>
+                <Typography component="li" variant="body2">{t?.history?.rollbackCapabilities || 'Rollback capabilities'}</Typography>
               </Box>
             </CardContent>
           </Card>
@@ -817,31 +963,31 @@ const ConfigurationManagementPage: React.FC = () => {
 
       {/* Create Configuration Dialog */}
       <Dialog open={createConfigOpen} onClose={() => setCreateConfigOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Add Configuration Item</DialogTitle>
+        <DialogTitle>{t?.createConfigDialog?.title || 'Add Configuration Item'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Configuration Key"
+                label={t?.createConfigDialog?.configKey || 'Configuration Key'}
                 fullWidth
-                placeholder="e.g., database.max_connections"
+                placeholder={t?.createConfigDialog?.configKeyPlaceholder || 'e.g., database.max_connections'}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select value="string" label="Type">
-                  <MenuItem value="string">String</MenuItem>
-                  <MenuItem value="number">Number</MenuItem>
-                  <MenuItem value="boolean">Boolean</MenuItem>
-                  <MenuItem value="json">JSON</MenuItem>
-                  <MenuItem value="encrypted">Encrypted</MenuItem>
+                <InputLabel>{t?.createConfigDialog?.type || 'Type'}</InputLabel>
+                <Select value="string" label={t?.createConfigDialog?.type || 'Type'}>
+                  <MenuItem value="string">{t?.createConfigDialog?.types?.string || 'String'}</MenuItem>
+                  <MenuItem value="number">{t?.createConfigDialog?.types?.number || 'Number'}</MenuItem>
+                  <MenuItem value="boolean">{t?.createConfigDialog?.types?.boolean || 'Boolean'}</MenuItem>
+                  <MenuItem value="json">{t?.createConfigDialog?.types?.json || 'JSON'}</MenuItem>
+                  <MenuItem value="encrypted">{t?.createConfigDialog?.types?.encrypted || 'Encrypted'}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Value"
+                label={t?.createConfigDialog?.value || 'Value'}
                 fullWidth
                 multiline
                 rows={3}
@@ -849,93 +995,93 @@ const ConfigurationManagementPage: React.FC = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Environment</InputLabel>
-                <Select value="production" label="Environment">
-                  <MenuItem value="production">Production</MenuItem>
-                  <MenuItem value="staging">Staging</MenuItem>
-                  <MenuItem value="development">Development</MenuItem>
+                <InputLabel>{t?.createConfigDialog?.environment || 'Environment'}</InputLabel>
+                <Select value="production" label={t?.createConfigDialog?.environment || 'Environment'}>
+                  <MenuItem value="production">{t?.configurations?.production || 'Production'}</MenuItem>
+                  <MenuItem value="staging">{t?.configurations?.staging || 'Staging'}</MenuItem>
+                  <MenuItem value="development">{t?.configurations?.development || 'Development'}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="Service"
+                label={t?.createConfigDialog?.service || 'Service'}
                 fullWidth
-                placeholder="e.g., api-gateway"
+                placeholder={t?.createConfigDialog?.servicePlaceholder || 'e.g., api-gateway'}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="Description"
+                label={t?.createConfigDialog?.description || 'Description'}
                 fullWidth
                 multiline
                 rows={2}
-                placeholder="Describe what this configuration controls"
+                placeholder={t?.createConfigDialog?.descriptionPlaceholder || 'Describe what this configuration controls'}
               />
             </Grid>
             <Grid item xs={12}>
               <FormControlLabel
                 control={<Switch />}
-                label="This is a secret value"
+                label={t?.createConfigDialog?.secretValue || 'This is a secret value'}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateConfigOpen(false)}>Cancel</Button>
+          <Button onClick={() => setCreateConfigOpen(false)}>{t?.createConfigDialog?.cancel || 'Cancel'}</Button>
           <Button variant="contained" onClick={() => setCreateConfigOpen(false)}>
-            Create Configuration
+            {t?.createConfigDialog?.createConfiguration || 'Create Configuration'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Deploy Dialog */}
       <Dialog open={deployDialogOpen} onClose={() => setDeployDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Deploy Configuration</DialogTitle>
+        <DialogTitle>{t?.deployDialog?.title || 'Deploy Configuration'}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth sx={{ mb: 2, mt: 1 }}>
-            <InputLabel>Target Environment</InputLabel>
-            <Select value="staging" label="Target Environment">
-              <MenuItem value="staging">Staging</MenuItem>
-              <MenuItem value="production">Production</MenuItem>
+            <InputLabel>{t?.deployDialog?.targetEnvironment || 'Target Environment'}</InputLabel>
+            <Select value="staging" label={t?.deployDialog?.targetEnvironment || 'Target Environment'}>
+              <MenuItem value="staging">{t?.configurations?.staging || 'Staging'}</MenuItem>
+              <MenuItem value="production">{t?.configurations?.production || 'Production'}</MenuItem>
             </Select>
           </FormControl>
-          
+
           <TextField
-            label="Services to Deploy"
+            label={t?.deployDialog?.servicesToDeploy || 'Services to Deploy'}
             fullWidth
             sx={{ mb: 2 }}
-            placeholder="Leave empty to deploy all services"
+            placeholder={t?.deployDialog?.servicesToDeployPlaceholder || 'Leave empty to deploy all services'}
           />
-          
+
           <TextField
-            label="Version Tag"
+            label={t?.deployDialog?.versionTag || 'Version Tag'}
             fullWidth
             sx={{ mb: 2 }}
-            placeholder="e.g., v1.2.3"
+            placeholder={t?.deployDialog?.versionTagPlaceholder || 'e.g., v1.2.3'}
           />
-          
+
           <FormControlLabel
             control={<Switch defaultChecked />}
-            label="Enable rollback plan"
+            label={t?.deployDialog?.enableRollback || 'Enable rollback plan'}
             sx={{ display: 'block', mb: 2 }}
           />
-          
+
           <TextField
-            label="Deployment Notes"
+            label={t?.deployDialog?.deploymentNotes || 'Deployment Notes'}
             fullWidth
             multiline
             rows={3}
-            placeholder="Optional notes about this deployment"
+            placeholder={t?.deployDialog?.deploymentNotesPlaceholder || 'Optional notes about this deployment'}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeployDialogOpen(false)}>Cancel</Button>
-          <Button 
-            variant="contained" 
+          <Button onClick={() => setDeployDialogOpen(false)}>{t?.deployDialog?.cancel || 'Cancel'}</Button>
+          <Button
+            variant="contained"
             onClick={() => deployConfiguration({ environment: 'staging', services: [], version: 'v1.0.0' })}
           >
-            Deploy
+            {t?.deployDialog?.deploy || 'Deploy'}
           </Button>
         </DialogActions>
       </Dialog>

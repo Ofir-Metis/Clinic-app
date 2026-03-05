@@ -1,0 +1,135 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "open drawer" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - generic [ref=e9]: Time Magic ⏰
+      - button "profile menu" [ref=e10] [cursor=pointer]:
+        - generic [ref=e11]: T
+  - navigation "Breadcrumb navigation" [ref=e14]:
+    - navigation "breadcrumb" [ref=e15]:
+      - list [ref=e16]:
+        - listitem [ref=e17]:
+          - link "Navigate to My Growth Hub" [ref=e18] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e19]
+            - text: My Growth Hub
+        - listitem [ref=e21]:
+          - img [ref=e22]
+        - listitem [ref=e24]:
+          - paragraph [ref=e25]: Time Magic ⏰
+  - main "Main content" [ref=e26]:
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - heading "📅 Your Schedule" [level=4] [ref=e29]
+        - generic [ref=e30]:
+          - button "Month View" [ref=e31] [cursor=pointer]:
+            - img [ref=e32]
+          - button "Week View" [ref=e34] [cursor=pointer]:
+            - img [ref=e35]
+          - button "Day View" [ref=e37] [cursor=pointer]:
+            - img [ref=e38]
+      - paragraph [ref=e40]: Manage your appointments and sessions
+    - generic [ref=e41]:
+      - generic [ref=e44]:
+        - heading "Calendar" [level=6] [ref=e45]:
+          - img [ref=e46]
+          - text: Calendar
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50] [cursor=pointer]:
+              - generic [ref=e52]: February 2026
+              - button "calendar view is open, switch to year view" [ref=e53]:
+                - img [ref=e54]
+            - generic [ref=e56]:
+              - button "Previous month" [ref=e57] [cursor=pointer]:
+                - img [ref=e58]
+              - button "Next month" [ref=e61] [cursor=pointer]:
+                - img [ref=e62]
+          - grid "February 2026" [ref=e66]:
+            - row "Sunday Monday Tuesday Wednesday Thursday Friday Saturday" [ref=e67]:
+              - columnheader "Sunday" [ref=e68]: S
+              - columnheader "Monday" [ref=e69]: M
+              - columnheader "Tuesday" [ref=e70]: T
+              - columnheader "Wednesday" [ref=e71]: W
+              - columnheader "Thursday" [ref=e72]: T
+              - columnheader "Friday" [ref=e73]: F
+              - columnheader "Saturday" [ref=e74]: S
+            - rowgroup [ref=e75]:
+              - row "1 2 3 4 5 6 7" [ref=e76]:
+                - gridcell "1" [ref=e77] [cursor=pointer]
+                - gridcell "2" [ref=e78] [cursor=pointer]
+                - gridcell "3" [ref=e79] [cursor=pointer]
+                - gridcell "4" [ref=e80] [cursor=pointer]
+                - gridcell "5" [ref=e81] [cursor=pointer]
+                - gridcell "6" [ref=e82] [cursor=pointer]
+                - gridcell "7" [ref=e83] [cursor=pointer]
+              - row "8 9 10 11 12 13 14" [ref=e84]:
+                - gridcell "8" [ref=e85] [cursor=pointer]
+                - gridcell "9" [ref=e86] [cursor=pointer]
+                - gridcell "10" [ref=e87] [cursor=pointer]
+                - gridcell "11" [ref=e88] [cursor=pointer]
+                - gridcell "12" [ref=e89] [cursor=pointer]
+                - gridcell "13" [ref=e90] [cursor=pointer]
+                - gridcell "14" [ref=e91] [cursor=pointer]
+              - row "15 16 17 18 19 20 21" [ref=e92]:
+                - gridcell "15" [ref=e93] [cursor=pointer]
+                - gridcell "16" [ref=e94] [cursor=pointer]
+                - gridcell "17" [ref=e95] [cursor=pointer]
+                - gridcell "18" [ref=e96] [cursor=pointer]
+                - gridcell "19" [ref=e97] [cursor=pointer]
+                - gridcell "20" [ref=e98] [cursor=pointer]
+                - gridcell "21" [ref=e99] [cursor=pointer]
+              - row "22 23 24 25 26 27 28" [ref=e100]:
+                - gridcell "22" [ref=e101] [cursor=pointer]
+                - gridcell "23" [selected] [ref=e102] [cursor=pointer]
+                - gridcell "24" [ref=e103] [cursor=pointer]
+                - gridcell "25" [ref=e104] [cursor=pointer]
+                - gridcell "26" [ref=e105] [cursor=pointer]
+                - gridcell "27" [ref=e106] [cursor=pointer]
+                - gridcell "28" [ref=e107] [cursor=pointer]
+        - generic [ref=e108]:
+          - 'heading "Selected date: 2/23/2026" [level=6] [ref=e109]'
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - heading "0" [level=6] [ref=e112]
+              - text: Appointments
+            - generic [ref=e113]:
+              - heading "0" [level=6] [ref=e114]
+              - text: Upcoming
+      - generic [ref=e116]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - heading "Appointments for 2/23/2026" [level=6] [ref=e120]:
+              - img [ref=e121]
+              - text: Appointments for 2/23/2026
+            - button "Add" [ref=e124] [cursor=pointer]:
+              - img [ref=e126]
+              - text: Add
+          - generic [ref=e128]:
+            - paragraph [ref=e129]: No appointments on this date
+            - paragraph [ref=e130]: Click 'Add' to schedule a session
+        - generic [ref=e132]:
+          - heading "This Week" [level=6] [ref=e133]:
+            - img [ref=e134]
+            - text: This Week
+          - paragraph [ref=e136]: No upcoming appointments
+  - button "Schedule New Appointment" [ref=e137] [cursor=pointer]:
+    - img [ref=e138]
+  - navigation "Bottom navigation" [ref=e140]:
+    - button "My Growth Hub" [ref=e141] [cursor=pointer]:
+      - img [ref=e142]
+      - generic [ref=e144]: My Growth Hub
+    - button "Fellow Travelers" [ref=e145] [cursor=pointer]:
+      - img [ref=e146]
+      - generic [ref=e148]: Fellow Travelers
+    - button "Time Magic ⏰" [ref=e149] [cursor=pointer]:
+      - img [ref=e150]
+      - generic [ref=e152]: Time Magic ⏰
+    - button "More" [ref=e153] [cursor=pointer]:
+      - img [ref=e154]
+      - generic [ref=e156]: More
+```

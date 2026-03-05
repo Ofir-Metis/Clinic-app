@@ -22,7 +22,14 @@ import {
   FormControlLabel,
   Tooltip,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  alpha,
+  Checkbox,
+  Divider
 } from '@mui/material';
 import {
   PlayArrow as StartIcon,
@@ -36,13 +43,16 @@ import {
   Settings as SettingsIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  Security as SecurityIcon,
+  PrivacyTip as PrivacyTipIcon
 } from '@mui/icons-material';
 
 import RecordingService, { RecordingEvent, RecordingMetadata, RecordingConfig } from '../services/RecordingService';
 import { detectMeetingType, checkScreenRecordingSupport, getRecordingInstructions, MeetingInfo } from '../utils/meetingDetection';
 import { useTranslation } from '../contexts/LanguageContext';
 import { useWebSocket } from '../hooks/useWebSocket';
+import AudioWaveform from './AudioWaveform';
 
 export interface SessionRecorderProps {
   sessionId: string;
@@ -70,6 +80,47 @@ interface RecordingState {
   recordingId: string | null;
 }
 
+type QualityLevel = 'low' | 'standard' | 'high' | 'ultra';
+
+interface QualityPreset {
+  label: string;
+  description: string;
+  videoBitrate: number;
+  audioBitrate: number;
+  resolution?: string;
+}
+
+const QUALITY_PRESETS: Record<QualityLevel, QualityPreset> = {
+  low: {
+    label: 'Low',
+    description: '512 Kbps • Good for slow connections',
+    videoBitrate: 512000,
+    audioBitrate: 64000,
+    resolution: '480p'
+  },
+  standard: {
+    label: 'Standard',
+    description: '1.5 Mbps • Balanced quality & size',
+    videoBitrate: 1500000,
+    audioBitrate: 96000,
+    resolution: '720p'
+  },
+  high: {
+    label: 'High',
+    description: '2.5 Mbps • Recommended',
+    videoBitrate: 2500000,
+    audioBitrate: 128000,
+    resolution: '1080p'
+  },
+  ultra: {
+    label: 'Ultra',
+    description: '4 Mbps • Best quality, large files',
+    videoBitrate: 4000000,
+    audioBitrate: 192000,
+    resolution: '1080p'
+  }
+};
+
 const SessionRecorder: React.FC<SessionRecorderProps> = ({
   sessionId,
   participantId,
@@ -84,7 +135,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
   autoStart = false,
   enableRealTimeUpdates = true
 }) => {
-  const { t } = useTranslation();
+  const { translations } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -118,7 +169,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
 
   const [settings, setSettings] = useState({
     audioOnly: config.audioOnly || false,
-    highQuality: true,
+    qualityLevel: 'high' as QualityLevel,
     showSettingsDialog: false,
     recordingMode: config.recordingMode || 'camera'
   });
@@ -130,18 +181,29 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
   const [screenRecordingSupport, setScreenRecordingSupport] = useState(checkScreenRecordingSupport());
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [showMeetingInstructions, setShowMeetingInstructions] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(() => {
+    // Check if consent was previously given for this session
+    const stored = sessionStorage.getItem(`recording_consent_${sessionId}`);
+    return stored === 'true';
+  });
 
   // Initialize recording service
   useEffect(() => {
     // Update recording mode based on meeting type
-    const recordingMode = meetingInfo.isOnlineMeeting && meetingInfo.requiresScreenRecording 
-      ? meetingInfo.recommendedRecordingMode 
+    const recordingMode = meetingInfo.isOnlineMeeting && meetingInfo.requiresScreenRecording
+      ? meetingInfo.recommendedRecordingMode
       : settings.recordingMode;
+
+    // Get quality preset settings
+    const qualityPreset = QUALITY_PRESETS[settings.qualityLevel];
 
     const recordingConfig: RecordingConfig = {
       audioOnly: settings.audioOnly,
-      videoBitrate: settings.highQuality ? 2500000 : 1000000,
-      audioBitrate: settings.highQuality ? 128000 : 64000,
+      videoBitrate: qualityPreset.videoBitrate,
+      audioBitrate: qualityPreset.audioBitrate,
       recordingMode,
       screenRecordingOptions: {
         includeSystemAudio: true,
@@ -163,7 +225,13 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
             error: null,
             recordingId: null
           }));
-          
+
+          // Capture media stream for waveform visualization
+          if (recordingServiceRef.current) {
+            const stream = recordingServiceRef.current.getMediaStream();
+            setMediaStream(stream);
+          }
+
           // Send WebSocket update
           if (enableRealTimeUpdates && connectionState.sessionJoined) {
             sendRecordingUpdate({
@@ -185,6 +253,9 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
             isPaused: false,
             recordingId: event.data?.recordingId || null
           }));
+
+          // Clear media stream for waveform
+          setMediaStream(null);
           
           // Send WebSocket update
           if (enableRealTimeUpdates && connectionState.sessionJoined) {
@@ -298,9 +369,9 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
 
     recordingServiceRef.current.addEventListener(handleRecordingEvent);
 
-    // Auto-start if requested
+    // Auto-start if requested (will show consent dialog if needed)
     if (autoStart && compatibility.supported && !disabled) {
-      setTimeout(() => handleStartRecording(), 1000);
+      setTimeout(() => handleRequestRecording(), 1000);
     }
 
     return () => {
@@ -327,7 +398,34 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
     return () => clearInterval(interval);
   }, [recordingState.isRecording]);
 
-  const handleStartRecording = useCallback(async () => {
+  const handleRequestRecording = useCallback(() => {
+    if (disabled) return;
+
+    // If consent not yet given for this session, show consent dialog
+    if (!consentGiven) {
+      setShowConsentDialog(true);
+      return;
+    }
+
+    // Consent already given, proceed to recording
+    handleStartRecordingInternal();
+  }, [disabled, consentGiven]);
+
+  const handleConsentAndStart = useCallback(() => {
+    // Store consent for this session
+    sessionStorage.setItem(`recording_consent_${sessionId}`, 'true');
+    setConsentGiven(true);
+    setShowConsentDialog(false);
+    setConsentChecked(false);
+
+    // Log consent for audit trail
+    console.log(`[Audit] Recording consent given for session ${sessionId} at ${new Date().toISOString()}`);
+
+    // Proceed to start recording
+    handleStartRecordingInternal();
+  }, [sessionId]);
+
+  const handleStartRecordingInternal = useCallback(async () => {
     if (!recordingServiceRef.current || disabled) return;
 
     try {
@@ -344,7 +442,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
       await recordingServiceRef.current.startRecording(metadata);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to start recording';
-      
+
       if (errorMessage.includes('Permission denied') || errorMessage.includes('NotAllowedError')) {
         setShowPermissionDialog(true);
       } else {
@@ -352,7 +450,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
         onRecordingError?.(errorMessage);
       }
     }
-  }, [sessionId, participantId, settings.audioOnly, disabled]);
+  }, [sessionId, participantId, settings.audioOnly, disabled, meetingUrl, meetingInfo]);
 
   const handleStopRecording = useCallback(async () => {
     if (!recordingServiceRef.current) return;
@@ -407,10 +505,10 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
         <CardContent>
           <Alert severity="error" sx={{ mb: 2 }}>
             <Typography variant="h6" gutterBottom>
-              {t.recording.notSupported}
+              {translations.recording.notSupported}
             </Typography>
             <Typography variant="body2">
-              {t.recording.browserError}
+              {translations.recording.browserError}
             </Typography>
             <ul>
               {compatibility.recommendations?.map((rec, index) => (
@@ -436,13 +534,13 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
           {/* Header */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6" component="h3">
-              {t.recording.title}
+              {translations.recording.title}
             </Typography>
             <Box display="flex" alignItems="center" gap={1}>
               {recordingState.isRecording && (
                 <Chip
                   icon={<MicIcon />}
-                  label={t.recording.live}
+                  label={translations.recording.live}
                   color="error"
                   size="small"
                   sx={{ animation: 'pulse 1.5s infinite' }}
@@ -458,7 +556,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
                   />
                 </Tooltip>
               )}
-              <Tooltip title={t.recording.settings}>
+              <Tooltip title={translations.recording.settings}>
                 <IconButton 
                   size="small" 
                   onClick={() => setSettings(prev => ({ ...prev, showSettingsDialog: true }))}
@@ -482,10 +580,10 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
             <Box sx={{ mb: 2 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                 <Typography variant="body2" color="textSecondary">
-                  {t.recording.duration} {formatDuration(recordingState.duration)}
+                  {translations.recording.duration} {formatDuration(recordingState.duration)}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {t.recording.size} {formatFileSize(recordingState.fileSize)}
+                  {translations.recording.size} {formatFileSize(recordingState.fileSize)}
                 </Typography>
               </Box>
               
@@ -493,7 +591,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
                 <Box sx={{ mb: 1 }}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
                     <Typography variant="caption" color="textSecondary">
-                      {t.recording.uploading}
+                      {translations.recording.uploading}
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
                       {Math.round(recordingState.uploadProgress)}%
@@ -509,9 +607,23 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
 
               {recordingState.recordingId && (
                 <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mt: 1 }}>
-                  {t.recording.savedSuccessfully} {recordingState.recordingId.slice(-8)}
+                  {translations.recording.savedSuccessfully} {recordingState.recordingId.slice(-8)}
                 </Alert>
               )}
+            </Box>
+          )}
+
+          {/* Audio Waveform Visualization */}
+          {recordingState.isRecording && (
+            <Box sx={{ mb: 2 }}>
+              <AudioWaveform
+                stream={mediaStream}
+                isRecording={recordingState.isRecording}
+                isPaused={recordingState.isPaused}
+                width={isMobile ? 280 : 400}
+                height={60}
+                variant="waveform"
+              />
             </Box>
           )}
 
@@ -523,11 +635,11 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
                 color="error"
                 size="large"
                 startIcon={settings.audioOnly ? <MicIcon /> : <VideoIcon />}
-                onClick={handleStartRecording}
+                onClick={handleRequestRecording}
                 disabled={disabled}
                 sx={{ minWidth: 140 }}
               >
-                {t.recording.startRecording}
+                {translations.recording.startRecording}
               </Button>
             ) : (
               <>
@@ -557,7 +669,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
                   disabled={disabled}
                   sx={{ minWidth: 140 }}
                 >
-                  {t.recording.stopRecording}
+                  {translations.recording.stopRecording}
                 </Button>
               </>
             )}
@@ -567,9 +679,9 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
           {isMobile && recordingState.isRecording && (
             <Box display="flex" justifyContent="center" mt={2}>
               <Typography variant="caption" color="textSecondary" align="center">
-                {recordingState.isPaused ? t.recording.recordingPaused : t.recording.recordingActive}
+                {recordingState.isPaused ? translations.recording.recordingPaused : translations.recording.recordingActive}
                 <br />
-                {t.recording.chunks} {recordingState.chunkCount}
+                {translations.recording.chunks} {recordingState.chunkCount}
               </Typography>
             </Box>
           )}
@@ -583,7 +695,7 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>{t.recording.settings}</DialogTitle>
+        <DialogTitle>{translations.recording.settings}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <FormControlLabel
@@ -593,29 +705,77 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
                   onChange={(e) => setSettings(prev => ({ ...prev, audioOnly: e.target.checked }))}
                 />
               }
-              label={t.recording.audioOnlyMode}
+              label={translations.recording.audioOnlyMode}
             />
             <Typography variant="caption" display="block" color="textSecondary" sx={{ ml: 4, mt: -1, mb: 2 }}>
-              {t.recording.audioOnlyDescription}
+              {translations.recording.audioOnlyDescription}
             </Typography>
 
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={settings.highQuality}
-                  onChange={(e) => setSettings(prev => ({ ...prev, highQuality: e.target.checked }))}
-                />
-              }
-              label={t.recording.highQuality}
-            />
-            <Typography variant="caption" display="block" color="textSecondary" sx={{ ml: 4, mt: -1 }}>
-              {t.recording.highQualityDescription}
-            </Typography>
+            {/* Quality Level Selector */}
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel id="quality-level-label">Recording Quality</InputLabel>
+              <Select
+                labelId="quality-level-label"
+                value={settings.qualityLevel}
+                label="Recording Quality"
+                onChange={(e) => setSettings(prev => ({ ...prev, qualityLevel: e.target.value as QualityLevel }))}
+              >
+                {(Object.keys(QUALITY_PRESETS) as QualityLevel[]).map((level) => (
+                  <MenuItem
+                    key={level}
+                    value={level}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      py: 1.5
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                      <Typography fontWeight={600}>
+                        {QUALITY_PRESETS[level].label}
+                      </Typography>
+                      {level === 'high' && (
+                        <Chip label="Recommended" size="small" color="primary" sx={{ height: 20, fontSize: '0.65rem' }} />
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {QUALITY_PRESETS[level].description}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Quality Info Box */}
+            <Box
+              sx={{
+                mt: 2,
+                p: 2,
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.info.main, 0.08),
+                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} gutterBottom>
+                Current Settings
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Video: {(QUALITY_PRESETS[settings.qualityLevel].videoBitrate / 1000).toFixed(0)} Kbps
+                {QUALITY_PRESETS[settings.qualityLevel].resolution && ` • ${QUALITY_PRESETS[settings.qualityLevel].resolution}`}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Audio: {(QUALITY_PRESETS[settings.qualityLevel].audioBitrate / 1000).toFixed(0)} Kbps
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                Est. file size: ~{Math.round((QUALITY_PRESETS[settings.qualityLevel].videoBitrate + QUALITY_PRESETS[settings.qualityLevel].audioBitrate) / 8000 * 60)} MB/hour
+              </Typography>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSettings(prev => ({ ...prev, showSettingsDialog: false }))}>
-            {t.recording.close}
+            {translations.recording.close}
           </Button>
         </DialogActions>
       </Dialog>
@@ -625,26 +785,117 @@ const SessionRecorder: React.FC<SessionRecorderProps> = ({
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={1}>
             <WarningIcon color="warning" />
-            {t.recording.permissionRequired}
+            {translations.recording.permissionRequired}
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" paragraph>
-            {t.recording.permissionMessage}
+            {translations.recording.permissionMessage}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            {t.recording.permissionInstructions}
+            {translations.recording.permissionInstructions}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowPermissionDialog(false)}>
-            {t.recording.cancel}
+            {translations.recording.cancel}
           </Button>
           <Button onClick={() => {
             setShowPermissionDialog(false);
-            setTimeout(handleStartRecording, 500);
+            setTimeout(handleStartRecordingInternal, 500);
           }} variant="contained">
-            {t.recording.tryAgain}
+            {translations.recording.tryAgain}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Recording Consent Dialog */}
+      <Dialog
+        open={showConsentDialog}
+        onClose={() => {
+          setShowConsentDialog(false);
+          setConsentChecked(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <SecurityIcon color="primary" />
+            Recording Consent Required
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mb: 2 }}>
+            <Alert severity="info" icon={<PrivacyTipIcon />} sx={{ mb: 2 }}>
+              This coaching session will be recorded for quality assurance and your personal review.
+            </Alert>
+
+            <Typography variant="body1" paragraph>
+              Before we begin recording, please acknowledge the following:
+            </Typography>
+
+            <Box
+              sx={{
+                bgcolor: alpha(theme.palette.background.default, 0.6),
+                borderRadius: 2,
+                p: 2,
+                mb: 2,
+                border: `1px solid ${theme.palette.divider}`
+              }}
+            >
+              <Typography variant="body2" component="ul" sx={{ pl: 2, m: 0 }}>
+                <li>The session will be recorded in {settings.audioOnly ? 'audio' : 'video'} format</li>
+                <li>Recording will be securely stored and encrypted</li>
+                <li>Access is limited to authorized participants</li>
+                <li>You can request deletion of recordings at any time</li>
+                <li>Recordings may be used for session notes and progress tracking</li>
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={consentChecked}
+                  onChange={(e) => setConsentChecked(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  I understand and consent to having this session recorded. I have read and agree to the{' '}
+                  <Typography
+                    component="span"
+                    color="primary"
+                    sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Privacy Policy
+                  </Typography>
+                  .
+                </Typography>
+              }
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setShowConsentDialog(false);
+              setConsentChecked(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleConsentAndStart}
+            disabled={!consentChecked}
+            startIcon={settings.audioOnly ? <MicIcon /> : <VideoIcon />}
+          >
+            I Consent - Start Recording
           </Button>
         </DialogActions>
       </Dialog>

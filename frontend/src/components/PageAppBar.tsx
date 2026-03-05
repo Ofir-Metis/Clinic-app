@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppBar, Toolbar, Avatar, Typography, Box, useTheme } from '@mui/material';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../contexts/LanguageContext';
 import ViewSwitchingButton from './ViewSwitchingButton';
 
 /**

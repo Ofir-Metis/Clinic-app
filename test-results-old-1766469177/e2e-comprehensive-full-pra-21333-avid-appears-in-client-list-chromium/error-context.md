@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic "language switcher" [ref=e5]:
+    - combobox [ref=e6] [cursor=pointer]: 🇮🇱 עברית
+    - textbox: he
+    - img
+    - group
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - heading "ברוכים הבאים למסע הצמיחה שלכם! 🌱" [level=1] [ref=e11]
+      - paragraph [ref=e12]: מוכנים להפוך למנכ"ל של החיים שלכם?
+    - alert [ref=e13]:
+      - img [ref=e15]
+      - generic [ref=e17]:
+        - generic [ref=e18]: Something went wrong
+        - paragraph [ref=e19]: Invalid credentials. Please check your email and password.
+        - button "Login" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - text: Login
+      - button "Close" [ref=e26] [cursor=pointer]:
+        - img [ref=e27]
+    - generic "email" [ref=e29]:
+      - generic [ref=e30]: הכתובת הדיגיטלית שלכם 📧
+      - generic [ref=e31]:
+        - textbox "הכתובת הדיגיטלית שלכם 📧" [ref=e32]:
+          - /placeholder: Enter your email address
+          - text: coach-1766427977939@wellnesscoach.test
+        - group:
+          - generic: הכתובת הדיגיטלית שלכם 📧
+    - generic "password" [ref=e33]:
+      - generic [ref=e34]: הקוד הסודי שלכם 🔐
+      - generic [ref=e35]:
+        - textbox "הקוד הסודי שלכם 🔐" [ref=e36]:
+          - /placeholder: Enter your password
+          - text: SecureCoach2024!@#
+        - button "toggle password visibility" [ref=e38] [cursor=pointer]:
+          - img [ref=e39]
+        - group:
+          - generic: הקוד הסודי שלכם 🔐
+    - link "ערפל במוח? לאפס את הסיסמה 🧠" [ref=e42] [cursor=pointer]:
+      - /url: /reset/request
+    - button "login" [ref=e43] [cursor=pointer]:
+      - generic [ref=e44]: להתחיל את הטרנספורמציה שלי! ✨
+    - paragraph [ref=e46]: או
+    - iframe [ref=e50]:
+      - button "כניסה באמצעות Google. פתיחה בכרטיסייה חדשה" [ref=f1e3] [cursor=pointer]:
+        - generic [ref=f1e5]:
+          - img [ref=f1e7]
+          - generic [ref=f1e14]: כניסה באמצעות Google
+    - generic [ref=e51]:
+      - paragraph [ref=e52]: חדש בהרפתקה הזאת?
+      - link "sign up" [ref=e53] [cursor=pointer]:
+        - /url: /register
+        - text: להתחיל את המסע כאן! 🚀
+```

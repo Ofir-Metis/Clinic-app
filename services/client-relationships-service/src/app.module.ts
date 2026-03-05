@@ -17,6 +17,7 @@ import { RelationshipPermission } from './entities/relationship-permission.entit
 import { SharedGoal } from './entities/shared-goal.entity';
 import { Goal } from './entities/goal.entity';
 import { Achievement } from './entities/achievement.entity';
+import { Message } from './entities/message.entity';
 
 // Service imports
 import { ClientService } from './services/client.service';
@@ -25,6 +26,7 @@ import { RelationshipService } from './services/relationship.service';
 import { PermissionService } from './services/permission.service';
 import { GoalService } from './services/goal.service';
 import { AchievementService } from './services/achievement.service';
+import { CommunicationService } from './services/communication.service';
 
 // Controller imports
 import { ClientController } from './controllers/client.controller';
@@ -33,6 +35,7 @@ import { RelationshipController } from './controllers/relationship.controller';
 import { PermissionController } from './controllers/permission.controller';
 import { GoalController } from './controllers/goal.controller';
 import { AchievementController } from './controllers/achievement.controller';
+import { CommunicationController } from './controllers/communication.controller';
 
 @Module({
   imports: [
@@ -47,7 +50,8 @@ import { AchievementController } from './controllers/achievement.controller';
       RelationshipPermission,
       SharedGoal,
       Goal,
-      Achievement
+      Achievement,
+      Message,
     ]),
 
     // NATS Microservice Configuration - uses ConfigService from CommonModule
@@ -110,6 +114,7 @@ import { AchievementController } from './controllers/achievement.controller';
     PermissionController,
     GoalController,
     AchievementController,
+    CommunicationController,
   ],
 
   providers: [
@@ -119,6 +124,7 @@ import { AchievementController } from './controllers/achievement.controller';
     PermissionService,
     GoalService,
     AchievementService,
+    CommunicationService,
   ],
 
   exports: [
@@ -128,6 +134,7 @@ import { AchievementController } from './controllers/achievement.controller';
     PermissionService,
     GoalService,
     AchievementService,
+    CommunicationService,
   ],
 })
 export class AppModule {}

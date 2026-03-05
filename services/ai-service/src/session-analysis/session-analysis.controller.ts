@@ -39,7 +39,7 @@ interface UserContext {
 @Controller('session-analysis')
 @ApiTags('Session Analysis')
 @ApiBearerAuth()
-// @UseGuards(JwtAuthGuard) // Temporarily disabled to get service running
+@UseGuards(JwtAuthGuard)
 export class SessionAnalysisController {
   private readonly logger = new Logger(SessionAnalysisController.name);
 

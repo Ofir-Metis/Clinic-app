@@ -149,7 +149,7 @@ enum TabValue {
 
 const ClientProgressSharing: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
 
   const [selectedTab, setSelectedTab] = useState<TabValue>(TabValue.PROGRESS_FEED);
@@ -361,37 +361,37 @@ const ClientProgressSharing: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
             <FilterIcon sx={{ mr: 2, color: 'primary.main' }} />
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Filter Updates
+              {t.clientPortal?.progressSharing?.filters?.title || 'Filter Updates'}
             </Typography>
           </Box>
           
           <Grid container spacing={3}>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
+                <InputLabel>{t.clientPortal?.progressSharing?.filters?.type || 'Type'}</InputLabel>
                 <Select
                   value={typeFilter}
-                  label="Type"
+                  label={t.clientPortal?.progressSharing?.filters?.type || 'Type'}
                   onChange={(e) => setTypeFilter(e.target.value)}
                 >
-                  <MenuItem value="all">All Types</MenuItem>
-                  <MenuItem value="achievement">🏆 Achievements</MenuItem>
-                  <MenuItem value="milestone">🎯 Milestones</MenuItem>
-                  <MenuItem value="insight">💡 Insights</MenuItem>
-                  <MenuItem value="breakthrough">⚡ Breakthroughs</MenuItem>
+                  <MenuItem value="all">{t.clientPortal?.progressSharing?.filters?.allTypes || 'All Types'}</MenuItem>
+                  <MenuItem value="achievement">{t.clientPortal?.progressSharing?.filters?.achievements || '🏆 Achievements'}</MenuItem>
+                  <MenuItem value="milestone">{t.clientPortal?.progressSharing?.filters?.milestones || '🎯 Milestones'}</MenuItem>
+                  <MenuItem value="insight">{t.clientPortal?.progressSharing?.filters?.insights || '💡 Insights'}</MenuItem>
+                  <MenuItem value="breakthrough">{t.clientPortal?.progressSharing?.filters?.breakthroughs || '⚡ Breakthroughs'}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
-                <InputLabel>Coach</InputLabel>
+                <InputLabel>{t.clientPortal?.progressSharing?.filters?.coach || 'Coach'}</InputLabel>
                 <Select
                   value={coachFilter}
-                  label="Coach"
+                  label={t.clientPortal?.progressSharing?.filters?.coach || 'Coach'}
                   onChange={(e) => setCoachFilter(e.target.value)}
                 >
-                  <MenuItem value="all">All Coaches</MenuItem>
+                  <MenuItem value="all">{t.clientPortal?.progressSharing?.filters?.allCoaches || 'All Coaches'}</MenuItem>
                   {coaches.map(coach => (
                     <MenuItem key={coach.id} value={coach.id}>
                       {coach.name}
@@ -403,15 +403,15 @@ const ClientProgressSharing: React.FC = () => {
             
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
-                <InputLabel>Time Period</InputLabel>
+                <InputLabel>{t.clientPortal?.progressSharing?.filters?.timePeriod || 'Time Period'}</InputLabel>
                 <Select
                   value={dateFilter}
-                  label="Time Period"
+                  label={t.clientPortal?.progressSharing?.filters?.timePeriod || 'Time Period'}
                   onChange={(e) => setDateFilter(e.target.value)}
                 >
-                  <MenuItem value="all">All Time</MenuItem>
-                  <MenuItem value="week">This Week</MenuItem>
-                  <MenuItem value="month">This Month</MenuItem>
+                  <MenuItem value="all">{t.clientPortal?.progressSharing?.filters?.allTime || 'All Time'}</MenuItem>
+                  <MenuItem value="week">{t.clientPortal?.progressSharing?.filters?.thisWeek || 'This Week'}</MenuItem>
+                  <MenuItem value="month">{t.clientPortal?.progressSharing?.filters?.thisMonth || 'This Month'}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -425,17 +425,17 @@ const ClientProgressSharing: React.FC = () => {
           <CardContent sx={{ textAlign: 'center', py: 6 }}>
             <ShareIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-              No progress updates found
+              {t.clientPortal?.progressSharing?.feed?.noUpdates || 'No progress updates found'}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Start sharing your journey with your coaches!
+              {t.clientPortal?.progressSharing?.feed?.noUpdatesSubtitle || 'Start sharing your journey with your coaches!'}
             </Typography>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setShowShareDialog(true)}
             >
-              Share First Update
+              {t.clientPortal?.progressSharing?.feed?.shareFirst || 'Share First Update'}
             </Button>
           </CardContent>
         </Card>
@@ -475,7 +475,7 @@ const ClientProgressSharing: React.FC = () => {
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Progress
+                      {t.clientPortal?.progressSharing?.feed?.progress || 'Progress'}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {update.progress.current}/{update.progress.target} {update.progress.unit}
@@ -514,7 +514,7 @@ const ClientProgressSharing: React.FC = () => {
               {/* Shared With */}
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                  Shared with:
+                  {t.clientPortal?.progressSharing?.feed?.sharedWith || 'Shared with:'}
                 </Typography>
                 <AvatarGroup size="small">
                   {update.sharedWith.map(coachId => {
@@ -534,7 +534,7 @@ const ClientProgressSharing: React.FC = () => {
               {update.reactions.length > 0 && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Coach Reactions:
+                    {t.clientPortal?.progressSharing?.feed?.coachReactions || 'Coach Reactions:'}
                   </Typography>
                   {update.reactions.map(reaction => (
                     <Paper
@@ -574,7 +574,7 @@ const ClientProgressSharing: React.FC = () => {
               {update.comments.length > 0 && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    Comments:
+                    {t.clientPortal?.progressSharing?.feed?.comments || 'Comments:'}
                   </Typography>
                   {update.comments.map(comment => (
                     <Paper
@@ -613,13 +613,13 @@ const ClientProgressSharing: React.FC = () => {
                     startIcon={<LikeIcon />}
                     onClick={() => handleReaction(update.id, 'like')}
                   >
-                    React
+                    {t.clientPortal?.progressSharing?.feed?.react || 'React'}
                   </Button>
                   <Button
                     size="small"
                     startIcon={<CommentIcon />}
                   >
-                    Comment
+                    {t.clientPortal?.progressSharing?.feed?.comment || 'Comment'}
                   </Button>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -675,7 +675,7 @@ const ClientProgressSharing: React.FC = () => {
             {celebration.coachReactions.length > 0 && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  Coach Celebrations 🎊
+                  {t.clientPortal?.progressSharing?.celebrations?.coachCelebrations || 'Coach Celebrations 🎊'}
                 </Typography>
                 {celebration.coachReactions.map(reaction => (
                   <Paper
@@ -709,7 +709,7 @@ const ClientProgressSharing: React.FC = () => {
                 }
               }}
             >
-              Share This Celebration
+              {t.clientPortal?.progressSharing?.celebrations?.shareThisCelebration || 'Share This Celebration'}
             </Button>
           </CardContent>
         </Card>
@@ -732,10 +732,10 @@ const ClientProgressSharing: React.FC = () => {
           </Avatar>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Share Your Progress
+              {t.clientPortal?.progressSharing?.sharing?.shareProgress || 'Share Your Progress'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Let your coaches celebrate your journey with you
+              {t.clientPortal?.progressSharing?.sharing?.shareSubtitle || 'Let your coaches celebrate your journey with you'}
             </Typography>
           </Box>
         </Box>
@@ -745,8 +745,8 @@ const ClientProgressSharing: React.FC = () => {
         <Stack spacing={3}>
           <TextField
             fullWidth
-            label="Update Title"
-            placeholder="What are you celebrating today?"
+            label={t.clientPortal?.progressSharing?.sharing?.updateTitle || 'Update Title'}
+            placeholder={t.clientPortal?.progressSharing?.sharing?.titlePlaceholder || 'What are you celebrating today?'}
             value={newUpdate.title}
             onChange={(e) => setNewUpdate(prev => ({ ...prev, title: e.target.value }))}
           />
@@ -755,8 +755,8 @@ const ClientProgressSharing: React.FC = () => {
             fullWidth
             multiline
             rows={4}
-            label="Description"
-            placeholder="Share the details of your progress, insights, or achievements..."
+            label={t.clientPortal?.progressSharing?.sharing?.description || 'Description'}
+            placeholder={t.clientPortal?.progressSharing?.sharing?.descriptionPlaceholder || 'Share the details of your progress, insights, or achievements...'}
             value={newUpdate.description}
             onChange={(e) => setNewUpdate(prev => ({ ...prev, description: e.target.value }))}
           />
@@ -764,10 +764,10 @@ const ClientProgressSharing: React.FC = () => {
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Update Type</InputLabel>
+                <InputLabel>{t.clientPortal?.progressSharing?.sharing?.updateType || 'Update Type'}</InputLabel>
                 <Select
                   value={newUpdate.type}
-                  label="Update Type"
+                  label={t.clientPortal?.progressSharing?.sharing?.updateType || 'Update Type'}
                   onChange={(e) => setNewUpdate(prev => ({ ...prev, type: e.target.value as any }))}
                 >
                   <MenuItem value="achievement">🏆 Achievement</MenuItem>
@@ -781,15 +781,15 @@ const ClientProgressSharing: React.FC = () => {
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel>Visibility</InputLabel>
+                <InputLabel>{t.clientPortal?.progressSharing?.sharing?.visibility || 'Visibility'}</InputLabel>
                 <Select
                   value={newUpdate.visibility}
-                  label="Visibility"
+                  label={t.clientPortal?.progressSharing?.sharing?.visibility || 'Visibility'}
                   onChange={(e) => setNewUpdate(prev => ({ ...prev, visibility: e.target.value as any }))}
                 >
-                  <MenuItem value="coaches">All My Coaches</MenuItem>
-                  <MenuItem value="selected">Selected Coaches</MenuItem>
-                  <MenuItem value="private">Private (Just Me)</MenuItem>
+                  <MenuItem value="coaches">{t.clientPortal?.progressSharing?.sharing?.visibilityOptions?.coaches || 'All My Coaches'}</MenuItem>
+                  <MenuItem value="selected">{t.clientPortal?.progressSharing?.sharing?.visibilityOptions?.selected || 'Selected Coaches'}</MenuItem>
+                  <MenuItem value="private">{t.clientPortal?.progressSharing?.sharing?.visibilityOptions?.private || 'Private (Just Me)'}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -797,11 +797,11 @@ const ClientProgressSharing: React.FC = () => {
 
           {newUpdate.visibility === 'selected' && (
             <FormControl fullWidth>
-              <InputLabel>Select Coaches</InputLabel>
+              <InputLabel>{t.clientPortal?.progressSharing?.sharing?.selectCoaches || 'Select Coaches'}</InputLabel>
               <Select
                 multiple
                 value={newUpdate.sharedWith || []}
-                label="Select Coaches"
+                label={t.clientPortal?.progressSharing?.sharing?.selectCoaches || 'Select Coaches'}
                 onChange={(e) => setNewUpdate(prev => ({ ...prev, sharedWith: e.target.value as string[] }))}
               >
                 {coaches.map(coach => (
@@ -815,8 +815,8 @@ const ClientProgressSharing: React.FC = () => {
 
           <TextField
             fullWidth
-            label="Tags (comma separated)"
-            placeholder="fitness, milestone, breakthrough"
+            label={t.clientPortal?.progressSharing?.sharing?.tags || 'Tags (comma separated)'}
+            placeholder={t.clientPortal?.progressSharing?.sharing?.tagsPlaceholder || 'fitness, milestone, breakthrough'}
             onChange={(e) => {
               const tags = e.target.value.split(',').map(tag => tag.trim()).filter(Boolean);
               setNewUpdate(prev => ({ ...prev, tags }));
@@ -827,7 +827,7 @@ const ClientProgressSharing: React.FC = () => {
 
       <DialogActions sx={{ p: 3 }}>
         <Button onClick={() => setShowShareDialog(false)}>
-          Cancel
+          {t.clientPortal?.progressSharing?.common?.cancel || 'Cancel'}
         </Button>
         <Button
           variant="contained"
@@ -835,7 +835,7 @@ const ClientProgressSharing: React.FC = () => {
           startIcon={<SendIcon />}
           disabled={!newUpdate.title || !newUpdate.description}
         >
-          Share Update
+          {t.clientPortal?.progressSharing?.sharing?.shareUpdate || 'Share Update'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -844,7 +844,7 @@ const ClientProgressSharing: React.FC = () => {
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <Typography>Loading your progress...</Typography>
+        <Typography>{t.clientPortal?.progressSharing?.common?.loading || 'Loading your progress...'}</Typography>
       </Box>
     );
   }
@@ -871,10 +871,10 @@ const ClientProgressSharing: React.FC = () => {
               WebkitTextFillColor: 'transparent'
             }}
           >
-            Your Progress Journey 🌟
+            {t.clientPortal?.progressSharing?.title || 'Your Progress Journey 🌟'}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-            Share your achievements and celebrate with your coaching team
+            {t.clientPortal?.progressSharing?.subtitle || 'Share your achievements and celebrate with your coaching team'}
           </Typography>
         </Box>
 
@@ -892,9 +892,9 @@ const ClientProgressSharing: React.FC = () => {
               }
             }}
           >
-            <Tab label="Progress Feed" icon={<ProgressIcon />} iconPosition="start" />
-            <Tab label="Celebrations" icon={<CelebrationIcon />} iconPosition="start" />
-            <Tab label="Analytics" icon={<GrowthIcon />} iconPosition="start" />
+            <Tab label={t.clientPortal?.progressSharing?.tabs?.progressFeed || 'Progress Feed'} icon={<ProgressIcon />} iconPosition="start" />
+            <Tab label={t.clientPortal?.progressSharing?.tabs?.celebrations || 'Celebrations'} icon={<CelebrationIcon />} iconPosition="start" />
+            <Tab label={t.clientPortal?.progressSharing?.tabs?.analytics || 'Analytics'} icon={<GrowthIcon />} iconPosition="start" />
           </Tabs>
         </Card>
 
@@ -906,10 +906,10 @@ const ClientProgressSharing: React.FC = () => {
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <GrowthIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">
-                Analytics Coming Soon
+                {t.clientPortal?.progressSharing?.analytics?.comingSoon || 'Analytics Coming Soon'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Track your progress trends and insights
+                {t.clientPortal?.progressSharing?.analytics?.trackProgress || 'Track your progress trends and insights'}
               </Typography>
             </CardContent>
           </Card>

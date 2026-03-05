@@ -12,6 +12,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { timingSafeEqual } from 'crypto';
 import { AdminSetupService } from './admin-setup.service';
 
 export interface CreateAdminRequest {
@@ -41,6 +42,26 @@ export class AdminSetupController {
   constructor(private adminSetupService: AdminSetupService) {}
 
   /**
+   * Timing-safe secret comparison to prevent timing attacks
+   */
+  private isSecretValid(provided: string | undefined, expected: string): boolean {
+    if (!provided) return false;
+    const providedBuf = Buffer.from(provided);
+    const expectedBuf = Buffer.from(expected);
+    if (providedBuf.length !== expectedBuf.length) return false;
+    return timingSafeEqual(providedBuf, expectedBuf);
+  }
+
+  /**
+   * Check if admin setup endpoints are enabled
+   */
+  private checkSetupEnabled(): void {
+    if (process.env.ENABLE_ADMIN_SETUP !== 'true') {
+      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+    }
+  }
+
+  /**
    * Create initial admin user - should only be used for initial setup
    * Requires special admin secret header for security
    */
@@ -50,9 +71,18 @@ export class AdminSetupController {
     @Headers('x-admin-secret') adminSecret: string,
   ): Promise<CreateAdminResponse> {
     try {
+      // Check if admin setup is enabled
+      this.checkSetupEnabled();
+
       // Validate admin secret
-      const expectedSecret = process.env.ADMIN_SECRET || 'clinic-admin-secret-2024';
-      if (!adminSecret || adminSecret !== expectedSecret) {
+      const expectedSecret = process.env.ADMIN_SECRET;
+      if (!expectedSecret) {
+        throw new HttpException(
+          'ADMIN_SECRET environment variable is required',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      if (!this.isSecretValid(adminSecret, expectedSecret)) {
         this.logger.warn('❌ Unauthorized admin creation attempt');
         throw new HttpException(
           'Unauthorized: Invalid admin secret',
@@ -117,9 +147,18 @@ export class AdminSetupController {
     @Headers('x-admin-secret') adminSecret: string,
   ): Promise<{ hasAdmin: boolean; count: number }> {
     try {
+      // Check if admin setup is enabled
+      this.checkSetupEnabled();
+
       // Validate admin secret
-      const expectedSecret = process.env.ADMIN_SECRET || 'clinic-admin-secret-2024';
-      if (!adminSecret || adminSecret !== expectedSecret) {
+      const expectedSecret = process.env.ADMIN_SECRET;
+      if (!expectedSecret) {
+        throw new HttpException(
+          'ADMIN_SECRET environment variable is required',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      if (!this.isSecretValid(adminSecret, expectedSecret)) {
         throw new HttpException(
           'Unauthorized: Invalid admin secret',
           HttpStatus.UNAUTHORIZED
@@ -150,15 +189,33 @@ export class AdminSetupController {
 
   /**
    * Create additional admin user (when at least one admin exists)
+   * TODO: This endpoint needs proper authentication - currently unprotected
    */
   @Post('create-additional-admin')
   async createAdditionalAdmin(
     @Body() body: CreateAdminRequest,
-    @Headers('authorization') authHeader: string,
+    @Headers('x-admin-secret') adminSecret: string,
   ): Promise<CreateAdminResponse> {
     try {
-      // This would require an existing admin to be authenticated
-      // For now, we'll implement basic validation
+      // Check if admin setup is enabled
+      this.checkSetupEnabled();
+
+      // TODO: Replace with JWT-based admin authentication
+      // For now, require admin secret as a basic security measure
+      const expectedSecret = process.env.ADMIN_SECRET;
+      if (!expectedSecret) {
+        throw new HttpException(
+          'ADMIN_SECRET environment variable is required',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
+      }
+      if (!this.isSecretValid(adminSecret, expectedSecret)) {
+        this.logger.warn('❌ Unauthorized additional admin creation attempt');
+        throw new HttpException(
+          'Unauthorized: Invalid admin secret',
+          HttpStatus.UNAUTHORIZED
+        );
+      }
 
       if (!body.email || !body.password) {
         throw new HttpException(

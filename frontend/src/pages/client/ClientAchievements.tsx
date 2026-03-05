@@ -167,8 +167,9 @@ enum TabValue {
 
 const ClientAchievements: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
+  const translations = t;
 
   const [selectedTab, setSelectedTab] = useState<TabValue>(TabValue.ACHIEVEMENTS);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -469,7 +470,7 @@ const ClientAchievements: React.FC = () => {
             </Avatar>
             
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Level {currentLevel.level}
+              {translations.achievements?.level.title || 'Level'} {currentLevel.level}
             </Typography>
             
             <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, color: currentLevel.color }}>
@@ -479,7 +480,7 @@ const ClientAchievements: React.FC = () => {
             <Box sx={{ mb: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Progress to Next Level
+                  {translations.achievements?.level.progressToNext || 'Progress to Next Level'}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                   {stats.totalPoints} / {currentLevel.pointsRequired + currentLevel.pointsToNext} XP
@@ -499,12 +500,12 @@ const ClientAchievements: React.FC = () => {
                 }}
               />
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'center' }}>
-                {currentLevel.pointsToNext} XP needed for next level
+                {currentLevel.pointsToNext} {translations.achievements?.level.xpNeeded || 'XP needed for next level'}
               </Typography>
             </Box>
 
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-              Level Benefits:
+              {translations.achievements?.level.benefits || 'Level Benefits:'}
             </Typography>
             <Stack spacing={1}>
               {currentLevel.benefits.map((benefit, index) => (
@@ -527,11 +528,11 @@ const ClientAchievements: React.FC = () => {
               {stats.totalPoints}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Total XP
+              {translations.achievements?.stats.totalXP || 'Total XP'}
             </Typography>
           </Paper>
         </Grid>
-        
+
         <Grid item xs={6} sm={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
             <BadgeIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
@@ -539,11 +540,11 @@ const ClientAchievements: React.FC = () => {
               {stats.unlockedAchievements}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Achievements
+              {translations.achievements?.stats.achievements || 'Achievements'}
             </Typography>
           </Paper>
         </Grid>
-        
+
         <Grid item xs={6} sm={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
             <StreakIcon sx={{ fontSize: 40, color: 'error.main', mb: 1 }} />
@@ -551,11 +552,11 @@ const ClientAchievements: React.FC = () => {
               {stats.activeStreaks}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Active Streaks
+              {translations.achievements?.stats.activeStreaks || 'Active Streaks'}
             </Typography>
           </Paper>
         </Grid>
-        
+
         <Grid item xs={6} sm={3}>
           <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
             <CompleteIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
@@ -563,7 +564,7 @@ const ClientAchievements: React.FC = () => {
               {stats.completedMilestones}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Milestones
+              {translations.achievements?.stats.milestones || 'Milestones'}
             </Typography>
           </Paper>
         </Grid>
@@ -597,7 +598,7 @@ const ClientAchievements: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
               <FilterIcon sx={{ mr: 2, color: 'primary.main' }} />
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Filter Achievements
+                {translations.achievements?.filter.title || 'Filter Achievements'}
               </Typography>
             </Box>
             
@@ -606,11 +607,11 @@ const ClientAchievements: React.FC = () => {
                 <TextField
                   select
                   fullWidth
-                  label="Category"
+                  label={translations.achievements?.filter.category || 'Category'}
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                 >
-                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="all">{translations.achievements?.filter.allCategories || 'All Categories'}</MenuItem>
                   <MenuItem value="personal">🧠 Personal</MenuItem>
                   <MenuItem value="health">💪 Health</MenuItem>
                   <MenuItem value="career">💼 Career</MenuItem>
@@ -620,33 +621,33 @@ const ClientAchievements: React.FC = () => {
                   <MenuItem value="finance">💰 Finance</MenuItem>
                 </TextField>
               </Grid>
-              
+
               <Grid item xs={12} sm={4}>
                 <TextField
                   select
                   fullWidth
-                  label="Status"
+                  label={translations.achievements?.filter.status || 'Status'}
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
-                  <MenuItem value="all">All Achievements</MenuItem>
-                  <MenuItem value="unlocked">🏆 Unlocked</MenuItem>
-                  <MenuItem value="locked">🔒 Locked</MenuItem>
+                  <MenuItem value="all">{translations.achievements?.filter.allAchievements || 'All Achievements'}</MenuItem>
+                  <MenuItem value="unlocked">🏆 {translations.achievements?.filter.unlocked || 'Unlocked'}</MenuItem>
+                  <MenuItem value="locked">🔒 {translations.achievements?.filter.locked || 'Locked'}</MenuItem>
                 </TextField>
               </Grid>
-              
+
               <Grid item xs={12} sm={4}>
                 <TextField
                   select
                   fullWidth
-                  label="Sort By"
+                  label={translations.achievements?.filter.sortBy || 'Sort By'}
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <MenuItem value="recent">Most Recent</MenuItem>
-                  <MenuItem value="points">Highest Points</MenuItem>
-                  <MenuItem value="difficulty">Difficulty</MenuItem>
-                  <MenuItem value="progress">Progress</MenuItem>
+                  <MenuItem value="recent">{translations.achievements?.filter.mostRecent || 'Most Recent'}</MenuItem>
+                  <MenuItem value="points">{translations.achievements?.filter.highestPoints || 'Highest Points'}</MenuItem>
+                  <MenuItem value="difficulty">{translations.achievements?.filter.difficulty || 'Difficulty'}</MenuItem>
+                  <MenuItem value="progress">{translations.achievements?.filter.progress || 'Progress'}</MenuItem>
                 </TextField>
               </Grid>
             </Grid>
@@ -672,10 +673,10 @@ const ClientAchievements: React.FC = () => {
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, textTransform: 'capitalize' }}>
-                    {category} Achievements
+                    {category} {translations.achievements?.categoryAchievements || 'Achievements'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {categoryAchievements.filter(a => a.isUnlocked).length} of {categoryAchievements.length} unlocked
+                    {categoryAchievements.filter(a => a.isUnlocked).length} {translations.achievements?.ofUnlocked || 'of'} {categoryAchievements.length} {translations.achievements?.unlocked || 'unlocked'}
                   </Typography>
                 </Box>
                 <Badge
@@ -747,7 +748,7 @@ const ClientAchievements: React.FC = () => {
                               <Box sx={{ mb: 2 }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                                   <Typography variant="caption" color="text.secondary">
-                                    Progress
+                                    {translations.achievements?.filter.progress || 'Progress'}
                                   </Typography>
                                   <Typography variant="caption" sx={{ fontWeight: 600 }}>
                                     {achievement.progress.current}/{achievement.progress.target} {achievement.progress.unit}
@@ -775,7 +776,7 @@ const ClientAchievements: React.FC = () => {
 
                             {achievement.isUnlocked && achievement.unlockedAt && (
                               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                                Unlocked {achievement.unlockedAt.toLocaleDateString()}
+                                {translations.achievements?.unlockedOn || 'Unlocked'} {achievement.unlockedAt.toLocaleDateString()}
                               </Typography>
                             )}
                           </CardContent>
@@ -794,10 +795,10 @@ const ClientAchievements: React.FC = () => {
             <CardContent sx={{ textAlign: 'center', py: 6 }}>
               <TrophyIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                No achievements found
+                {translations.achievements?.noAchievements || 'No achievements found'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Try adjusting your filters or start working on new goals
+                {translations.achievements?.noAchievementsHint || 'Try adjusting your filters or start working on new goals'}
               </Typography>
             </CardContent>
           </Card>
@@ -836,7 +837,7 @@ const ClientAchievements: React.FC = () => {
                   {streak.description}
                 </Typography>
                 <Chip
-                  label={streak.isActive ? 'Active' : 'Broken'}
+                  label={streak.isActive ? (translations.achievements?.streaks.active || 'Active') : (translations.achievements?.streaks.broken || 'Broken')}
                   color={streak.isActive ? 'error' : 'default'}
                   size="small"
                 />
@@ -846,7 +847,7 @@ const ClientAchievements: React.FC = () => {
                   {streak.currentStreak}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Current Streak
+                  {translations.achievements?.streaks.currentStreak || 'Current Streak'}
                 </Typography>
               </Box>
             </Box>
@@ -857,7 +858,7 @@ const ClientAchievements: React.FC = () => {
                   {streak.longestStreak}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Longest Streak
+                  {translations.achievements?.streaks.longestStreak || 'Longest Streak'}
                 </Typography>
               </Box>
               <Box>
@@ -865,13 +866,13 @@ const ClientAchievements: React.FC = () => {
                   {streak.lastActivityDate.toLocaleDateString()}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Last Activity
+                  {translations.achievements?.streaks.lastActivity || 'Last Activity'}
                 </Typography>
               </Box>
             </Box>
 
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-              Streak Milestones:
+              {translations.achievements?.streaks.milestones || 'Streak Milestones:'}
             </Typography>
             
             <Grid container spacing={2}>
@@ -886,7 +887,7 @@ const ClientAchievements: React.FC = () => {
                     }}
                   >
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                      {milestone.days} Days
+                      {milestone.days} {translations.achievements?.streaks.days || 'Days'}
                     </Typography>
                     <Typography variant="body2" color={milestone.isUnlocked ? 'success.main' : 'text.secondary'}>
                       {milestone.reward}
@@ -930,7 +931,7 @@ const ClientAchievements: React.FC = () => {
                   {milestone.description}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Target: {milestone.targetDate.toLocaleDateString()}
+                  {translations.achievements?.milestoneSection.target || 'Target:'} {milestone.targetDate.toLocaleDateString()}
                 </Typography>
               </Box>
               <Box sx={{ textAlign: 'right' }}>
@@ -938,7 +939,7 @@ const ClientAchievements: React.FC = () => {
                   {milestone.progress}%
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Complete
+                  {translations.achievements?.milestoneSection.complete || 'Complete'}
                 </Typography>
               </Box>
             </Box>
@@ -960,7 +961,7 @@ const ClientAchievements: React.FC = () => {
             </Box>
 
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-              Progress Steps:
+              {translations.achievements?.milestoneSection.progressSteps || 'Progress Steps:'}
             </Typography>
             
             <Stepper orientation="vertical">
@@ -972,7 +973,7 @@ const ClientAchievements: React.FC = () => {
                     </Typography>
                     {subMilestone.completedAt && (
                       <Typography variant="caption" color="text.secondary">
-                        Completed {subMilestone.completedAt.toLocaleDateString()}
+                        {translations.achievements?.milestoneSection.completed || 'Completed'} {subMilestone.completedAt.toLocaleDateString()}
                       </Typography>
                     )}
                   </StepLabel>
@@ -1045,7 +1046,7 @@ const ClientAchievements: React.FC = () => {
 
               <Box>
                 <Chip
-                  label={`${selectedAchievement.difficulty} Achievement`}
+                  label={`${selectedAchievement.difficulty} ${translations.achievements?.difficulty.achievement || 'Achievement'}`}
                   sx={{
                     bgcolor: alpha(getDifficultyColor(selectedAchievement.difficulty), 0.2),
                     color: getDifficultyColor(selectedAchievement.difficulty),
@@ -1058,22 +1059,22 @@ const ClientAchievements: React.FC = () => {
               </Box>
 
               <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                +{selectedAchievement.points} XP Earned!
+                +{selectedAchievement.points} {translations.achievements?.xpEarned || 'XP Earned!'}
               </Typography>
 
               {selectedAchievement.unlockedAt && (
                 <Typography variant="body2" color="text.secondary">
-                  Unlocked on {selectedAchievement.unlockedAt.toLocaleDateString()}
+                  {translations.achievements?.unlockedOn || 'Unlocked on'} {selectedAchievement.unlockedAt.toLocaleDateString()}
                 </Typography>
               )}
 
               {selectedAchievement.nextLevel && (
                 <Alert severity="info" sx={{ textAlign: 'left' }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                    Next Level: {selectedAchievement.nextLevel.title}
+                    {translations.achievements?.nextLevel || 'Next Level:'} {selectedAchievement.nextLevel.title}
                   </Typography>
                   <Typography variant="body2">
-                    Requirements:
+                    {translations.achievements?.requirements || 'Requirements:'}
                   </Typography>
                   <List dense>
                     {selectedAchievement.nextLevel.requirements.map((req, index) => (
@@ -1093,10 +1094,10 @@ const ClientAchievements: React.FC = () => {
               startIcon={<ShareIcon />}
               sx={{ mr: 2 }}
             >
-              Share Achievement
+              {translations.achievements?.shareAchievement || 'Share Achievement'}
             </Button>
             <Button onClick={() => setShowCelebrationDialog(false)}>
-              Close
+              {translations.achievements?.close || 'Close'}
             </Button>
           </DialogActions>
         </>
@@ -1134,10 +1135,10 @@ const ClientAchievements: React.FC = () => {
               WebkitTextFillColor: 'transparent'
             }}
           >
-            Your Achievement Journey 🏆
+            {translations.achievements?.title || 'Your Achievement Journey 🏆'}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-            Track your progress, celebrate milestones, and unlock new achievements
+            {translations.achievements?.subtitle || 'Track your progress, celebrate milestones, and unlock new achievements'}
           </Typography>
         </Box>
 
@@ -1155,10 +1156,10 @@ const ClientAchievements: React.FC = () => {
               }
             }}
           >
-            <Tab label="Achievements" icon={<TrophyIcon />} iconPosition="start" />
-            <Tab label="Streaks" icon={<StreakIcon />} iconPosition="start" />
-            <Tab label="Milestones" icon={<TimelineIcon />} iconPosition="start" />
-            <Tab label="Level Progress" icon={<ProgressIcon />} iconPosition="start" />
+            <Tab label={translations.achievements?.tabs.achievements || 'Achievements'} icon={<TrophyIcon />} iconPosition="start" />
+            <Tab label={translations.achievements?.tabs.streaks || 'Streaks'} icon={<StreakIcon />} iconPosition="start" />
+            <Tab label={translations.achievements?.tabs.milestones || 'Milestones'} icon={<TimelineIcon />} iconPosition="start" />
+            <Tab label={translations.achievements?.tabs.levelProgress || 'Level Progress'} icon={<ProgressIcon />} iconPosition="start" />
           </Tabs>
         </Card>
 

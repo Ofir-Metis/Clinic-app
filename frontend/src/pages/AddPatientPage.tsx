@@ -5,15 +5,11 @@ import {
   TextField,
   Checkbox,
   FormControlLabel,
-  Button,
-  MenuItem,
   Snackbar,
-  CircularProgress,
   Typography,
   Box,
   Grid,
   Avatar,
-  Stack,
 } from '@mui/material';
 import {
   PersonAdd as PersonAddIcon,
@@ -32,9 +28,14 @@ import { useErrorHandler } from '../hooks/useErrorHandler';
 import ErrorAlert from '../components/ErrorAlert';
 import LoadingButton from '../components/LoadingButton';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { useAuth } from '../AuthContext';
 
-const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 }) => {
-  const { t, i18n } = useTranslation();
+const AddPatientPage: React.FC = () => {
+  const { translations: t } = useTranslation();
+  const { user } = useAuth();
+
+  // Get the current coach's ID from auth context (prefer UUID coachId over numeric user.id)
+  const therapistId = user?.coachId || user?.id;
   const [snack, setSnack] = useState<{ message: string; severity: 'success' | 'error' } | null>(null);
   const { error, handleError, clearError, setRetryAction } = useErrorHandler();
 
@@ -48,30 +49,43 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
       role: 'patient',
     },
     validationSchema: Yup.object({
-      firstName: Yup.string().required(t('required')),
-      lastName: Yup.string().required(t('required')),
-      email: Yup.string().email(t('invalidEmail')).required(t('required')),
-      phone: Yup.string().required(t('required')),
-      role: Yup.string().required(t('required')),
+      firstName: Yup.string().required(t.addPatientPage.required),
+      lastName: Yup.string().required(t.addPatientPage.required),
+      email: Yup.string().email(t.addPatientPage.invalidEmail).required(t.addPatientPage.required),
+      phone: Yup.string()
+        .required(t.addPatientPage.required)
+        .test('phone-digits', t.addPatientPage.phoneInvalid, (value) => {
+          if (!value) return false;
+          const digits = value.replace(/\D/g, '');
+          return digits.length >= 7 && digits.length <= 15;
+        }),
+      // Role is auto-set to 'client' - no validation needed
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
       logger.debug('add patient submit', values);
       clearError();
-      
+
+      // Ensure we have a valid therapist ID
+      if (!therapistId) {
+        setSnack({ message: t.addPatientPage.coachNotFound, severity: 'error' });
+        setSubmitting(false);
+        return;
+      }
+
       const attemptAddPatient = async () => {
         try {
           await addPatient({ ...values, therapistId });
-          setSnack({ message: t('patientSaved'), severity: 'success' });
+          setSnack({ message: t.addPatientPage.patientSaved, severity: 'success' });
           resetForm();
         } catch (e) {
           logger.error('add patient error', e);
-          setSnack({ message: t('saveFailed'), severity: 'error' });
-          handleError(e, 'Failed to add patient. Please try again.');
+          setSnack({ message: t.addPatientPage.saveFailed, severity: 'error' });
+          handleError(e, t.addPatientPage.saveFailed);
         } finally {
           setSubmitting(false);
         }
       };
-      
+
       setRetryAction(attemptAddPatient);
       await attemptAddPatient();
     },
@@ -79,17 +93,17 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
 
   return (
     <WellnessLayout
-      title="Add New Patient"
+      title={t.addPatientPage.title}
       showFab={false}
     >
       {/* Header Section */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Avatar sx={{ 
-          width: 80, 
-          height: 80, 
-          bgcolor: 'primary.main', 
-          mx: 'auto', 
-          mb: 2 
+        <Avatar sx={{
+          width: 80,
+          height: 80,
+          bgcolor: 'primary.main',
+          mx: 'auto',
+          mb: 2
         }}>
           <PersonAddIcon sx={{ fontSize: 40 }} />
         </Avatar>
@@ -105,10 +119,10 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
             WebkitTextFillColor: 'transparent',
           }}
         >
-          👤 Add New Client
+          {t.addPatientPage.heading}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Create a new client profile for your wellness practice
+          {t.addPatientPage.subtitle}
         </Typography>
       </Box>
 
@@ -120,7 +134,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label={t('firstName', 'First Name')}
+                    label={t.addPatientPage.firstName}
                     {...formik.getFieldProps('firstName')}
                     error={formik.touched.firstName && Boolean(formik.errors.firstName)}
                     helperText={formik.touched.firstName && formik.errors.firstName}
@@ -132,7 +146,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label={t('lastName', 'Last Name')}
+                    label={t.addPatientPage.lastName}
                     {...formik.getFieldProps('lastName')}
                     error={formik.touched.lastName && Boolean(formik.errors.lastName)}
                     helperText={formik.touched.lastName && formik.errors.lastName}
@@ -144,7 +158,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label={t('email', 'Email Address')}
+                    label={t.addPatientPage.email}
                     type="email"
                     {...formik.getFieldProps('email')}
                     error={formik.touched.email && Boolean(formik.errors.email)}
@@ -157,7 +171,7 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label={t('phone', 'Phone Number')}
+                    label={t.addPatientPage.phone}
                     {...formik.getFieldProps('phone')}
                     error={formik.touched.phone && Boolean(formik.errors.phone)}
                     helperText={formik.touched.phone && formik.errors.phone}
@@ -167,16 +181,16 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <Box sx={{ 
-                    p: 2, 
-                    borderRadius: 2, 
+                  <Box sx={{
+                    p: 2,
+                    borderRadius: 2,
                     background: 'rgba(46, 125, 107, 0.04)',
                     border: '1px solid rgba(46, 125, 107, 0.12)',
                   }}>
                     <FormControlLabel
                       control={
-                        <Checkbox 
-                          {...formik.getFieldProps('whatsappOptIn')} 
+                        <Checkbox
+                          {...formik.getFieldProps('whatsappOptIn')}
                           checked={formik.values.whatsappOptIn}
                           icon={<WhatsAppIcon />}
                           checkedIcon={<WhatsAppIcon />}
@@ -185,54 +199,42 @@ const AddPatientPage: React.FC<{ therapistId?: number }> = ({ therapistId = 1 })
                       label={
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
-                            {t('whatsappOptIn', 'WhatsApp Notifications')}
+                            {t.addPatientPage.whatsappOptIn}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Allow sending appointment reminders via WhatsApp
+                            {t.addPatientPage.whatsappDescription}
                           </Typography>
                         </Box>
                       }
                     />
                   </Box>
                 </Grid>
+                {/* Role is auto-set to 'client' - hidden from UI */}
                 <Grid item xs={12}>
-                  <TextField
-                    select
-                    fullWidth
-                    label={t('role', 'Account Type')}
-                    {...formik.getFieldProps('role')}
-                    error={formik.touched.role && Boolean(formik.errors.role)}
-                    helperText={formik.touched.role && formik.errors.role}
-                  >
-                    <MenuItem value="patient">{t('patient', 'Client/Patient')}</MenuItem>
-                    <MenuItem value="therapist">{t('therapist', 'Therapist')}</MenuItem>
-                  </TextField>
-                </Grid>
-                <Grid item xs={12}>
-                  <Box sx={{ 
-                    p: 2, 
-                    borderRadius: 2, 
+                  <Box sx={{
+                    p: 2,
+                    borderRadius: 2,
                     background: 'rgba(139, 90, 135, 0.04)',
                     border: '1px solid rgba(139, 90, 135, 0.12)',
                     textAlign: 'center',
                   }}>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {t('inviteInfo', 'An invitation will be sent to the client\'s email address with login instructions.')}
+                      {t.addPatientPage.inviteInfo}
                     </Typography>
                   </Box>
                 </Grid>
-                
+
                 <Grid item xs={12}>
-                  <LoadingButton 
-                    type="submit" 
-                    variant="contained" 
+                  <LoadingButton
+                    type="submit"
+                    variant="contained"
                     size="large"
-                    fullWidth 
+                    fullWidth
                     loading={formik.isSubmitting}
                     startIcon={<PersonAddIcon />}
                     sx={{ height: 56 }}
                   >
-                    {t('savePatient', 'Add Client')}
+                    {t.addPatientPage.addClient}
                   </LoadingButton>
                 </Grid>
               </Grid>

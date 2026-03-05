@@ -9,6 +9,7 @@ import { join } from 'path';
 import { CommonModule } from '@clinic/common';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ClientsModule } from './clients/clients.module';
+import { PatientsModule } from './patients/patients.module';
 import { CoachesModule } from './coaches/coaches.module';
 import { SettingsModule } from './settings/settings.module';
 import { WebSocketModule } from './websocket/websocket.module';
@@ -29,6 +30,8 @@ import { MonitoringModule } from './monitoring/monitoring.module';
 // import { DataRetentionModule } from './data-retention/data-retention.module'; // Temporarily disabled
 import { AuditModule } from './audit/audit.module';
 import { ResilienceModule } from './resilience/resilience.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { CommunicationModule } from './communication/communication.module';
 import { CsrfModule, SecurityHeadersModule } from '@clinic/common';
 import { AppResolver } from './app.resolver';
 import { HealthController } from './health/health.controller';
@@ -37,6 +40,9 @@ import { SettingsService } from './settings/settings.service';
 import { CoachesService } from './coaches/coaches.service';
 import { AuthController } from './auth.controller';
 import { TestController } from './test.controller';
+import { VoiceNotesModule } from './voice-notes/voice-notes.module';
+import { ProgressModule } from './progress/progress.module';
+import { RelationshipsModule } from './relationships/relationships.module';
 
 @Module({
   imports: [
@@ -73,17 +79,20 @@ import { TestController } from './test.controller';
     }),
     DashboardModule,
     ClientsModule,
-    // CoachesModule, // Keep disabled - may have dependencies
+    PatientsModule,
+    CoachesModule, // Enabled for coach discovery and search
     SettingsModule,
     WebSocketModule, // Enabled - WebSocket support for real-time features
     // RecordingsModule, // Keep disabled - storage dependencies
-    // GoogleModule, // Keep disabled - OAuth dependencies
+    GoogleModule, // Enabled for Google Calendar/Meet/Gmail integration
     // OnboardingModule, // Keep disabled
     // ProgramsModule, // Keep disabled
     // AIModule, // Keep disabled
     // AnalyticsModule, // Keep disabled
     // ViewSwitchingModule, // Keep disabled
     AdminModule,
+    AppointmentsModule,
+    CommunicationModule, // Messaging between coaches and clients
     // ComplianceModule, // Keep disabled - HIPAA dependencies
     // EncryptionModule, // Temporarily disabled for debugging
     // DisasterRecoveryModule, // Temporarily disabled
@@ -93,6 +102,9 @@ import { TestController } from './test.controller';
     // DataRetentionModule, // Keep disabled - complex dependencies
     AuditModule,
     ResilienceModule,
+    VoiceNotesModule, // Voice-to-text note recording
+    ProgressModule, // Client progress tracking and goal management
+    RelationshipsModule, // Client-coach connection requests and relationship management
     // CsrfModule, // Already included in CommonModule
     // SecurityHeadersModule, // Already included in CommonModule
   ],
@@ -100,7 +112,7 @@ import { TestController } from './test.controller';
   providers: [
     DashboardService,
     SettingsService,
-    // CoachesService, // Keep disabled - may have circular dependencies
+    CoachesService, // Enabled for coach discovery and search
     AppResolver,
     {
       provide: APP_GUARD,

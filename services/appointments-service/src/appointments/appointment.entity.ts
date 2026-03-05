@@ -52,11 +52,11 @@ export class Appointment {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'therapist_id', type: 'uuid' })
-  therapistId!: string;
+  @Column({ name: 'therapist_id', type: 'uuid', nullable: true })
+  therapistId?: string;
 
-  @Column({ name: 'client_id', type: 'uuid' })
-  clientId!: string;
+  @Column({ name: 'client_id', type: 'uuid', nullable: true })
+  clientId?: string;
 
   @Column({ name: 'start_time', type: 'timestamptz' })
   startTime!: Date;
@@ -242,7 +242,7 @@ export class Appointment {
       ...this.meetingConfig,
       type: 'in-person',
       location,
-      meetingUrl: undefined,
+      meetingUrl: null as any,
       googleMeetEnabled: false,
       recordingSettings: {
         ...this.meetingConfig.recordingSettings,

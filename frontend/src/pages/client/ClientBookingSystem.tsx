@@ -66,8 +66,14 @@ import {
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { getDatePickerLocale } from '../../locales/datePickerLocale';
 import { useTranslation } from '../../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { getPatientAppointments } from '../../api/patientAppointments';
+import { createAppointment } from '../../api/appointments';
+import apiClient from '../../api/client';
+import { logger } from '../../logger';
 
 interface Coach {
   id: string;
@@ -126,9 +132,11 @@ interface Appointment {
 
 const ClientBookingSystem: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const { adapterLocale, localeText } = getDatePickerLocale(language);
   const navigate = useNavigate();
-  
+  const { user } = useAuth();
+
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTab, setSelectedTab] = useState(0);
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -136,7 +144,8 @@ const ClientBookingSystem: React.FC = () => {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const [bookingData, setBookingData] = useState<Partial<BookingData>>({
     date: new Date(),
     specialRequests: ''
@@ -151,76 +160,68 @@ const ClientBookingSystem: React.FC = () => {
 
   useEffect(() => {
     loadCoachesAndAppointments();
-  }, []);
+  }, [user?.id]);
 
   const loadCoachesAndAppointments = async () => {
     try {
       setIsLoading(true);
-      
-      // Mock data - replace with actual API calls
-      const mockCoaches: Coach[] = [
-        {
-          id: 'coach1',
-          name: 'Dr. Sarah Johnson',
-          specialization: 'Life & Career Coaching',
-          rating: 4.9,
-          hourlyRate: 120,
-          availability: {
-            '2024-01-15': ['09:00', '10:30', '14:00', '16:00'],
-            '2024-01-16': ['10:00', '11:30', '15:00'],
-            '2024-01-17': ['09:00', '13:00', '14:30', '16:30']
-          },
-          sessionTypes: [
-            { id: 'initial', name: t.booking.sessionTypes.initial, duration: 60, price: 120, description: 'First session assessment' },
-            { id: 'followup', name: t.booking.sessionTypes.followup, duration: 45, price: 100, description: 'Regular coaching session' }
-          ],
-          locationPreferences: [
-            { id: 'online', type: 'online', label: t.booking.locationTypes.online },
-            { id: 'inperson', type: 'inperson', label: t.booking.locationTypes.inperson, address: '123 Wellness Center' }
-          ]
-        },
-        {
-          id: 'coach2', 
-          name: 'Marcus Rodriguez',
-          specialization: 'Mindfulness & Stress Management',
-          rating: 4.8,
-          hourlyRate: 100,
-          availability: {
-            '2024-01-15': ['11:00', '13:00', '17:00'],
-            '2024-01-16': ['09:30', '14:00', '15:30', '17:00'],
-            '2024-01-17': ['10:00', '12:00', '16:00']
-          },
-          sessionTypes: [
-            { id: 'breakthrough', name: t.booking.sessionTypes.breakthrough, duration: 90, price: 150, description: 'Intensive breakthrough session' },
-            { id: 'progress', name: t.booking.sessionTypes.progress, duration: 30, price: 75, description: 'Progress check-in' }
-          ],
-          locationPreferences: [
-            { id: 'online', type: 'online', label: t.booking.locationTypes.online },
-            { id: 'phone', type: 'phone', label: t.booking.locationTypes.phone }
-          ]
-        }
-      ];
+      setLoadError(null);
 
-      const mockAppointments: Appointment[] = [
-        {
-          id: 'apt1',
-          coachId: 'coach1',
-          coachName: 'Dr. Sarah Johnson',
-          date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          timeSlot: '14:00',
-          sessionType: 'Follow-up Session',
-          duration: 45,
-          location: 'Online',
-          status: 'confirmed',
-          price: 100,
-          meetingLink: 'https://meet.google.com/abc-def-ghi'
+      // Fetch coaches from API
+      let fetchedCoaches: Coach[] = [];
+      try {
+        const { data } = await apiClient.get('/coaches');
+        if (Array.isArray(data)) {
+          fetchedCoaches = data.map((c: any) => ({
+            id: String(c.id),
+            name: c.name || c.fullName || 'Coach',
+            specialization: c.specialization || c.title || '',
+            rating: c.rating || 0,
+            hourlyRate: c.hourlyRate || 0,
+            profileImage: c.profileImage,
+            availability: c.availability || {},
+            sessionTypes: c.sessionTypes || [
+              { id: 'standard', name: t.booking?.sessionTypes?.followup || 'Standard Session', duration: 60, price: c.hourlyRate || 0, description: '' },
+            ],
+            locationPreferences: c.locationPreferences || [
+              { id: 'online', type: 'online' as const, label: t.booking?.locationTypes?.online || 'Online' },
+            ],
+          }));
         }
-      ];
+      } catch (err) {
+        logger.debug('Failed to fetch coaches list, using empty state', err);
+      }
+      setCoaches(fetchedCoaches);
 
-      setCoaches(mockCoaches);
-      setAppointments(mockAppointments);
+      // Fetch client's appointments from API
+      let fetchedAppointments: Appointment[] = [];
+      if (user?.id) {
+        try {
+          const aptData = await getPatientAppointments({ patientId: user.id });
+          const items = Array.isArray(aptData) ? aptData : aptData?.items || [];
+          fetchedAppointments = items.map((apt: any) => ({
+            id: String(apt.id),
+            coachId: String(apt.therapistId || apt.coachId || ''),
+            coachName: apt.therapistName || apt.coachName || 'Coach',
+            coachImage: apt.coachImage,
+            date: new Date(apt.startTime || apt.date),
+            timeSlot: new Date(apt.startTime || apt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sessionType: apt.type || apt.sessionType || 'Session',
+            duration: apt.duration || 60,
+            location: apt.location || (apt.type === 'virtual' ? 'Online' : 'In-person'),
+            status: apt.status || 'pending',
+            notes: apt.notes,
+            meetingLink: apt.meetingUrl || apt.meetingLink,
+            price: apt.price || 0,
+          }));
+        } catch (err) {
+          logger.debug('Failed to fetch client appointments', err);
+        }
+      }
+      setAppointments(fetchedAppointments);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('Failed to load booking data', error);
+      setLoadError(t.errors?.general || 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
@@ -242,20 +243,34 @@ const ClientBookingSystem: React.FC = () => {
 
   const confirmBooking = async () => {
     try {
-      // TODO: API call to book appointment
-      console.log('Booking confirmed:', bookingData);
-      
-      // Show success message and close dialogs
+      if (!bookingData.coachId || !bookingData.date || !bookingData.timeSlot) return;
+
+      const [hours, minutes] = bookingData.timeSlot.split(':').map(Number);
+      const startTime = new Date(bookingData.date);
+      startTime.setHours(hours, minutes, 0, 0);
+
+      const duration = bookingData.sessionType?.duration || 60;
+      const endTime = new Date(startTime.getTime() + duration * 60 * 1000);
+
+      await createAppointment({
+        therapistId: bookingData.coachId,
+        clientId: String(user?.id || ''),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        type: bookingData.location?.type === 'inperson' ? 'in-person' : 'virtual',
+        status: 'scheduled',
+        location: bookingData.location?.address,
+      });
+
       setShowConfirmDialog(false);
       setShowBookingDialog(false);
       setCurrentStep(0);
       setBookingData({ date: new Date(), specialRequests: '' });
-      
+
       // Refresh appointments
       await loadCoachesAndAppointments();
-      
     } catch (error) {
-      console.error('Booking failed:', error);
+      logger.error('Booking failed', error);
     }
   };
 
@@ -333,7 +348,11 @@ const ClientBookingSystem: React.FC = () => {
         {t.booking.selectDate}
       </Typography>
       
-      <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <LocalizationProvider
+        dateAdapter={AdapterDateFns}
+        adapterLocale={adapterLocale}
+        localeText={localeText}
+      >
         <DateCalendar
           value={bookingData.date}
           onChange={(newDate) => setBookingData(prev => ({ ...prev, date: newDate || new Date() }))}
@@ -599,6 +618,17 @@ const ClientBookingSystem: React.FC = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Alert severity="error" sx={{ mb: 2 }}>{loadError}</Alert>
+        <Button variant="contained" onClick={loadCoachesAndAppointments}>
+          {t.actions?.retry || 'Retry'}
+        </Button>
       </Box>
     );
   }

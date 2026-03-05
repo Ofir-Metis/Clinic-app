@@ -1,10 +1,48 @@
 {
   "permissions": {
     "allow": [
-      "Bash",
-      "Read"
+      "Read",
+      "Bash(yarn lint:*)",
+      "Bash(yarn format:*)",
+      "Bash(yarn workspace @clinic/* test:*)",
+      "Bash(yarn workspace @clinic/* build:*)",
+      "Bash(yarn workspace frontend test:*)",
+      "Bash(yarn workspace frontend dev:*)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose restart:*)",
+      "Bash(curl http://localhost:*)",
+      "Bash(npx playwright test:*)"
     ],
-    "deny": [],
-    "ask": []
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Write(.env)",
+      "Write(.env.local)",
+      "Write(.env.production)",
+      "Edit(.env)",
+      "Edit(.env.local)",
+      "Edit(.env.production)"
+    ],
+    "ask": [
+      "Bash(docker compose up:*)",
+      "Bash(docker compose down:*)",
+      "Bash(docker compose build:*)",
+      "Bash(git push:*)",
+      "Bash(docker system prune:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write(.env*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'BLOCKED: Cannot modify .env files via Claude Code. Edit manually or use .env.example as template.' && exit 2"
+          }
+        ]
+      }
+    ]
   }
 }

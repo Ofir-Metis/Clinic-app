@@ -34,14 +34,13 @@ async function bootstrap() {
       getNodeEnv: () => process.env.NODE_ENV || 'development'
     };
     monitoringConfig = { enableMetrics: false, enableApiDocs: false };
-    securityConfig = { 
-      corsOrigins: [
-        'http://localhost:5173', 
-        'http://localhost:5174',
-        'http://10.100.102.17:5173',
-        'http://10.100.102.17:4000'
-      ] 
-    };
+
+    // Parse CORS origins from environment variable
+    const corsOrigins = process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',').map(s => s.trim())
+      : ['http://localhost:5173']; // Only localhost for development
+
+    securityConfig = { corsOrigins };
   }
 
   // Security Configuration - Disable helmet CSP since we use custom headers
@@ -118,11 +117,15 @@ async function bootstrap() {
   );
 
   // CORS configuration using production config
+  if (productionConfig.isProduction() && (!process.env.CORS_ORIGINS && (!securityConfig.corsOrigins || securityConfig.corsOrigins.length === 0))) {
+    logger.error('⚠️ Production mode but no CORS_ORIGINS configured - using config service fallback');
+  }
+
   app.enableCors({
     origin: productionConfig.isProduction() ? securityConfig.corsOrigins : true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Trace-Id'],
   });
 
   // API Documentation using production config

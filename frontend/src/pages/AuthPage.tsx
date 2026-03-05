@@ -20,8 +20,8 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
-import { 
-  Visibility, 
+import {
+  Visibility,
   VisibilityOff,
   Person as PersonIcon,
   Psychology as PsychologyIcon,
@@ -31,6 +31,8 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { theme } from '../theme';
 import { GOOGLE_CLIENT_ID } from '../env';
+import { login as authLogin, register as authRegister } from '../api/auth';
+import { useAuth, User } from '../contexts/AuthContext';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -48,8 +50,9 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => (
  * Enhanced AuthPage with wellness-focused design for clinic management.
  */
 const AuthPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [tab, setTab] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -82,13 +85,13 @@ const AuthPage: React.FC = () => {
     const newErrors: { [key: string]: string } = {};
     
     if (!loginData.email) {
-      newErrors.email = t('required', 'This field is required');
+      newErrors.email = t('auth.login.errors.required');
     } else if (!validateEmail(loginData.email)) {
-      newErrors.email = t('invalidEmail', 'Please enter a valid email address');
+      newErrors.email = t('auth.login.errors.emailFormat');
     }
-    
+
     if (!loginData.password) {
-      newErrors.password = t('required', 'This field is required');
+      newErrors.password = t('auth.login.errors.required');
     }
     
     setErrors(newErrors);
@@ -96,15 +99,38 @@ const AuthPage: React.FC = () => {
     if (Object.keys(newErrors).length === 0) {
       setLoading(true);
       try {
-        // Simulate login API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Set auth token for PrivateRoute
-        localStorage.setItem('token', 'mock-jwt-token-' + Date.now());
-        
+        // Call real authentication API
+        const response = await authLogin(loginData.email, loginData.password);
+
+        // Determine role from API response
+        const userRole: User['role'] = response.user?.roles?.includes('admin')
+          ? 'admin'
+          : response.user?.roles?.includes('client') || response.user?.roles?.includes('patient')
+            ? 'client'
+            : 'coach';
+
+        // Build user data from API response
+        const userData: User = {
+          id: response.user?.id?.toString() || '0',
+          email: response.user?.email || loginData.email,
+          name: response.user?.name || '',
+          role: userRole,
+        };
+
+        // Use AuthContext to properly store credentials
+        await login(
+          {
+            accessToken: response.access_token,
+            refreshToken: response.refresh_token || response.access_token,
+            expiresIn: 3600,
+          },
+          userData
+        );
+
         navigate('/dashboard');
-      } catch (error) {
-        setErrors({ general: t('loginFailed', 'Login failed. Please try again.') });
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || t('auth.login.errors.invalidCredentials');
+        setErrors({ general: errorMessage });
       } finally {
         setLoading(false);
       }
@@ -115,23 +141,23 @@ const AuthPage: React.FC = () => {
     const newErrors: { [key: string]: string } = {};
     
     if (!registerData.fullName) {
-      newErrors.fullName = t('required', 'This field is required');
+      newErrors.fullName = t('auth.register.errors.required');
     }
-    
+
     if (!registerData.email) {
-      newErrors.email = t('required', 'This field is required');
+      newErrors.email = t('auth.register.errors.required');
     } else if (!validateEmail(registerData.email)) {
-      newErrors.email = t('invalidEmail', 'Please enter a valid email address');
+      newErrors.email = t('auth.register.errors.emailFormat');
     }
-    
+
     if (!registerData.password) {
-      newErrors.password = t('required', 'This field is required');
+      newErrors.password = t('auth.register.errors.required');
     } else if (!validatePassword(registerData.password)) {
-      newErrors.password = t('passwordTooShort', 'Password must be at least 8 characters');
+      newErrors.password = t('auth.register.errors.passwordRequirements');
     }
-    
+
     if (registerData.type === 'therapist' && !registerData.licenseNumber) {
-      newErrors.licenseNumber = t('required', 'License number is required for therapists');
+      newErrors.licenseNumber = t('auth.register.errors.required');
     }
     
     setErrors(newErrors);
@@ -139,15 +165,42 @@ const AuthPage: React.FC = () => {
     if (Object.keys(newErrors).length === 0) {
       setLoading(true);
       try {
-        // Simulate registration API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Set auth token for PrivateRoute
-        localStorage.setItem('token', 'mock-jwt-token-' + Date.now());
-        
+        // Map form type to role
+        const role = registerData.type === 'therapist' ? 'coach' : 'client';
+
+        // Call real registration API
+        const registerResponse = await authRegister({
+          email: registerData.email,
+          password: registerData.password,
+          name: registerData.fullName,
+          role: role
+        });
+
+        // After registration, log in to get tokens
+        const loginResponse = await authLogin(registerData.email, registerData.password);
+
+        // Build user data
+        const userData: User = {
+          id: loginResponse.user?.id?.toString() || registerResponse.id?.toString() || '0',
+          email: registerData.email,
+          name: registerData.fullName,
+          role: role as User['role'],
+        };
+
+        // Use AuthContext to properly store credentials
+        await login(
+          {
+            accessToken: loginResponse.access_token,
+            refreshToken: loginResponse.refresh_token || loginResponse.access_token,
+            expiresIn: 3600,
+          },
+          userData
+        );
+
         navigate('/dashboard');
-      } catch (error) {
-        setErrors({ general: t('registrationFailed', 'Registration failed. Please try again.') });
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.message || error?.message || t('auth.register.errors.required');
+        setErrors({ general: errorMessage });
       } finally {
         setLoading(false);
       }
@@ -179,7 +232,7 @@ const AuthPage: React.FC = () => {
               value={i18n.language}
               onChange={e => i18n.changeLanguage(e.target.value)}
               size="small"
-              aria-label="language switcher"
+              aria-label={translations.ui?.languageSwitcher || "language switcher"}
               sx={{ minWidth: 120 }}
             >
               <MenuItem value="en">🇺🇸 English</MenuItem>
@@ -208,16 +261,16 @@ const AuthPage: React.FC = () => {
                     WebkitTextFillColor: 'transparent',
                   }}
                 >
-                  🌿 Wellness Clinic
+                  {translations.appName || '🌿 Wellness Clinic'}
                 </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     color: 'text.secondary',
                     fontSize: { xs: '0.875rem', sm: '1rem' },
                   }}
                 >
-                  Professional mental health and personal development platform
+                  {translations.appDescription || 'Professional mental health and personal development platform'}
                 </Typography>
               </Box>
 
@@ -235,13 +288,13 @@ const AuthPage: React.FC = () => {
                 variant="fullWidth"
                 sx={{ mb: 2 }}
               >
-                <Tab 
-                  label={t('login', 'Sign In')}
+                <Tab
+                  label={t('auth.login.loginButton')}
                   icon={<PersonIcon />}
                   iconPosition="start"
                 />
-                <Tab 
-                  label={t('register', 'Join Us')}
+                <Tab
+                  label={t('auth.register.registerButton')}
                   icon={<PsychologyIcon />}
                   iconPosition="start"
                 />
@@ -252,7 +305,7 @@ const AuthPage: React.FC = () => {
                 <Box component="form" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
                   <TextField
                     fullWidth
-                    label={t('email', 'Email Address')}
+                    label={t('auth.login.email')}
                     type="email"
                     value={loginData.email}
                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
@@ -261,10 +314,10 @@ const AuthPage: React.FC = () => {
                     sx={{ mb: 2 }}
                     disabled={loading}
                   />
-                  
+
                   <TextField
                     fullWidth
-                    label={t('password', 'Password')}
+                    label={t('auth.login.password')}
                     type={showPassword ? 'text' : 'password'}
                     value={loginData.password}
                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
@@ -300,29 +353,29 @@ const AuthPage: React.FC = () => {
                     {loading ? (
                       <CircularProgress size={24} color="inherit" />
                     ) : (
-                      t('login', 'Sign In')
+                      t('auth.login.loginButton')
                     )}
                   </Button>
 
                   {/* Divider */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
                     mb: 3,
                   }}>
                     <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
                     <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
-                      {t('or', 'or')}
+                      {t('auth.login.or')}
                     </Typography>
                     <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
                   </Box>
 
                   {/* Google Login */}
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <GoogleLogin 
-                      onSuccess={() => navigate('/dashboard')} 
+                    <GoogleLogin
+                      onSuccess={() => navigate('/dashboard')}
                       onError={() => {}}
-                      width="100%"
+                      width={400}
                       theme="outline"
                       size="large"
                     />
@@ -335,7 +388,7 @@ const AuthPage: React.FC = () => {
                 <Box component="form" onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
                   <TextField
                     fullWidth
-                    label={t('fullName', 'Full Name')}
+                    label={t('auth.register.fullName')}
                     value={registerData.fullName}
                     onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
                     error={!!errors.fullName}
@@ -346,7 +399,7 @@ const AuthPage: React.FC = () => {
 
                   <TextField
                     fullWidth
-                    label={t('email', 'Email Address')}
+                    label={t('auth.register.email')}
                     type="email"
                     value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
@@ -358,7 +411,7 @@ const AuthPage: React.FC = () => {
 
                   <TextField
                     fullWidth
-                    label={t('password', 'Password')}
+                    label={t('auth.register.password')}
                     type={showPassword ? 'text' : 'password'}
                     value={registerData.password}
                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
@@ -382,7 +435,7 @@ const AuthPage: React.FC = () => {
 
                   {/* User Type Selection */}
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    {t('accountType', 'Account Type')}
+                    Account Type
                   </Typography>
                   <RadioGroup
                     value={registerData.type}
@@ -395,7 +448,7 @@ const AuthPage: React.FC = () => {
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <PsychologyIcon fontSize="small" />
-                          {t('therapist', 'Mental Health Professional')}
+                          {t('auth.register.therapist')}
                         </Box>
                       }
                     />
@@ -405,7 +458,7 @@ const AuthPage: React.FC = () => {
                       label={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <PersonIcon fontSize="small" />
-                          {t('patient', 'Client/Patient')}
+                          {t('auth.register.patient')}
                         </Box>
                       }
                     />
@@ -416,17 +469,17 @@ const AuthPage: React.FC = () => {
                     <>
                       <TextField
                         fullWidth
-                        label={t('specialization', 'Specialization')}
+                        label={t('settings.profile.specialization')}
                         value={registerData.specialization}
                         onChange={(e) => setRegisterData({ ...registerData, specialization: e.target.value })}
-                        placeholder="e.g., Cognitive Behavioral Therapy, Family Therapy"
+                        placeholder={translations.placeholders?.specialization || "e.g., Cognitive Behavioral Therapy, Family Therapy"}
                         disabled={loading}
                         sx={{ mb: 2 }}
                       />
-                      
+
                       <TextField
                         fullWidth
-                        label={t('licenseNumber', 'License Number')}
+                        label="License Number"
                         value={registerData.licenseNumber}
                         onChange={(e) => setRegisterData({ ...registerData, licenseNumber: e.target.value })}
                         error={!!errors.licenseNumber}
@@ -451,29 +504,29 @@ const AuthPage: React.FC = () => {
                     {loading ? (
                       <CircularProgress size={24} color="inherit" />
                     ) : (
-                      t('register', 'Create Account')
+                      t('auth.register.registerButton')
                     )}
                   </Button>
 
                   {/* Divider */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
                     mb: 3,
                   }}>
                     <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
                     <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>
-                      {t('or', 'or')}
+                      {t('auth.register.or')}
                     </Typography>
                     <Box sx={{ flexGrow: 1, height: 1, bgcolor: 'divider' }} />
                   </Box>
 
                   {/* Google Registration */}
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <GoogleLogin 
-                      onSuccess={() => navigate('/dashboard')} 
+                    <GoogleLogin
+                      onSuccess={() => navigate('/dashboard')}
                       onError={() => {}}
-                      width="100%"
+                      width={400}
                       theme="outline"
                       size="large"
                     />

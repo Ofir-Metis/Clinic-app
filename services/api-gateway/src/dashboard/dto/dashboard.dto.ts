@@ -19,6 +19,15 @@ export enum DashboardView {
 
 export class DashboardQueryDto {
   @ApiProperty({
+    description: 'Coach ID (UUID) to filter data for specific coach',
+    required: false,
+    example: '4522552d-e163-41ce-a487-4612b5af5e1a'
+  })
+  @IsOptional()
+  @IsString()
+  coachId?: string;
+
+  @ApiProperty({
     description: 'Time range for dashboard data',
     enum: TimeRange,
     default: TimeRange.WEEK,

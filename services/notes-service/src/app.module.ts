@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotesModule } from './notes/notes.module';
+import { VoiceNotesModule } from './voice-notes/voice-notes.module';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -15,9 +16,10 @@ import { HealthController } from './health/health.controller';
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
       autoLoadEntities: true,
-      synchronize: false,
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
     NotesModule,
+    VoiceNotesModule,
   ],
   controllers: [HealthController],
 })

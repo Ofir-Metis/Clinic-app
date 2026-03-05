@@ -54,6 +54,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface SecurityOverview {
   mfaStatus: {
@@ -112,6 +113,18 @@ const SecuritySettingsPage: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { translations } = useTranslation();
+
+  // Helper to safely access adminSecurity translations
+  const t = translations.adminSecurity as Record<string, unknown> | undefined;
+  const tabs = t?.tabs as Record<string, string> | undefined;
+  const overview = t?.overview as Record<string, string> | undefined;
+  const mfa = t?.mfa as Record<string, unknown> | undefined;
+  const sessions = t?.sessions as Record<string, string> | undefined;
+  const events = t?.events as Record<string, string> | undefined;
+  const accessControl = t?.accessControl as Record<string, unknown> | undefined;
+  const policies = t?.policies as Record<string, string> | undefined;
+  const common = t?.common as Record<string, string> | undefined;
 
   // State for different sections
   const [securityOverview, setSecurityOverview] = useState<SecurityOverview | null>(null);
@@ -247,7 +260,7 @@ const SecuritySettingsPage: React.FC = () => {
     <Box p={3}>
       <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <SecurityIcon fontSize="large" />
-        Security Management
+        {(t?.title as string) || 'Security Management'}
       </Typography>
 
       {error && (
@@ -257,12 +270,12 @@ const SecuritySettingsPage: React.FC = () => {
       )}
 
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        <Tab label="Overview" icon={<SecurityIcon />} />
-        <Tab label="Multi-Factor Auth" icon={<KeyIcon />} />
-        <Tab label="Active Sessions" icon={<DeviceIcon />} />
-        <Tab label="Security Events" icon={<EventIcon />} />
-        <Tab label="Access Control" icon={<BlockIcon />} />
-        <Tab label="Policies" icon={<PolicyIcon />} />
+        <Tab label={tabs?.overview || 'Overview'} icon={<SecurityIcon />} />
+        <Tab label={tabs?.mfa || 'Multi-Factor Auth'} icon={<KeyIcon />} />
+        <Tab label={tabs?.sessions || 'Active Sessions'} icon={<DeviceIcon />} />
+        <Tab label={tabs?.events || 'Security Events'} icon={<EventIcon />} />
+        <Tab label={tabs?.accessControl || 'Access Control'} icon={<BlockIcon />} />
+        <Tab label={tabs?.policies || 'Policies'} icon={<PolicyIcon />} />
       </Tabs>
 
       {/* Overview Tab */}
@@ -271,12 +284,12 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>MFA Status</Typography>
+                <Typography variant="h6" gutterBottom>{overview?.mfaStatus || 'MFA Status'}</Typography>
                 <Typography variant="h3" color="primary">
                   {Math.round((securityOverview.mfaStatus.usersWithMFA / securityOverview.mfaStatus.totalUsers) * 100)}%
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {securityOverview.mfaStatus.usersWithMFA} of {securityOverview.mfaStatus.totalUsers} users
+                  {securityOverview.mfaStatus.usersWithMFA} {(overview?.ofUsers || 'of {total} users').replace('{total}', String(securityOverview.mfaStatus.totalUsers))}
                 </Typography>
               </CardContent>
             </Card>
@@ -285,12 +298,12 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Active Sessions</Typography>
+                <Typography variant="h6" gutterBottom>{overview?.activeSessions || 'Active Sessions'}</Typography>
                 <Typography variant="h3" color="primary">
                   {securityOverview.sessionSecurity.activeSessions}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {securityOverview.sessionSecurity.suspiciousSessions} suspicious
+                  {securityOverview.sessionSecurity.suspiciousSessions} {overview?.suspicious || 'suspicious'}
                 </Typography>
               </CardContent>
             </Card>
@@ -299,12 +312,12 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12} md={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Security Events</Typography>
+                <Typography variant="h6" gutterBottom>{overview?.securityEvents || 'Security Events'}</Typography>
                 <Typography variant="h3" color="primary">
                   {securityOverview.securityEvents.totalToday}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {securityOverview.securityEvents.criticalEvents} critical today
+                  {securityOverview.securityEvents.criticalEvents} {overview?.criticalToday || 'critical today'}
                 </Typography>
               </CardContent>
             </Card>
@@ -313,22 +326,22 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Compliance Overview</Typography>
+                <Typography variant="h6" gutterBottom>{overview?.complianceOverview || 'Compliance Overview'}</Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="body2">Password Policy</Typography>
+                    <Typography variant="body2">{overview?.passwordPolicy || 'Password Policy'}</Typography>
                     <Typography variant="h6" color="primary">
                       {securityOverview.compliance.passwordPolicyCompliance}%
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="body2">MFA Compliance</Typography>
+                    <Typography variant="body2">{overview?.mfaCompliance || 'MFA Compliance'}</Typography>
                     <Typography variant="h6" color="primary">
                       {securityOverview.compliance.mfaCompliance}%
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <Typography variant="body2">Session Timeout</Typography>
+                    <Typography variant="body2">{overview?.sessionTimeout || 'Session Timeout'}</Typography>
                     <Typography variant="h6" color="primary">
                       {securityOverview.compliance.sessionTimeoutCompliance}%
                     </Typography>
@@ -347,13 +360,13 @@ const SecuritySettingsPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                  <Typography variant="h6">Multi-Factor Authentication</Typography>
+                  <Typography variant="h6">{(mfa?.title as string) || 'Multi-Factor Authentication'}</Typography>
                   <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={() => setMfaSetupOpen(true)}
                   >
-                    Setup MFA
+                    {(mfa?.setupMfa as string) || 'Setup MFA'}
                   </Button>
                 </Box>
 
@@ -369,7 +382,7 @@ const SecuritySettingsPage: React.FC = () => {
                             {count}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            users
+                            {(mfa?.users as string) || 'users'}
                           </Typography>
                         </Box>
                       </Grid>
@@ -386,17 +399,17 @@ const SecuritySettingsPage: React.FC = () => {
       {currentTab === 2 && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>Active Sessions</Typography>
+            <Typography variant="h6" gutterBottom>{sessions?.title || 'Active Sessions'}</Typography>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>IP Address</TableCell>
-                    <TableCell>Location</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell>Last Activity</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{sessions?.user || 'User'}</TableCell>
+                    <TableCell>{sessions?.ipAddress || 'IP Address'}</TableCell>
+                    <TableCell>{sessions?.location || 'Location'}</TableCell>
+                    <TableCell>{sessions?.created || 'Created'}</TableCell>
+                    <TableCell>{sessions?.lastActivity || 'Last Activity'}</TableCell>
+                    <TableCell>{sessions?.actions || 'Actions'}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -433,7 +446,7 @@ const SecuritySettingsPage: React.FC = () => {
       {currentTab === 3 && (
         <Card>
           <CardContent>
-            <Typography variant="h6" gutterBottom>Security Events</Typography>
+            <Typography variant="h6" gutterBottom>{events?.title || 'Security Events'}</Typography>
             <List>
               {securityEvents.map((event) => (
                 <ListItem key={event.id} divider>
@@ -485,13 +498,13 @@ const SecuritySettingsPage: React.FC = () => {
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">Allowed IPs</Typography>
+                  <Typography variant="h6">{(accessControl?.allowedIps as string) || 'Allowed IPs'}</Typography>
                   <Button
                     size="small"
                     startIcon={<AddIcon />}
                     onClick={() => setIpManagementOpen(true)}
                   >
-                    Add IP
+                    {((accessControl?.manageIp as Record<string, string>)?.addRule) || 'Add IP'}
                   </Button>
                 </Box>
                 <List dense>
@@ -513,7 +526,7 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Blocked IPs</Typography>
+                <Typography variant="h6" gutterBottom>{(accessControl?.blockedIps as string) || 'Blocked IPs'}</Typography>
                 <List dense>
                   {securityOverview.accessControl.blockedIPs.map((ip, index) => (
                     <ListItem key={index}>
@@ -538,41 +551,40 @@ const SecuritySettingsPage: React.FC = () => {
           <Grid item xs={12}>
             <Card>
               <CardContent>
-                <Typography variant="h6" gutterBottom>Security Policies</Typography>
+                <Typography variant="h6" gutterBottom>{policies?.title || 'Security Policies'}</Typography>
                 <Alert severity="info" sx={{ mb: 3 }}>
-                  Security policy management is available in the full admin console.
-                  These settings control password requirements, session timeouts, and access controls.
+                  {policies?.info || 'Security policy management is available in the full admin console. These settings control password requirements, session timeouts, and access controls.'}
                 </Alert>
-                
+
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>Password Policy</Typography>
+                    <Typography variant="subtitle1" gutterBottom>{policies?.passwordPolicy || 'Password Policy'}</Typography>
                     <FormControlLabel
                       control={<Switch checked={true} />}
-                      label="Require uppercase letters"
+                      label={policies?.requireUppercase || 'Require uppercase letters'}
                     />
                     <FormControlLabel
                       control={<Switch checked={true} />}
-                      label="Require special characters"
+                      label={policies?.requireSpecial || 'Require special characters'}
                     />
                     <FormControlLabel
                       control={<Switch checked={true} />}
-                      label="Require numbers"
+                      label={policies?.requireNumbers || 'Require numbers'}
                     />
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>Session Policy</Typography>
+                    <Typography variant="subtitle1" gutterBottom>{policies?.sessionPolicy || 'Session Policy'}</Typography>
                     <FormControlLabel
                       control={<Switch checked={true} />}
-                      label="Require MFA for admin users"
+                      label={policies?.requireMfaAdmin || 'Require MFA for admin users'}
                     />
                     <FormControlLabel
                       control={<Switch checked={false} />}
-                      label="Force logout on suspicious activity"
+                      label={policies?.forceLogoutSuspicious || 'Force logout on suspicious activity'}
                     />
                     <TextField
-                      label="Session timeout (hours)"
+                      label={policies?.sessionTimeoutHours || 'Session timeout (hours)'}
                       type="number"
                       defaultValue={8}
                       size="small"
@@ -588,57 +600,57 @@ const SecuritySettingsPage: React.FC = () => {
 
       {/* MFA Setup Dialog */}
       <Dialog open={mfaSetupOpen} onClose={() => setMfaSetupOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Setup Multi-Factor Authentication</DialogTitle>
+        <DialogTitle>{((mfa?.setupDialog as Record<string, string>)?.title) || 'Setup Multi-Factor Authentication'}</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            MFA setup functionality will be implemented with proper TOTP library integration.
+            {((mfa?.setupDialog as Record<string, string>)?.info) || 'MFA setup functionality will be implemented with proper TOTP library integration.'}
           </Alert>
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>MFA Method</InputLabel>
-            <Select value="totp" label="MFA Method">
-              <MenuItem value="totp">TOTP (Authenticator App)</MenuItem>
-              <MenuItem value="sms">SMS</MenuItem>
-              <MenuItem value="email">Email</MenuItem>
+            <InputLabel>{((mfa?.setupDialog as Record<string, string>)?.methodLabel) || 'MFA Method'}</InputLabel>
+            <Select value="totp" label={((mfa?.setupDialog as Record<string, string>)?.methodLabel) || 'MFA Method'}>
+              <MenuItem value="totp">{((mfa?.setupDialog as Record<string, string>)?.totp) || 'TOTP (Authenticator App)'}</MenuItem>
+              <MenuItem value="sms">{((mfa?.setupDialog as Record<string, string>)?.sms) || 'SMS'}</MenuItem>
+              <MenuItem value="email">{((mfa?.setupDialog as Record<string, string>)?.email) || 'Email'}</MenuItem>
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setMfaSetupOpen(false)}>Cancel</Button>
+          <Button onClick={() => setMfaSetupOpen(false)}>{common?.cancel || 'Cancel'}</Button>
           <Button variant="contained" onClick={() => setMfaSetupOpen(false)}>
-            Setup
+            {common?.setup || 'Setup'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* IP Management Dialog */}
       <Dialog open={ipManagementOpen} onClose={() => setIpManagementOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Manage IP Access</DialogTitle>
+        <DialogTitle>{((accessControl?.manageIp as Record<string, string>)?.title) || 'Manage IP Access'}</DialogTitle>
         <DialogContent>
           <TextField
-            label="IP Address or Range"
-            placeholder="192.168.1.0/24"
+            label={((accessControl?.manageIp as Record<string, string>)?.ipLabel) || 'IP Address or Range'}
+            placeholder={((accessControl?.manageIp as Record<string, string>)?.ipPlaceholder) || '192.168.1.0/24'}
             fullWidth
             sx={{ mb: 2 }}
           />
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Action</InputLabel>
-            <Select value="allow" label="Action">
-              <MenuItem value="allow">Allow</MenuItem>
-              <MenuItem value="block">Block</MenuItem>
+            <InputLabel>{((accessControl?.manageIp as Record<string, string>)?.actionLabel) || 'Action'}</InputLabel>
+            <Select value="allow" label={((accessControl?.manageIp as Record<string, string>)?.actionLabel) || 'Action'}>
+              <MenuItem value="allow">{((accessControl?.manageIp as Record<string, string>)?.allow) || 'Allow'}</MenuItem>
+              <MenuItem value="block">{((accessControl?.manageIp as Record<string, string>)?.block) || 'Block'}</MenuItem>
             </Select>
           </FormControl>
           <TextField
-            label="Reason"
+            label={((accessControl?.manageIp as Record<string, string>)?.reasonLabel) || 'Reason'}
             multiline
             rows={3}
             fullWidth
-            placeholder="Optional reason for this access control rule"
+            placeholder={((accessControl?.manageIp as Record<string, string>)?.reasonPlaceholder) || 'Optional reason for this access control rule'}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIpManagementOpen(false)}>Cancel</Button>
+          <Button onClick={() => setIpManagementOpen(false)}>{common?.cancel || 'Cancel'}</Button>
           <Button variant="contained" onClick={() => setIpManagementOpen(false)}>
-            Add Rule
+            {((accessControl?.manageIp as Record<string, string>)?.addRule) || 'Add Rule'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -18,6 +18,7 @@ import {
   Alert,
   IconButton,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import {
   Home as HomeIcon,
@@ -35,6 +36,9 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { theme } from '../theme';
+import { useAuth } from '../AuthContext';
+import { fetchAppointments, fetchClientCount } from '../api/dashboard';
+import { fetchNotifications, Notification as ApiNotification } from '../api/notifications';
 
 // RTL Theme configuration for Hebrew
 const rtlTheme = createTheme({
@@ -64,55 +68,9 @@ interface Notification {
   read: boolean;
 }
 
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    patientName: 'רחל כהן',
-    time: '09:00',
-    type: 'טיפול פסיכולוגי',
-    status: 'confirmed',
-    duration: 50,
-  },
-  {
-    id: '2',
-    patientName: 'דוד לוי',
-    time: '10:30',
-    type: 'ייעוץ זוגי',
-    status: 'confirmed',
-    duration: 60,
-  },
-  {
-    id: '3',
-    patientName: 'מירה אברהם',
-    time: '14:00',
-    type: 'טיפול קוגניטיבי',
-    status: 'pending',
-    duration: 50,
-  },
-];
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'תזכורת חשובה',
-    message: 'לרחל כהן יש פגישה בעוד 30 דקות',
-    type: 'info',
-    timestamp: new Date(),
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'בקשה לשינוי מועד',
-    message: 'דוד לוי ביקש לשנות את מועד הפגישה למחר',
-    type: 'warning',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    read: false,
-  },
-];
-
 const navItems = [
   { label: 'בית', icon: <HomeIcon />, to: '/therapist/home', value: 'home' },
-  { label: 'רשימת מטופלים', icon: <PeopleIcon />, to: '/therapist/patients', value: 'patients' },
+  { label: 'רשימת לקוחות', icon: <PeopleIcon />, to: '/therapist/patients', value: 'patients' },
   { label: 'התראות', icon: <NotificationsIcon />, to: '/therapist/notifications', value: 'notifications' },
   { label: 'הגדרות', icon: <SettingsIcon />, to: '/therapist/settings', value: 'settings' },
 ];
@@ -120,12 +78,72 @@ const navItems = [
 const TherapistHomePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const isDesktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('md'));
-  
-  const [appointments] = useState<Appointment[]>(mockAppointments);
-  const [notifications] = useState<Notification[]>(mockNotifications);
-  const [therapistName] = useState('ד"ר כהן'); // Mock therapist name
-  
+
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [clientCount, setClientCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Get therapist name from auth context
+  const therapistName = user?.name || 'מאמן';
+
+  // Fetch data from API
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user?.id) return;
+
+      const coachId = parseInt(user.id);
+      setLoading(true);
+
+      try {
+        // Fetch appointments
+        const appointmentsData = await fetchAppointments(coachId);
+        const transformedAppointments: Appointment[] = appointmentsData.map((apt: any) => {
+          const startTime = new Date(apt.startTime);
+          return {
+            id: apt.id?.toString() || '',
+            patientName: apt.name || apt.patientName || 'לקוח',
+            time: startTime.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' }),
+            type: apt.type || 'פגישה',
+            status: apt.status === 'scheduled' ? 'confirmed' as const :
+                   apt.status === 'cancelled' ? 'cancelled' as const : 'pending' as const,
+            duration: 50,
+          };
+        });
+        setAppointments(transformedAppointments);
+
+        // Fetch client count
+        const count = await fetchClientCount(coachId);
+        setClientCount(count);
+
+        // Fetch notifications
+        try {
+          const notificationsData = await fetchNotifications();
+          const transformedNotifications: Notification[] = notificationsData.map((n: ApiNotification) => ({
+            id: n.id.toString(),
+            title: 'התראה',
+            message: n.message,
+            type: 'info' as const,
+            timestamp: new Date(n.date),
+            read: false,
+          }));
+          setNotifications(transformedNotifications);
+        } catch (notifError) {
+          // Notifications API might not be available, continue without them
+          console.warn('Could not fetch notifications:', notifError);
+        }
+      } catch (error) {
+        console.error('Error fetching therapist home data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id]);
+
   // Get current nav value
   const currentNav = navItems.find(item => location.pathname === item.to)?.value || 'home';
   
@@ -177,12 +195,18 @@ const TherapistHomePage: React.FC = () => {
         background: rtlTheme.palette.background.default,
       }}>
         {/* Main Content */}
-        <Box sx={{ 
-          px: { xs: 2, sm: 3, md: 4 }, 
+        <Box sx={{
+          px: { xs: 2, sm: 3, md: 4 },
           py: { xs: 3, sm: 4 },
           maxWidth: { md: 1200 },
           mx: 'auto',
         }}>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+          <>
           {/* Header Section */}
           <Box sx={{ mb: { xs: 4, sm: 5, md: 6 } }}>
             {/* Welcome Greeting */}
@@ -256,7 +280,7 @@ const TherapistHomePage: React.FC = () => {
                     '&:last-child': { pb: { xs: 2, sm: 3 } },
                   }}>
                     <Typography variant="h4" color="secondary.main" fontWeight={700}>
-                      12
+                      {clientCount}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       מטופלים פעילים
@@ -512,6 +536,8 @@ const TherapistHomePage: React.FC = () => {
                 </CardContent>
               </Card>
             </Box>
+          )}
+          </>
           )}
         </Box>
 

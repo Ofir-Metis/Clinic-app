@@ -403,7 +403,7 @@ export class MeetingManagerService {
   ): Promise<void> {
     appointment.meetingType = 'online';
     appointment.meetingConfig.type = 'online';
-    appointment.meetingConfig.location = undefined;
+    appointment.meetingConfig.location = null as any;
     
     // Enable Google Meet if requested or by default
     if (updateRequest.googleMeetEnabled !== false) {
@@ -437,7 +437,7 @@ export class MeetingManagerService {
     appointment.meetingType = 'in-person';
     appointment.meetingConfig.type = 'in-person';
     appointment.meetingConfig.googleMeetEnabled = false;
-    appointment.meetingConfig.meetingUrl = undefined;
+    appointment.meetingConfig.meetingUrl = null as any;
     
     if (updateRequest.location) {
       appointment.meetingConfig.location = updateRequest.location;
@@ -503,7 +503,7 @@ export class MeetingManagerService {
       this.logger.log(`Generating Google Meet link for appointment ${appointment.id}`);
 
       // Find coach's Google account for calendar integration
-      const coachGoogleAccount = await this.findCoachGoogleAccount(appointment.therapistId);
+      const coachGoogleAccount = await this.findCoachGoogleAccount(appointment.therapistId || '');
       if (!coachGoogleAccount) {
         return {
           success: false,

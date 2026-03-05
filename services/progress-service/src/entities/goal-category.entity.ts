@@ -61,7 +61,6 @@ export class GoalCategory {
   userId?: string; // null for system defaults
 
   @Column({ name: 'is_system_default', type: 'boolean', default: false })
-  @Index()
   isSystemDefault: boolean;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })

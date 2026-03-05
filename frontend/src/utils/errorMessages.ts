@@ -171,7 +171,8 @@ export const getAuthErrorMessage = (error: unknown): ApiError => {
   if (baseError.code === 'UNAUTHORIZED') {
     return {
       ...baseError,
-      userMessage: 'Invalid credentials. Please check your email and password.'
+      userMessage: 'Invalid credentials. Please check your email and password.',
+      action: 'none'
     };
   }
 

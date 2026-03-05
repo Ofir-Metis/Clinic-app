@@ -44,10 +44,15 @@ import {
   Notifications as NotificationIcon,
   FilterList as FilterIcon,
   People as PeopleIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Refresh as RefreshIcon,
+  EventAvailable as BookSessionIcon,
+  Explore as DiscoverIcon
 } from '@mui/icons-material';
 import { useTranslation } from '../../contexts/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { getPatientAppointments } from '../../api/patientAppointments';
 
 interface Coach {
   id: string;
@@ -114,162 +119,121 @@ interface ClientDashboardData {
 
 const ClientDashboard: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<ClientDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filtering state
   const [selectedCoach, setSelectedCoach] = useState<string>('all');
   const [sessionTypeFilter, setSessionTypeFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('upcoming');
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    // Load dashboard data when user becomes available
+    if (user?.id) {
+      loadDashboardData();
+    } else {
+      // User not loaded yet - set loading false but no error
+      setIsLoading(false);
+      setError(null);
+    }
+  }, [user?.id]);
 
   const loadDashboardData = async () => {
+    if (!user?.id) {
+      console.log('[ClientDashboard] User not yet loaded, waiting...');
+      setIsLoading(false);
+      setError(null); // Clear any previous errors
+      return;
+    }
+
     try {
       setIsLoading(true);
-      // Mock data - replace with actual API call
-      const mockCoaches = [
-        {
-          id: '1',
-          name: 'Dr. Emily Chen',
-          specialization: 'Life & Wellness Coaching',
-          isActive: true,
-          relationshipSince: '2024-01-15'
-        },
-        {
-          id: '2', 
-          name: 'Marcus Rodriguez',
-          specialization: 'Career & Leadership',
-          isActive: true,
-          relationshipSince: '2024-03-10'
-        },
-        {
-          id: '3',
-          name: 'Dr. Aisha Patel',
-          specialization: 'Mindfulness & Stress Management',
-          isActive: true,
-          relationshipSince: '2024-02-20'
-        }
-      ];
+      setError(null); // Clear errors when starting fresh load
 
-      setTimeout(() => {
-        setDashboardData({
-          client: {
-            name: "Sarah Johnson",
-            joinDate: "2024-01-15",
-            profileImage: "/api/placeholder/avatar"
-          },
-          coaches: mockCoaches,
-          progress: {
-            totalGoals: 12,
-            completedGoals: 5,
-            activeGoals: 7,
-            currentStreak: 12,
-            overallProgress: 68,
-            weeklyProgress: 85,
-            progressByCoach: {
-              '1': {
-                coachId: '1',
-                coachName: 'Dr. Emily Chen',
-                completedSessions: 8,
-                activeGoals: 3,
-                progress: 75
-              },
-              '2': {
-                coachId: '2',
-                coachName: 'Marcus Rodriguez',
-                completedSessions: 4,
-                activeGoals: 2,
-                progress: 60
-              },
-              '3': {
-                coachId: '3',
-                coachName: 'Dr. Aisha Patel',
-                completedSessions: 6,
-                activeGoals: 2,
-                progress: 70
-              }
-            }
-          },
-          upcomingSessions: [
-            {
-              id: '1',
-              title: 'Weekly Check-in & Goal Review',
-              date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-              type: 'online',
-              coach: mockCoaches[0],
-              meetingUrl: 'https://meet.google.com/abc-def-ghi',
-              duration: 60,
-              status: 'scheduled'
-            },
-            {
-              id: '2', 
-              title: 'Career Strategy Session',
-              date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-              type: 'in-person',
-              coach: mockCoaches[1],
-              location: 'Downtown Office - Suite 402',
-              duration: 90,
-              status: 'scheduled'
-            },
-            {
-              id: '3',
-              title: 'Mindfulness Practice',
-              date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-              type: 'online',
-              coach: mockCoaches[2],
-              meetingUrl: 'https://meet.google.com/xyz-abc-def',
-              duration: 45,
-              status: 'scheduled'
-            }
-          ],
-          recentAchievements: [
-            {
-              id: '1',
-              title: '7-Day Meditation Streak',
-              description: 'Completed daily meditation for a full week!',
-              achievedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-              icon: '🧘‍♀️',
-              coachId: '3',
-              coachName: 'Dr. Aisha Patel'
-            },
-            {
-              id: '2',
-              title: 'First Networking Event',
-              description: 'Attended your first professional networking event',
-              achievedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-              icon: '🤝',
-              coachId: '2',
-              coachName: 'Marcus Rodriguez'
-            },
-            {
-              id: '3',
-              title: 'Health Goal Milestone',
-              description: 'Reached your fitness target for the month!',
-              achievedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-              icon: '💪',
-              coachId: '1',
-              coachName: 'Dr. Emily Chen'
-            }
-          ],
-          motivationalMessage: t.clientPortal.dashboard.motivationalMessages[Math.floor(Math.random() * t.clientPortal.dashboard.motivationalMessages.length)],
-          quickStats: {
-            totalSessions: 18,
-            goalsAchieved: 5,
-            daysActive: 75,
-            currentLevel: t.clientPortal.dashboard.levels.multiCoachChampion,
-            totalCoaches: 3
-          }
-        });
+      // Get client name from auth context
+      const clientName = user?.name || 'Client';
+      const clientId = parseInt(user.id, 10);
+
+      if (isNaN(clientId)) {
+        console.error('[ClientDashboard] Invalid user ID:', user.id);
+        setError('Invalid user ID');
         setIsLoading(false);
-      }, 1000);
+        return;
+      }
+
+      // Fetch real appointments from API
+      let upcomingSessions: Session[] = [];
+      try {
+        const appointmentsData = await getPatientAppointments({ patientId: clientId });
+        upcomingSessions = (appointmentsData || [])
+          .filter((apt: any) => new Date(apt.startTime) > new Date())
+          .map((apt: any) => ({
+            id: apt.id?.toString() || '',
+            title: apt.title || 'Coaching Session',
+            date: new Date(apt.startTime),
+            type: apt.type === 'virtual' ? 'online' as const : 'in-person' as const,
+            coach: {
+              id: apt.therapistId?.toString() || '1',
+              name: apt.coachName || 'Your Coach',
+              specialization: 'Life Coaching',
+              isActive: true,
+              relationshipSince: ''
+            },
+            meetingUrl: apt.meetingUrl,
+            location: apt.location,
+            duration: 60,
+            status: apt.status === 'scheduled' ? 'scheduled' as const :
+                   apt.status === 'completed' ? 'completed' as const : 'cancelled' as const
+          }));
+      } catch (aptError) {
+        console.warn('Could not fetch appointments:', aptError);
+      }
+
+      // Get unique coaches from appointments
+      const coachesMap = new Map<string, Coach>();
+      upcomingSessions.forEach(session => {
+        if (!coachesMap.has(session.coach.id)) {
+          coachesMap.set(session.coach.id, session.coach);
+        }
+      });
+      const coaches = Array.from(coachesMap.values());
+
+      // Set dashboard data with real data where available
+      setDashboardData({
+        client: {
+          name: clientName,
+          joinDate: new Date().toISOString().split('T')[0],
+          profileImage: undefined
+        },
+        coaches: coaches.length > 0 ? coaches : [],
+        progress: {
+          totalGoals: 0,
+          completedGoals: 0,
+          activeGoals: 0,
+          currentStreak: 0,
+          overallProgress: 0,
+          weeklyProgress: 0,
+          progressByCoach: {}
+        },
+        upcomingSessions,
+        recentAchievements: [],
+        motivationalMessage: t.clientPortal?.dashboard?.motivationalMessages?.[0] || 'Keep going - you\'re doing great!',
+        quickStats: {
+          totalSessions: upcomingSessions.length,
+          goalsAchieved: 0,
+          daysActive: 0,
+          currentLevel: t.clientPortal?.dashboard?.levels?.beginner || 'Getting Started',
+          totalCoaches: coaches.length
+        }
+      });
+      setIsLoading(false);
     } catch (err) {
-      setError(t.errors.general);
+      console.error('Error loading dashboard data:', err);
+      setError(t.errors?.general || 'Error loading dashboard');
       setIsLoading(false);
     }
   };
@@ -328,6 +292,7 @@ const ClientDashboard: React.FC = () => {
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
         {/* Welcome Header */}
         <Card
+          data-testid="welcome-card"
           sx={{
             mb: 4,
             background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, ${alpha(theme.palette.secondary.light, 0.1)} 100%)`,
@@ -340,6 +305,7 @@ const ClientDashboard: React.FC = () => {
             <Grid container spacing={3} alignItems="center">
               <Grid item>
                 <Avatar
+                  data-testid="user-avatar"
                   sx={{
                     width: 80,
                     height: 80,
@@ -391,18 +357,32 @@ const ClientDashboard: React.FC = () => {
               </Grid>
               <Grid item>
                 <Stack direction="row" spacing={1}>
-                  <IconButton 
+                  <IconButton
                     color="primary"
-                    sx={{ 
+                    aria-label="refresh"
+                    onClick={() => loadDashboardData()}
+                    sx={{
+                      background: alpha(theme.palette.primary.main, 0.1),
+                      '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
+                    }}
+                  >
+                    <RefreshIcon />
+                  </IconButton>
+                  <IconButton
+                    color="primary"
+                    aria-label="messages"
+                    sx={{
                       background: alpha(theme.palette.primary.main, 0.1),
                       '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
                     }}
                   >
                     <MessageIcon />
                   </IconButton>
-                  <IconButton 
+                  <IconButton
                     color="primary"
-                    sx={{ 
+                    aria-label="notifications"
+                    onClick={() => navigate('/notifications')}
+                    sx={{
                       background: alpha(theme.palette.primary.main, 0.1),
                       '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
                     }}
@@ -527,8 +507,8 @@ const ClientDashboard: React.FC = () => {
         {/* Quick Stats */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={6} sm={3}>
-            <Card sx={{ 
-              textAlign: 'center', 
+            <Card data-testid="stat-card-sessions" sx={{
+              textAlign: 'center',
               p: 2,
               background: alpha(theme.palette.background.paper, 0.85),
               backdropFilter: 'blur(20px)',
@@ -536,7 +516,7 @@ const ClientDashboard: React.FC = () => {
               borderRadius: 3
             }}>
               <SessionIcon sx={{ fontSize: 40, color: theme.palette.primary.main, mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              <Typography variant="h4" data-testid="total-sessions-count" sx={{ fontWeight: 700, color: 'primary.main' }}>
                 {dashboardData.quickStats.totalSessions}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -544,10 +524,10 @@ const ClientDashboard: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ 
-              textAlign: 'center', 
+            <Card data-testid="stat-card-goals" sx={{
+              textAlign: 'center',
               p: 2,
               background: alpha(theme.palette.background.paper, 0.85),
               backdropFilter: 'blur(20px)',
@@ -555,7 +535,7 @@ const ClientDashboard: React.FC = () => {
               borderRadius: 3
             }}>
               <AchievementIcon sx={{ fontSize: 40, color: theme.palette.secondary.main, mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'secondary.main' }}>
+              <Typography variant="h4" data-testid="goals-achieved-count" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                 {dashboardData.quickStats.goalsAchieved}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -563,10 +543,10 @@ const ClientDashboard: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ 
-              textAlign: 'center', 
+            <Card data-testid="stat-card-streak" sx={{
+              textAlign: 'center',
               p: 2,
               background: alpha(theme.palette.background.paper, 0.85),
               backdropFilter: 'blur(20px)',
@@ -574,7 +554,7 @@ const ClientDashboard: React.FC = () => {
               borderRadius: 3
             }}>
               <StreakIcon sx={{ fontSize: 40, color: theme.palette.warning.main, mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
+              <Typography variant="h4" data-testid="day-streak-count" sx={{ fontWeight: 700, color: 'warning.main' }}>
                 {dashboardData.progress.currentStreak}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -582,10 +562,10 @@ const ClientDashboard: React.FC = () => {
               </Typography>
             </Card>
           </Grid>
-          
+
           <Grid item xs={6} sm={3}>
-            <Card sx={{ 
-              textAlign: 'center', 
+            <Card data-testid="stat-card-coaches" sx={{
+              textAlign: 'center',
               p: 2,
               background: alpha(theme.palette.background.paper, 0.85),
               backdropFilter: 'blur(20px)',
@@ -593,7 +573,7 @@ const ClientDashboard: React.FC = () => {
               borderRadius: 3
             }}>
               <PeopleIcon sx={{ fontSize: 40, color: theme.palette.info.main, mb: 1 }} />
-              <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
+              <Typography variant="h4" data-testid="active-coaches-count" sx={{ fontWeight: 700, color: 'info.main' }}>
                 {dashboardData.quickStats.totalCoaches}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -609,6 +589,7 @@ const ClientDashboard: React.FC = () => {
           <Grid item xs={12} lg={8}>
             {/* Progress Overview */}
             <Card
+              data-testid="progress-overview-card"
               sx={{
                 mb: 4,
                 background: alpha(theme.palette.background.paper, 0.85),
@@ -618,7 +599,7 @@ const ClientDashboard: React.FC = () => {
               }}
             >
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h5" data-testid="progress-section-title" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <ProgressIcon color="primary" />
                   {t.clientPortal.dashboard.progressJourney}
                 </Typography>
@@ -756,6 +737,7 @@ const ClientDashboard: React.FC = () => {
           <Grid item xs={12} lg={4}>
             {/* Upcoming Sessions */}
             <Card
+              data-testid="upcoming-sessions-card"
               sx={{
                 mb: 3,
                 background: alpha(theme.palette.background.paper, 0.85),
@@ -765,7 +747,7 @@ const ClientDashboard: React.FC = () => {
               }}
             >
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h6" data-testid="upcoming-sessions-title" sx={{ fontWeight: 600, mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <CalendarIcon color="primary" />
                   {t.clientPortal.dashboard.upcomingSessions}
                 </Typography>
@@ -845,6 +827,7 @@ const ClientDashboard: React.FC = () => {
 
             {/* Quick Actions */}
             <Card
+              data-testid="quick-actions-card"
               sx={{
                 background: alpha(theme.palette.background.paper, 0.85),
                 backdropFilter: 'blur(20px)',
@@ -853,18 +836,41 @@ const ClientDashboard: React.FC = () => {
               }}
             >
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                <Typography variant="h6" data-testid="quick-actions-title" sx={{ fontWeight: 600, mb: 3 }}>
                   {t.clientPortal.dashboard.quickActions}
                 </Typography>
-                
+
                 <Stack spacing={2}>
                   <Button
+                    component={RouterLink}
+                    to="/client/booking"
+                    variant="contained"
+                    fullWidth
+                    startIcon={<BookSessionIcon />}
+                    data-testid="book-session-button"
+                    sx={{
+                      borderRadius: 2,
+                      py: 1.5,
+                      textDecoration: 'none',
+                      background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                      '&:hover': {
+                        background: `linear-gradient(135deg, ${theme.palette.secondary.dark} 0%, ${theme.palette.secondary.main} 100%)`
+                      }
+                    }}
+                  >
+                    {t.clientPortal?.dashboard?.bookSession || 'Book Session'}
+                  </Button>
+
+                  <Button
+                    component={RouterLink}
+                    to="/client/goals"
                     variant="contained"
                     fullWidth
                     startIcon={<GoalIcon />}
                     sx={{
                       borderRadius: 2,
                       py: 1.5,
+                      textDecoration: 'none',
                       background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                       '&:hover': {
                         background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`
@@ -873,16 +879,40 @@ const ClientDashboard: React.FC = () => {
                   >
                     {t.clientPortal.dashboard.setNewGoal}
                   </Button>
-                  
+
                   <Button
+                    component={RouterLink}
+                    to="/client/progress"
                     variant="outlined"
                     fullWidth
                     startIcon={<ProgressIcon />}
-                    sx={{ borderRadius: 2, py: 1.5 }}
+                    sx={{ borderRadius: 2, py: 1.5, textDecoration: 'none' }}
                   >
                     {t.clientPortal.dashboard.viewProgress}
                   </Button>
-                  
+
+                  <Button
+                    component={RouterLink}
+                    to="/client/achievements"
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<AchievementIcon />}
+                    sx={{ borderRadius: 2, py: 1.5, textDecoration: 'none' }}
+                  >
+                    {t.clientPortal?.dashboard?.viewAchievements || 'Achievements'}
+                  </Button>
+
+                  <Button
+                    component={RouterLink}
+                    to="/client/discover"
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<DiscoverIcon />}
+                    sx={{ borderRadius: 2, py: 1.5, textDecoration: 'none' }}
+                  >
+                    {t.clientPortal?.dashboard?.discoverCoaches || 'Discover Coaches'}
+                  </Button>
+
                   <Button
                     variant="outlined"
                     fullWidth

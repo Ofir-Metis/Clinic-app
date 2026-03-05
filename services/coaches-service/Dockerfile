@@ -1,5 +1,6 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
+RUN apk add --no-cache python3 make g++
 COPY package.json yarn.lock ./
 COPY tsconfig.base.json ./
 COPY tsconfig.json ./
@@ -9,7 +10,7 @@ COPY frontend ./frontend
 RUN yarn config set registry https://registry.yarnpkg.com
 RUN yarn config set network-timeout 600000 -g
 RUN yarn install
-RUN yarn workspaces run build
+RUN yarn workspace @clinic/common build
 
 FROM node:20-alpine AS build
 WORKDIR /app/services/coaches-service

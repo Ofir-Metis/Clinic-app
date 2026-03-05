@@ -17,6 +17,7 @@ import {
   ForbiddenException,
   Logger,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AppointmentsService, CreateAppointmentData, UpdateAppointmentData} from './appointments.service';
@@ -30,7 +31,7 @@ import {
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
-// import { JwtAuthGuard } from '../jwt-auth.guard'; // Temporarily disabled
+import { JwtAuthGuard } from '../jwt-auth.guard';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -81,7 +82,7 @@ interface UpdateRecordingSettingsRequest {
 
 @ApiTags('Appointments')
 @Controller('appointments')
-// @UseGuards(JwtAuthGuard) // Temporarily disabled
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AppointmentsController {
   private readonly logger = new Logger(AppointmentsController.name);
@@ -315,12 +316,19 @@ export class AppointmentsController {
   // Legacy endpoints (backward compatibility)
   @Get()
   findAll(@Query() query: GetAppointmentsDto, @Req() req: any) {
-    this.logger.log('GET /appointments (legacy)', { user: req.user?.id });
-    if (req.user?.id !== query.therapistId) {
-      this.logger.warn('forbidden list', { user: req.user?.id });
+    this.logger.log('GET /appointments (legacy)', { user: req.user?.id, coachId: query.coachId });
+    // Use coachId from query or fall back to user's coachId
+    const coachId = query.coachId || req.user?.coachId;
+    if (!coachId) {
+      this.logger.warn('no coachId provided', { user: req.user?.id });
+      throw new ForbiddenException('Coach ID is required');
+    }
+    // Authorization: ensure user can only access their own data
+    if (req.user?.coachId && req.user.coachId !== coachId) {
+      this.logger.warn('forbidden list', { user: req.user?.id, requestedCoachId: coachId });
       throw new ForbiddenException();
     }
-    return this.appointmentsService.findAll(query);
+    return this.appointmentsService.findAll({ ...query, coachId });
   }
 
   @Get('history')

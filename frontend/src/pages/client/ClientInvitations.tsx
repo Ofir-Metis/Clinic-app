@@ -312,7 +312,7 @@ const ClientInvitations: React.FC = () => {
           coachSpecialization: 'Wellness & Mindfulness Coaching',
           coachRating: 4.9,
           coachExperience: 6,
-          coachBio: 'Licensed therapist and certified mindfulness instructor with expertise in stress management and holistic wellness approaches.',
+          coachBio: 'Certified wellness coach and mindfulness instructor with expertise in stress management and holistic wellness approaches.',
           clientId: 'client-456',
           clientName: 'Emma Thompson',
           clientEmail: 'emma@email.com',

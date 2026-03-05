@@ -186,6 +186,8 @@ export class SecurityService {
   private async setupTOTP(userId: string): Promise<MFASetupResult> {
     // Generate a random secret for TOTP (in production, use proper TOTP library)
     const secret = crypto.randomBytes(20).toString('hex');
+    // TODO: Persist TOTP secret to database (encrypted) - currently not stored
+    this.logger.warn(`TOTP setup requested for user ${userId} but secret persistence not yet implemented`);
     const issuer = 'Clinic Management System';
     const accountName = `Clinic App (${userId})`;
     
@@ -247,7 +249,7 @@ export class SecurityService {
       }
 
       // Mock verification for demo
-      const isValid = code === '123456' || this.verifyTOTPCode(code);
+      const isValid = this.verifyTOTPCode(code);
 
       if (isValid) {
         await this.logSecurityEvent({
@@ -287,17 +289,18 @@ export class SecurityService {
   }
 
   private verifyTOTPCode(code: string): boolean {
-    // In production, this would verify against user's stored TOTP secret
-    // For demo, accept any 6-digit code
-    return /^\d{6}$/.test(code);
+    // TODO: Implement real TOTP verification with otpauth library
+    // MFA is not yet available - reject all codes until properly implemented
+    this.logger.warn('TOTP verification attempted but not yet implemented');
+    return false;
   }
 
   private async verifyBackupCode(userId: string, backupCode: string): Promise<{ verified: boolean; message: string }> {
-    // In production, verify backup code against stored encrypted codes
-    // and mark as used
+    // TODO: Implement real backup code verification
+    this.logger.warn('Backup code verification attempted but not yet implemented');
     return {
-      verified: true,
-      message: 'Backup code verified successfully'
+      verified: false,
+      message: 'MFA backup codes are not yet available'
     };
   }
 

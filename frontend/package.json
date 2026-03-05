@@ -37,12 +37,14 @@
     "socket.io-client": "^4.8.1",
     "uuid": "^11.1.0",
     "yup": "^1.6.1",
-    "zxcvbn": "^4.4.2"
+    "zxcvbn": "^4.4.2",
+    "dompurify": "^3.0.8"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
+    "@types/dompurify": "^3.0.5",
     "@types/jest": "^30.0.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",

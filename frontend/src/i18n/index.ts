@@ -84,11 +84,13 @@ export const storeLanguage = (language: SupportedLanguage): void => {
 
 // Helper function to get initial language
 export const getInitialLanguage = (): SupportedLanguage => {
-  // Priority: stored preference > default language
+  // Priority: stored preference > default language (Hebrew)
   const stored = getStoredLanguage();
-  if (stored && stored !== DEFAULT_LANGUAGE) return stored;
-
-  return DEFAULT_LANGUAGE;
+  // If there's a valid stored preference, use it; otherwise default to Hebrew
+  if (stored && SUPPORTED_LANGUAGES.find(lang => lang.code === stored)) {
+    return stored;
+  }
+  return DEFAULT_LANGUAGE; // Hebrew
 };
 
 // Helper function to check if language is RTL

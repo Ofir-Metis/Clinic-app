@@ -17,6 +17,7 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface EmptyStateProps {
   variant?: 
@@ -46,63 +47,71 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   size = 'medium'
 }) => {
   const theme = useTheme();
+  const { translations } = useTranslation();
+
+  // Helper to get translation with fallback
+  const getTranslation = (key: string, fallback: string) => {
+    const emptyState = translations.emptyState as Record<string, Record<string, string>> | undefined;
+    const variantTranslations = emptyState?.[variant];
+    return variantTranslations?.[key] || fallback;
+  };
 
   const getEmptyStateConfig = () => {
     const configs = {
       appointments: {
         icon: EventIcon,
-        title: title || 'No appointments scheduled',
-        message: message || 'Get started by scheduling your first coaching session. Click below to add a new appointment.',
-        actionLabel: actionLabel || 'Schedule Appointment',
+        title: title || getTranslation('title', 'No appointments scheduled'),
+        message: message || getTranslation('message', 'Get started by scheduling your first coaching session. Click below to add a new appointment.'),
+        actionLabel: actionLabel || getTranslation('action', 'Schedule Appointment'),
         color: theme.palette.primary.main,
       },
       patients: {
         icon: PeopleIcon,
-        title: title || 'No clients found',
-        message: message || 'Start building your client base. Add your first client to begin their empowerment journey.',
-        actionLabel: actionLabel || 'Add Client',
+        title: title || getTranslation('title', 'No clients found'),
+        message: message || getTranslation('message', 'Start building your client base. Add your first client to begin their empowerment journey.'),
+        actionLabel: actionLabel || getTranslation('action', 'Add Client'),
         color: theme.palette.secondary.main,
       },
       notes: {
         icon: NotesIcon,
-        title: title || 'No session notes yet',
-        message: message || 'Document your coaching sessions to track client progress and insights.',
-        actionLabel: actionLabel || 'Create Note',
+        title: title || getTranslation('title', 'No session notes yet'),
+        message: message || getTranslation('message', 'Document your coaching sessions to track client progress and insights.'),
+        actionLabel: actionLabel || getTranslation('action', 'Create Note'),
         color: theme.palette.info.main,
       },
       analytics: {
         icon: AssessmentIcon,
-        title: title || 'No data to analyze',
-        message: message || 'Analytics will appear here once you start conducting coaching sessions and tracking progress.',
-        actionLabel: actionLabel || 'View Settings',
+        title: title || getTranslation('title', 'No data to analyze'),
+        message: message || getTranslation('message', 'Analytics will appear here once you start conducting coaching sessions and tracking progress.'),
+        actionLabel: actionLabel || getTranslation('action', 'View Settings'),
         color: theme.palette.warning.main,
       },
       search: {
         icon: SearchIcon,
-        title: title || 'No results found',
-        message: message || 'Try adjusting your search terms or filters to find what you\'re looking for.',
-        actionLabel: actionLabel || 'Clear Filters',
+        title: title || getTranslation('title', 'No results found'),
+        message: message || getTranslation('message', 'Try adjusting your search terms or filters to find what you\'re looking for.'),
+        actionLabel: actionLabel || getTranslation('action', 'Clear Filters'),
         color: theme.palette.text.secondary,
       },
       notifications: {
         icon: InboxIcon,
-        title: title || 'All caught up!',
-        message: message || 'You have no new notifications. We\'ll notify you when something important happens.',
-        actionLabel: actionLabel || 'View Settings',
+        title: title || getTranslation('title', 'All caught up!'),
+        message: message || getTranslation('message', 'You have no new notifications. We\'ll notify you when something important happens.'),
+        actionLabel: actionLabel || getTranslation('action', 'View Settings'),
         color: theme.palette.success.main,
       },
       goals: {
         icon: AssessmentIcon,
-        title: title || 'No goals set yet',
-        message: message || 'Help your clients achieve their potential by setting meaningful, actionable goals.',
-        actionLabel: actionLabel || 'Create Goal',
+        title: title || getTranslation('title', 'No goals set yet'),
+        message: message || getTranslation('message', 'Help your clients achieve their potential by setting meaningful, actionable goals.'),
+        actionLabel: actionLabel || getTranslation('action', 'Create Goal'),
         color: theme.palette.primary.main,
       },
       default: {
         icon: InboxIcon,
-        title: title || 'Nothing here yet',
-        message: message || 'This area will populate with content as you use the platform.',
-        actionLabel: actionLabel || 'Get Started',
+        title: title || getTranslation('title', 'Nothing here yet'),
+        message: message || getTranslation('message', 'This area will populate with content as you use the platform.'),
+        actionLabel: actionLabel || getTranslation('action', 'Get Started'),
         color: theme.palette.text.secondary,
       },
     };

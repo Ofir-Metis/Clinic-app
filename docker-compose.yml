@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: postgres
+    networks:
+      - clinic-network
   nats:
     image: nats:alpine
     ports:
@@ -20,20 +22,26 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
+    networks:
+      - clinic-network
   maildev:
     image: maildev/maildev
     ports:
       - '1080:1080'
       - '1025:1025'
+    networks:
+      - clinic-network
   minio:
     image: minio/minio
     environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     ports:
       - '9000:9000'
       - '9001:9001'
+    networks:
+      - clinic-network
   auth-service:
     build:
       context: .
@@ -54,6 +62,8 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
     ports:
       - '3001:3000'
+    networks:
+      - clinic-network
   appointments-service:
     build:
       context: .
@@ -77,6 +87,8 @@ services:
       EMAIL_PASS: ${EMAIL_PASS}
     ports:
       - '3002:3002'
+    networks:
+      - clinic-network
   files-service:
     build:
       context: .
@@ -95,6 +107,8 @@ services:
       S3_ENDPOINT: ${S3_ENDPOINT}
     ports:
       - '3003:3000'
+    networks:
+      - clinic-network
   notifications-service:
     build:
       context: .
@@ -113,6 +127,8 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
     ports:
       - '3004:3004'
+    networks:
+      - clinic-network
   ai-service:
     build:
       context: .
@@ -132,6 +148,8 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     ports:
       - '3005:3000'
+    networks:
+      - clinic-network
   notes-service:
     build:
       context: .
@@ -146,6 +164,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - '3006:3000'
+    networks:
+      - clinic-network
   analytics-service:
     build:
       context: .
@@ -160,6 +180,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - '3007:3007'
+    networks:
+      - clinic-network
   settings-service:
     build:
       context: .
@@ -175,6 +197,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - '3008:3008'
+    networks:
+      - clinic-network
   billing-service:
     build:
       context: .
@@ -207,6 +231,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
     ports:
       - '3009:3009'
+    networks:
+      - clinic-network
   redis:
     image: redis:7-alpine
     ports:
@@ -233,6 +259,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - '3013:3013'
+    networks:
+      - clinic-network
   client-relationships-service:
     build:
       context: .
@@ -254,6 +282,29 @@ services:
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - '3014:3014'
+    networks:
+      - clinic-network
+  progress-service:
+    build:
+      context: .
+      dockerfile: services/progress-service/Dockerfile
+    depends_on:
+      - postgres
+      - nats
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3015
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      NATS_URL: ${NATS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - '3015:3015'
+    networks:
+      - clinic-network
   api-gateway:
     build:
       context: .
@@ -267,6 +318,7 @@ services:
       - billing-service
       - coaches-service
       - client-relationships-service
+      - progress-service
       - nats
       - postgres
       - redis
@@ -287,16 +339,20 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       # HIPAA compliance and security
-      PHI_ENCRYPTION_KEY: ${PHI_ENCRYPTION_KEY:-clinic_phi_encryption_key_production_2024_very_secure_default_key}
+      PHI_ENCRYPTION_KEY: ${PHI_ENCRYPTION_KEY}
       # WebSocket configuration
       WS_CORS_ORIGIN: ${FRONTEND_ORIGIN}
       WS_TRANSPORTS: "websocket,polling"
       # Recording service integration
       S3_ENDPOINT: ${S3_ENDPOINT}
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       # AI service configuration
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Google OAuth Configuration
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:4000/api/auth/google/callback}
       # Microservice URLs for dashboard
       APPOINTMENTS_URL: http://appointments-service:3002
       NOTES_URL: http://notes-service:3000
@@ -306,9 +362,13 @@ services:
       NOTIFICATIONS_URL: http://notifications-service:3000
       BILLING_URL: http://billing-service:3009
       COACHES_URL: http://coaches-service:3013
+      THERAPISTS_URL: http://coaches-service:3013
       CLIENT_RELATIONSHIPS_URL: http://client-relationships-service:3014
+      PROGRESS_SERVICE_URL: http://progress-service:3015
     ports:
-      - '4001:3000' # Temporarily using 4001 due to phantom port binding on 4000
+      - '4000:3000'
+    networks:
+      - clinic-network
   google-integration-service:
     build:
       context: .
@@ -331,6 +391,8 @@ services:
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
     ports:
       - '3012:3012'
+    networks:
+      - clinic-network
   frontend:
     build:
       context: .
@@ -351,6 +413,8 @@ services:
       REACT_APP_ENABLE_RECORDINGS: "true"
     ports:
       - '5173:80'
+    networks:
+      - clinic-network
   nginx:
     image: nginx:alpine
     depends_on:
@@ -361,3 +425,9 @@ services:
     ports:
       - '80:80'
       - '443:443'
+    networks:
+      - clinic-network
+
+networks:
+  clinic-network:
+    driver: bridge

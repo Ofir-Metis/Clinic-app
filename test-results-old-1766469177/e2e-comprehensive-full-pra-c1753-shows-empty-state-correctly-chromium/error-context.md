@@ -1,0 +1,142 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: מרכז הצמיחה שלי
+      - button "profile menu" [ref=e7] [cursor=pointer]:
+        - generic [ref=e8]: D
+  - navigation "Main navigation" [ref=e9]:
+    - generic [ref=e11]:
+      - heading "מרכז הרווחה 🌟" [level=6] [ref=e13]
+      - separator [ref=e14]
+      - list [ref=e15]:
+        - button "מרכז הצמיחה שלי" [ref=e16] [cursor=pointer]:
+          - img [ref=e18]
+          - generic [ref=e21]: מרכז הצמיחה שלי
+        - button "חברי המסע" [ref=e22] [cursor=pointer]:
+          - img [ref=e24]
+          - generic [ref=e27]: חברי המסע
+        - button "קסם הזמן ⏰" [ref=e28] [cursor=pointer]:
+          - img [ref=e30]
+          - generic [ref=e33]: קסם הזמן ⏰
+        - button "ערכת הטרנספורמציה" [ref=e34] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e40]: ערכת הטרנספורמציה
+        - button "עדכונים קוסמיים" [ref=e41] [cursor=pointer]:
+          - img [ref=e43]
+          - generic [ref=e46]: עדכונים קוסמיים
+        - button "מרכז הפיקוד" [ref=e47] [cursor=pointer]:
+          - img [ref=e49]
+          - generic [ref=e52]: מרכז הפיקוד
+  - main "Main content" [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - heading "ברוכים השבים, לוחם הצמיחה! 💪" [level=1] [ref=e56]
+        - paragraph [ref=e57]: המסע שלכם לבריאות הנפש וצמיחה אישית ממשיך כאן
+      - generic [ref=e58]:
+        - generic [ref=e60]:
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - heading "🗓️ לוח הזמנים של היום" [level=4] [ref=e64]
+              - button "+ הוסיפו" [ref=e65] [cursor=pointer]
+            - paragraph [ref=e66]: Monday, December 22, 2025
+            - generic [ref=e67]:
+              - heading "🌅" [level=5] [ref=e68]
+              - heading "אין פגישות מתוזמנות להיום" [level=6] [ref=e69]
+              - paragraph [ref=e70]: קחו זמן לטיפול עצמי או תכנון
+              - button "📅 הוסיפו" [ref=e71] [cursor=pointer]
+          - generic [ref=e73]:
+            - heading "פעולות מהירות" [level=6] [ref=e74]
+            - generic [ref=e75]:
+              - button "👥 חניכים" [ref=e77] [cursor=pointer]:
+                - text: 👥
+                - generic [ref=e78]: חניכים
+              - button "📋 לוח שנה" [ref=e80] [cursor=pointer]:
+                - text: 📋
+                - generic [ref=e81]: לוח שנה
+              - button "🧠 כלי AI" [ref=e83] [cursor=pointer]:
+                - text: 🧠
+                - generic [ref=e84]: כלי AI
+        - generic [ref=e86]:
+          - generic [ref=e88]:
+            - heading "לוח שנה 📅" [level=6] [ref=e89]
+            - generic [ref=e90]:
+              - generic [ref=e91]:
+                - generic [ref=e92] [cursor=pointer]:
+                  - generic [ref=e94]: דצמבר 2025
+                  - button "calendar view is open, switch to year view" [ref=e95]:
+                    - img [ref=e96]
+                - generic [ref=e98]:
+                  - button "Previous month" [ref=e99] [cursor=pointer]:
+                    - img [ref=e100]
+                  - button "Next month" [ref=e103] [cursor=pointer]:
+                    - img [ref=e104]
+              - grid "דצמבר 2025" [ref=e108]:
+                - row "יום ראשון יום שני יום שלישי יום רביעי יום חמישי יום שישי יום שבת" [ref=e109]:
+                  - columnheader "יום ראשון" [ref=e110]: א
+                  - columnheader "יום שני" [ref=e111]: ב
+                  - columnheader "יום שלישי" [ref=e112]: ג
+                  - columnheader "יום רביעי" [ref=e113]: ד
+                  - columnheader "יום חמישי" [ref=e114]: ה
+                  - columnheader "יום שישי" [ref=e115]: ו
+                  - columnheader "יום שבת" [ref=e116]: ש
+                - rowgroup [ref=e117]:
+                  - row "1 2 3 4 5 6" [ref=e118]:
+                    - gridcell
+                    - gridcell "1" [ref=e119] [cursor=pointer]
+                    - gridcell "2" [ref=e120] [cursor=pointer]
+                    - gridcell "3" [ref=e121] [cursor=pointer]
+                    - gridcell "4" [ref=e122] [cursor=pointer]
+                    - gridcell "5" [ref=e123] [cursor=pointer]
+                    - gridcell "6" [ref=e124] [cursor=pointer]
+                  - row "7 8 9 10 11 12 13" [ref=e125]:
+                    - gridcell "7" [ref=e126] [cursor=pointer]
+                    - gridcell "8" [ref=e127] [cursor=pointer]
+                    - gridcell "9" [ref=e128] [cursor=pointer]
+                    - gridcell "10" [ref=e129] [cursor=pointer]
+                    - gridcell "11" [ref=e130] [cursor=pointer]
+                    - gridcell "12" [ref=e131] [cursor=pointer]
+                    - gridcell "13" [ref=e132] [cursor=pointer]
+                  - row "14 15 16 17 18 19 20" [ref=e133]:
+                    - gridcell "14" [ref=e134] [cursor=pointer]
+                    - gridcell "15" [ref=e135] [cursor=pointer]
+                    - gridcell "16" [ref=e136] [cursor=pointer]
+                    - gridcell "17" [ref=e137] [cursor=pointer]
+                    - gridcell "18" [ref=e138] [cursor=pointer]
+                    - gridcell "19" [ref=e139] [cursor=pointer]
+                    - gridcell "20" [ref=e140] [cursor=pointer]
+                  - row "21 22 23 24 25 26 27" [ref=e141]:
+                    - gridcell "21" [ref=e142] [cursor=pointer]
+                    - gridcell "22" [selected] [ref=e143] [cursor=pointer]
+                    - gridcell "23" [ref=e144] [cursor=pointer]
+                    - gridcell "24" [ref=e145] [cursor=pointer]
+                    - gridcell "25" [ref=e146] [cursor=pointer]
+                    - gridcell "26" [ref=e147] [cursor=pointer]
+                    - gridcell "27" [ref=e148] [cursor=pointer]
+                  - row "28 29 30 31" [ref=e149]:
+                    - gridcell "28" [ref=e150] [cursor=pointer]
+                    - gridcell "29" [ref=e151] [cursor=pointer]
+                    - gridcell "30" [ref=e152] [cursor=pointer]
+                    - gridcell "31" [ref=e153] [cursor=pointer]
+                    - gridcell
+                    - gridcell
+                    - gridcell
+            - generic [ref=e155]:
+              - generic [ref=e156]:
+                - heading "0" [level=6] [ref=e157]
+                - text: היום
+              - generic [ref=e158]:
+                - heading "4" [level=6] [ref=e159]
+                - text: סה"כ
+          - generic [ref=e161]:
+            - heading "סטטיסטיקות מהירות 📊" [level=6] [ref=e162]
+            - generic [ref=e163]:
+              - generic [ref=e164]:
+                - paragraph [ref=e165]: השבוע
+                - heading "4" [level=6] [ref=e166]
+              - generic [ref=e167]:
+                - paragraph [ref=e168]: חניכים פעילים
+                - heading "6" [level=6] [ref=e169]
+```

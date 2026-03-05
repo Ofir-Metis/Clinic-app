@@ -1,7 +1,9 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class GetAppointmentsDto {
-  therapistId!: number;
+  @IsString()
+  @IsOptional()
+  coachId?: string;
 
   @IsOptional()
   @IsEnum(['calendar', 'list'])

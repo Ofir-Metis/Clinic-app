@@ -1,15 +1,17 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
+# Install build dependencies for native modules (bcrypt)
+RUN apk add --no-cache python3 make g++
 COPY package.json yarn.lock ./
 COPY tsconfig.base.json ./
 COPY tsconfig.json ./
 COPY services ./services
 COPY libs ./libs
 COPY frontend ./frontend
-RUN yarn config set registry https://registry.npmmirror.com
+RUN yarn config set registry https://registry.yarnpkg.com
 RUN yarn config set network-timeout 600000 -g
 RUN yarn install
-RUN yarn workspaces run build
+RUN yarn workspace @clinic/common build
 
 FROM node:20-alpine AS build
 WORKDIR /app
@@ -30,7 +32,7 @@ COPY --from=build /app/libs/common/dist ./libs/common/dist
 RUN rm -rf ./node_modules/@clinic/common && \
     mkdir -p ./node_modules/@clinic/common && \
     cp -r ./libs/common/dist/* ./node_modules/@clinic/common/
-    
+
 # Ensure absolute import path used by compiled code resolves inside container
 RUN mkdir -p /libs/common && ln -s /app/libs/common/dist /libs/common/dist
 CMD ["node", "dist/main.js"]

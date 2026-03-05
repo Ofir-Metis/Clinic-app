@@ -29,7 +29,7 @@ import { useTranslation } from '../contexts/LanguageContext';
 import { theme } from '../theme';
 
 const ResetConfirmPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, translations } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -103,9 +103,9 @@ const ResetConfirmPage: React.FC = () => {
                 mb: 2 
               }} />
             )}
-            <Typography 
-              variant="h4" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              sx={{
                 fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                 fontWeight: 700,
                 mb: 1,
@@ -115,20 +115,22 @@ const ResetConfirmPage: React.FC = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              {resetSuccess ? 'Password Reset!' : 'Create New Password'}
+              {resetSuccess
+                ? (translations.auth?.resetConfirm?.successTitle || 'Password Reset!')
+                : (translations.auth?.resetConfirm?.title || 'Create New Password')}
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 color: 'text.secondary',
                 fontSize: { xs: '0.875rem', sm: '1rem' },
                 maxWidth: 300,
                 mx: 'auto',
               }}
             >
-              {resetSuccess 
-                ? 'Your password has been successfully reset. Redirecting to login...'
-                : 'Choose a strong password to secure your account.'
+              {resetSuccess
+                ? (translations.auth?.resetConfirm?.successMessage || 'Your password has been successfully reset. Redirecting to login...')
+                : (translations.auth?.resetConfirm?.subtitle || 'Choose a strong password to secure your account.')
               }
             </Typography>
           </Box>
@@ -145,25 +147,25 @@ const ResetConfirmPage: React.FC = () => {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                label={t('newPassword')}
-                placeholder="Enter your new password"
+                label={translations.auth?.resetConfirm?.newPassword || t('newPassword')}
+                placeholder={translations.placeholders?.enterNewPassword || "Enter your new password"}
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 error={formik.touched.password && Boolean(formik.errors.password)}
                 helperText={formik.touched.password && formik.errors.password}
-                aria-label="new password"
+                aria-label={translations.auth?.resetConfirm?.newPassword || "new password"}
                 autoComplete="new-password"
                 size="medium"
-                sx={{ 
+                sx={{
                   mb: 1,
                   '& .MuiOutlinedInput-root': { borderRadius: 3 }
                 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton 
-                        onClick={() => setShowPassword(prev => !prev)} 
-                        aria-label="toggle password visibility" 
+                      <IconButton
+                        onClick={() => setShowPassword(prev => !prev)}
+                        aria-label={translations.ui?.togglePasswordVisibility || "toggle password visibility"}
                         edge="end"
                         sx={{ mr: 0.5 }}
                       >
@@ -175,7 +177,7 @@ const ResetConfirmPage: React.FC = () => {
               />
               <Box sx={{ width: '100%', mb: 2 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Password Strength
+                  {translations.auth?.resetConfirm?.passwordStrength || 'Password Strength'}
                 </Typography>
                 <LinearProgress 
                   variant="determinate" 
@@ -203,25 +205,25 @@ const ResetConfirmPage: React.FC = () => {
                 id="confirmPassword"
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
-                label={t('confirmNewPassword')}
-                placeholder="Confirm your new password"
+                label={translations.auth?.resetConfirm?.confirmNewPassword || t('confirmNewPassword')}
+                placeholder={translations.placeholders?.confirmNewPassword || "Confirm your new password"}
                 value={formik.values.confirmPassword}
                 onChange={formik.handleChange}
                 error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
                 helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
-                aria-label="confirm new password"
+                aria-label={translations.auth?.resetConfirm?.confirmNewPassword || "confirm new password"}
                 autoComplete="new-password"
                 size="medium"
-                sx={{ 
+                sx={{
                   mb: 3,
                   '& .MuiOutlinedInput-root': { borderRadius: 3 }
                 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton 
-                        onClick={() => setShowConfirmPassword(prev => !prev)} 
-                        aria-label="toggle password visibility" 
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(prev => !prev)}
+                        aria-label={translations.ui?.togglePasswordVisibility || "toggle password visibility"}
                         edge="end"
                         sx={{ mr: 0.5 }}
                       >
@@ -246,7 +248,7 @@ const ResetConfirmPage: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                {formik.isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Reset Password'}
+                {formik.isSubmitting ? <CircularProgress size={24} color="inherit" /> : (translations.auth?.resetConfirm?.submitButton || 'Reset Password')}
               </Button>
             </>
           )}

@@ -48,3 +48,4 @@ export * from './encryption';
 export * from './disaster-recovery';
 export * from './database';
 export * from './security';
+export * from './validators/file-validation.validator';

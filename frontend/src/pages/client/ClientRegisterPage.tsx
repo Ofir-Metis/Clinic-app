@@ -38,6 +38,30 @@ import {
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../contexts/LanguageContext';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { register as authRegister, login as authLogin } from '../../api/auth';
+import { useAuth, User } from '../../contexts/AuthContext';
+
+// Type for the register translations
+interface RegisterTranslations {
+  title?: string;
+  subtitle?: string;
+  steps?: string[];
+  creatingAccount?: string;
+  beginTransformation?: string;
+  next?: string;
+  back?: string;
+  signInInstead?: string;
+  alreadyHaveAccount?: string;
+  quote?: string;
+  quoteSubtitle?: string;
+  fields?: Record<string, string>;
+  goals?: Record<string, string>;
+  coachingStyle?: Record<string, string>;
+  sessionPreference?: Record<string, string>;
+  terms?: Record<string, string>;
+  errors?: Record<string, string>;
+  placeholders?: Record<string, string>;
+}
 
 interface RegistrationFormData {
   // Step 1: Basic Info
@@ -86,9 +110,14 @@ const SESSION_PREFERENCES = [
 
 const ClientRegisterPage: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations } = useTranslation();
   const navigate = useNavigate();
-  
+  const { login } = useAuth();
+
+  // Get translations with proper typing
+  const clientPortal = translations.clientPortal as Record<string, unknown> | undefined;
+  const rt = clientPortal?.register as RegisterTranslations | undefined;
+
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<RegistrationFormData>({
     firstName: '',
@@ -108,7 +137,7 @@ const ClientRegisterPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
 
-  const steps = ['Basic Information', 'Personal Details', 'Your Journey'];
+  const steps = rt?.steps || ['Basic Information', 'Personal Details', 'Your Journey'];
 
   const handleInputChange = (field: keyof RegistrationFormData) => (
     event: React.ChangeEvent<HTMLInputElement>
@@ -135,18 +164,19 @@ const ClientRegisterPage: React.FC = () => {
 
   const validateCurrentStep = () => {
     const errors: {[key: string]: string} = {};
-    
+    const errT = rt?.errors;
+
     if (activeStep === 0) {
-      if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-      if (!validateEmail(formData.email)) errors.email = 'Please enter a valid email address';
-      if (!validatePassword(formData.password)) errors.password = 'Password must be at least 8 characters with letters and numbers';
-      if (formData.password !== formData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
+      if (!formData.firstName.trim()) errors.firstName = errT?.firstNameRequired || 'First name is required';
+      if (!formData.lastName.trim()) errors.lastName = errT?.lastNameRequired || 'Last name is required';
+      if (!validateEmail(formData.email)) errors.email = errT?.emailInvalid || 'Please enter a valid email address';
+      if (!validatePassword(formData.password)) errors.password = errT?.passwordRequirements || 'Password must be at least 8 characters with letters and numbers';
+      if (formData.password !== formData.confirmPassword) errors.confirmPassword = errT?.passwordsMismatch || 'Passwords do not match';
     } else if (activeStep === 1) {
-      if (!validatePhone(formData.phone)) errors.phone = 'Please enter a valid phone number';
-      if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
+      if (!validatePhone(formData.phone)) errors.phone = errT?.phoneInvalid || 'Please enter a valid phone number';
+      if (!formData.dateOfBirth) errors.dateOfBirth = errT?.dobRequired || 'Date of birth is required';
     }
-    
+
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -171,40 +201,70 @@ const ClientRegisterPage: React.FC = () => {
       return;
     }
     
+    const errT = rt?.errors;
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(errT?.passwordsMismatch || 'Passwords do not match');
       return;
     }
 
     if (!formData.agreedToTerms) {
-      setError('Please agree to the terms and conditions');
+      setError(errT?.agreeToTerms || 'Please agree to the terms and conditions');
       return;
     }
-    
+
     if (formData.primaryGoals.length === 0) {
-      setError('Please select at least one primary goal');
+      setError(errT?.selectGoal || 'Please select at least one primary goal');
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
-      // Mock API call - replace with actual client registration service
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful registration
-      localStorage.setItem('clientToken', 'mock-client-token');
-      localStorage.setItem('clientUser', JSON.stringify({
-        id: '1',
-        name: `${formData.firstName} ${formData.lastName}`,
+      // Call real registration API
+      const registerResponse = await authRegister({
         email: formData.email,
-        goals: formData.primaryGoals,
-        coachingStyle: formData.coachingStyle
-      }));
-      
+        password: formData.password,
+        name: `${formData.firstName} ${formData.lastName}`,
+        role: 'client'
+      });
+
+      // After registration, log in to get tokens
+      const loginResponse = await authLogin(formData.email, formData.password);
+
+      // Build user data
+      const userData: User = {
+        id: loginResponse.user?.id?.toString() || registerResponse.id?.toString() || '0',
+        email: formData.email,
+        name: `${formData.firstName} ${formData.lastName}`,
+        role: 'client',
+      };
+
+      // Use AuthContext to properly store credentials
+      await login(
+        {
+          accessToken: loginResponse.access_token,
+          refreshToken: loginResponse.refresh_token || loginResponse.access_token,
+          expiresIn: 3600,
+        },
+        userData
+      );
+
+      // Navigate to client onboarding
       navigate('/client/onboarding');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      // Unwrap nested error messages from API gateway
+      const msg = err?.response?.data?.message;
+      let errorMessage = 'Registration failed. Please try again.';
+      if (typeof msg === 'string') {
+        errorMessage = msg;
+      } else if (typeof msg === 'object' && msg !== null) {
+        const inner = msg?.message;
+        errorMessage = typeof inner === 'string' ? inner
+          : typeof inner === 'object' && inner !== null && typeof inner.message === 'string' ? inner.message
+          : err?.message || errorMessage;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -221,8 +281,10 @@ const ClientRegisterPage: React.FC = () => {
   };
 
   const validatePhone = (phone: string) => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,3}[-\s]?[\(]?[0-9]{1,4}[\)]?[-\s]?[0-9]{1,4}[-\s]?[0-9]{1,9}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
+    // Strip all non-digit characters except leading +
+    const digits = phone.replace(/[^\d]/g, '');
+    // Valid phone: 7-15 digits (ITU-T E.164 standard)
+    return digits.length >= 7 && digits.length <= 15;
   };
 
   const isStep1Valid = formData.firstName.trim() && 
@@ -243,10 +305,10 @@ const ClientRegisterPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label="First Name"
+                label={rt?.fields?.firstName || "First Name"}
                 value={formData.firstName}
                 onChange={handleInputChange('firstName')}
-                placeholder="Sarah"
+                placeholder={rt?.placeholders?.firstName || "Sarah"}
                 autoComplete="given-name"
                 error={Boolean(fieldErrors.firstName)}
                 helperText={fieldErrors.firstName}
@@ -254,10 +316,10 @@ const ClientRegisterPage: React.FC = () => {
               />
               <TextField
                 fullWidth
-                label="Last Name"
+                label={rt?.fields?.lastName || "Last Name"}
                 value={formData.lastName}
                 onChange={handleInputChange('lastName')}
-                placeholder="Johnson"
+                placeholder={rt?.placeholders?.lastName || "Johnson"}
                 autoComplete="family-name"
                 error={Boolean(fieldErrors.lastName)}
                 helperText={fieldErrors.lastName}
@@ -267,37 +329,37 @@ const ClientRegisterPage: React.FC = () => {
             
             <TextField
               fullWidth
-              label="Email Address"
+              label={rt?.fields?.email || "Email Address"}
               type="email"
               value={formData.email}
               onChange={handleInputChange('email')}
-              placeholder="sarah.johnson@example.com"
+              placeholder={rt?.placeholders?.email || "sarah.johnson@example.com"}
               autoComplete="email"
               error={Boolean(fieldErrors.email)}
               helperText={fieldErrors.email}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
-            
+
             <TextField
               fullWidth
-              label="Password"
+              label={rt?.fields?.password || "Password"}
               type="password"
               value={formData.password}
               onChange={handleInputChange('password')}
-              placeholder="Choose a strong password"
+              placeholder={rt?.placeholders?.password || "Choose a strong password"}
               autoComplete="new-password"
               error={Boolean(fieldErrors.password)}
               helperText={fieldErrors.password}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
-            
+
             <TextField
               fullWidth
-              label="Confirm Password"
+              label={rt?.fields?.confirmPassword || "Confirm Password"}
               type="password"
               value={formData.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
-              placeholder="Confirm your password"
+              placeholder={rt?.placeholders?.confirmPassword || "Confirm your password"}
               autoComplete="new-password"
               error={Boolean(fieldErrors.confirmPassword)}
               helperText={fieldErrors.confirmPassword}
@@ -311,19 +373,19 @@ const ClientRegisterPage: React.FC = () => {
           <Stack spacing={3}>
             <TextField
               fullWidth
-              label="Phone Number"
+              label={rt?.fields?.phone || "Phone Number"}
               value={formData.phone}
               onChange={handleInputChange('phone')}
-              placeholder="+1 (555) 123-4567"
+              placeholder={rt?.placeholders?.phone || "+1 (555) 123-4567"}
               autoComplete="tel"
               error={Boolean(fieldErrors.phone)}
               helperText={fieldErrors.phone}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
-            
+
             <TextField
               fullWidth
-              label="Date of Birth"
+              label={rt?.fields?.dateOfBirth || "Date of Birth"}
               type="date"
               value={formData.dateOfBirth}
               onChange={handleInputChange('dateOfBirth')}
@@ -333,14 +395,14 @@ const ClientRegisterPage: React.FC = () => {
               helperText={fieldErrors.dateOfBirth}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
-            
+
             <TextField
               fullWidth
-              label="Coach Code (Optional)"
+              label={rt?.fields?.coachCode || "Coach Code (Optional)"}
               value={formData.coachCode}
               onChange={handleInputChange('coachCode')}
-              placeholder="If you have a specific coach code"
-              helperText="Enter your coach's referral code if provided"
+              placeholder={rt?.fields?.coachCodePlaceholder || "If you have a specific coach code"}
+              helperText={rt?.fields?.coachCodeHelper || "Enter your coach's referral code if provided"}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             />
           </Stack>
@@ -351,7 +413,7 @@ const ClientRegisterPage: React.FC = () => {
           <Stack spacing={4}>
             <Box>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                What are your primary goals? (Select all that apply)
+                {rt?.goals?.title || "What are your primary goals? (Select all that apply)"}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {COACHING_GOALS.map((goal) => (
@@ -377,33 +439,33 @@ const ClientRegisterPage: React.FC = () => {
             <TextField
               select
               fullWidth
-              label="Preferred Coaching Style"
+              label={rt?.coachingStyle?.label || "Preferred Coaching Style"}
               value={formData.coachingStyle}
               onChange={handleInputChange('coachingStyle')}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             >
               {COACHING_STYLES.map((style) => (
                 <MenuItem key={style.value} value={style.value}>
-                  {style.label}
+                  {(rt?.coachingStyle as Record<string, string>)?.[style.value] || style.label}
                 </MenuItem>
               ))}
             </TextField>
-            
+
             <TextField
               select
               fullWidth
-              label="Session Preference"
+              label={rt?.sessionPreference?.label || "Session Preference"}
               value={formData.sessionPreference}
               onChange={handleInputChange('sessionPreference')}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
             >
               {SESSION_PREFERENCES.map((pref) => (
                 <MenuItem key={pref.value} value={pref.value}>
-                  {pref.label}
+                  {(rt?.sessionPreference as Record<string, string>)?.[pref.value] || pref.label}
                 </MenuItem>
               ))}
             </TextField>
-            
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -413,13 +475,13 @@ const ClientRegisterPage: React.FC = () => {
               }
               label={
                 <Typography variant="body2">
-                  I agree to the{' '}
+                  {rt?.terms?.agree || "I agree to the"}{' '}
                   <Link href="#" sx={{ textDecoration: 'none' }}>
-                    Terms of Service
+                    {rt?.terms?.termsOfService || "Terms of Service"}
                   </Link>
-                  {' '}and{' '}
+                  {' '}{rt?.terms?.and || "and"}{' '}
                   <Link href="#" sx={{ textDecoration: 'none' }}>
-                    Privacy Policy
+                    {rt?.terms?.privacyPolicy || "Privacy Policy"}
                   </Link>
                 </Typography>
               }
@@ -455,9 +517,9 @@ const ClientRegisterPage: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 6 }}>
-          <LoadingOverlay 
-            loading={isLoading} 
-            message="Creating your account..."
+          <LoadingOverlay
+            loading={isLoading}
+            message={rt?.creatingAccount || "Creating your account..."}
             variant="overlay"
             backdrop
           >
@@ -487,11 +549,11 @@ const ClientRegisterPage: React.FC = () => {
                 WebkitTextFillColor: 'transparent'
               }}
             >
-              Start Your Journey! 🚀
+              {rt?.title || 'Start Your Journey! 🚀'}
             </Typography>
-            
+
             <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-              Join thousands transforming their lives
+              {rt?.subtitle || 'Join thousands transforming their lives'}
             </Typography>
           </Box>
 
@@ -533,7 +595,7 @@ const ClientRegisterPage: React.FC = () => {
                 startIcon={<BackIcon />}
                 sx={{ borderRadius: 3 }}
               >
-                Back
+                {rt?.back || 'Back'}
               </Button>
 
               {activeStep === steps.length - 1 ? (
@@ -555,7 +617,7 @@ const ClientRegisterPage: React.FC = () => {
                     }
                   }}
                 >
-                  {isLoading ? 'Creating Account...' : 'Begin Transformation'}
+                  {isLoading ? (rt?.creatingAccount || 'Creating Account...') : (rt?.beginTransformation || 'Begin Transformation')}
                 </Button>
               ) : (
                 <Button
@@ -573,7 +635,7 @@ const ClientRegisterPage: React.FC = () => {
                     fontWeight: 600
                   }}
                 >
-                  Next
+                  {rt?.next || 'Next'}
                 </Button>
               )}
             </Box>
@@ -581,7 +643,7 @@ const ClientRegisterPage: React.FC = () => {
 
           <Divider sx={{ my: 4 }}>
             <Typography variant="body2" color="text.secondary">
-              Already have an account?
+              {rt?.alreadyHaveAccount || 'Already have an account?'}
             </Typography>
           </Divider>
 
@@ -604,7 +666,7 @@ const ClientRegisterPage: React.FC = () => {
               }
             }}
           >
-            Sign In Instead
+            {rt?.signInInstead || 'Sign In Instead'}
           </Button>
 
           {/* Motivational Footer */}
@@ -620,10 +682,10 @@ const ClientRegisterPage: React.FC = () => {
           >
             <SparkleIcon sx={{ fontSize: 32, color: theme.palette.success.main, mb: 1 }} />
             <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5 }}>
-              "The best time to plant a tree was 20 years ago. The second best time is now."
+              {rt?.quote || '"The best time to plant a tree was 20 years ago. The second best time is now."'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Your transformation begins with a single step 🌱
+              {rt?.quoteSubtitle || 'Your transformation begins with a single step 🌱'}
             </Typography>
           </Box>
           </LoadingOverlay>

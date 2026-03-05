@@ -8,5 +8,6 @@ import { Note } from './note.entity';
   imports: [TypeOrmModule.forFeature([Note])],
   controllers: [NotesController],
   providers: [NotesService],
+  exports: [NotesService],
 })
 export class NotesModule {}

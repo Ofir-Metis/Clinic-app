@@ -385,9 +385,11 @@ export class ProgressService {
       }
 
       if (filters.search) {
+        // Escape LIKE special characters to prevent wildcard injection
+        const escapedSearch = filters.search.replace(/[%_\\]/g, '\\$&');
         query = query.andWhere(
-          '(goal.title ILIKE :search OR goal.description ILIKE :search)',
-          { search: `%${filters.search}%` }
+          '(goal.title ILIKE :search ESCAPE \'\\\' OR goal.description ILIKE :search ESCAPE \'\\\')',
+          { search: `%${escapedSearch}%` }
         );
       }
 
@@ -666,10 +668,162 @@ export class ProgressService {
         challengeCount.set(challenge, (challengeCount.get(challenge) || 0) + 1);
       });
     });
-    
+
     return Array.from(challengeCount.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([challenge, count]) => ({ challenge, count }));
+  }
+
+  /**
+   * Get progress entries for a goal with pagination
+   */
+  async getProgressEntries(
+    goalId: string,
+    userId: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<ProgressEntry[]> {
+    try {
+      // First verify the goal exists and user has access
+      const goal = await this.goalRepository.findOne({
+        where: { id: goalId }
+      });
+
+      if (!goal) {
+        throw new NotFoundException('Goal not found');
+      }
+
+      if (!goal.isVisibleTo(userId, 'client')) {
+        throw new BadRequestException('User does not have permission to view this goal');
+      }
+
+      // Fetch progress entries with pagination
+      const entries = await this.progressRepository.find({
+        where: { goalId },
+        order: { entryDate: 'DESC', createdAt: 'DESC' },
+        take: limit,
+        skip: offset,
+        relations: ['goal']
+      });
+
+      this.logger.log(`Retrieved ${entries.length} progress entries for goal ${goalId}`);
+      return entries;
+
+    } catch (error) {
+      this.logger.error(`Failed to get progress entries for goal ${goalId}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get milestones for a goal
+   */
+  async getMilestones(goalId: string, userId: string): Promise<Milestone[]> {
+    try {
+      // First verify the goal exists and user has access
+      const goal = await this.goalRepository.findOne({
+        where: { id: goalId }
+      });
+
+      if (!goal) {
+        throw new NotFoundException('Goal not found');
+      }
+
+      if (!goal.isVisibleTo(userId, 'client')) {
+        throw new BadRequestException('User does not have permission to view this goal');
+      }
+
+      // Fetch all milestones for the goal
+      const milestones = await this.milestoneRepository.find({
+        where: { goalId },
+        order: { progressThreshold: 'ASC', targetDate: 'ASC' },
+        relations: ['goal']
+      });
+
+      this.logger.log(`Retrieved ${milestones.length} milestones for goal ${goalId}`);
+      return milestones;
+
+    } catch (error) {
+      this.logger.error(`Failed to get milestones for goal ${goalId}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Mark a milestone as achieved
+   */
+  async achieveMilestone(
+    milestoneId: string,
+    userId: string,
+    celebrationData?: any
+  ): Promise<Milestone> {
+    try {
+      const milestone = await this.milestoneRepository.findOne({
+        where: { id: milestoneId },
+        relations: ['goal']
+      });
+
+      if (!milestone) {
+        throw new NotFoundException('Milestone not found');
+      }
+
+      // Verify user has permission
+      if (!milestone.goal.canBeEditedBy(userId)) {
+        throw new BadRequestException('User does not have permission to update this milestone');
+      }
+
+      // Check if already achieved
+      if (milestone.isAchieved) {
+        this.logger.log(`Milestone ${milestoneId} already achieved`);
+        return milestone;
+      }
+
+      // Mark as achieved
+      milestone.isAchieved = true;
+      milestone.achievedDate = new Date();
+
+      // Set celebration data if provided
+      if (celebrationData) {
+        milestone.celebrationData = celebrationData;
+      }
+
+      const savedMilestone = await this.milestoneRepository.save(milestone);
+
+      this.logger.log(`Milestone ${milestoneId} achieved by user ${userId}`);
+      return savedMilestone;
+
+    } catch (error) {
+      this.logger.error(`Failed to achieve milestone ${milestoneId}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a goal and all related data
+   */
+  async deleteGoal(goalId: string, userId: string): Promise<void> {
+    try {
+      const goal = await this.goalRepository.findOne({
+        where: { id: goalId }
+      });
+
+      if (!goal) {
+        throw new NotFoundException('Goal not found');
+      }
+
+      if (!goal.canBeEditedBy(userId)) {
+        throw new BadRequestException('User does not have permission to delete this goal');
+      }
+
+      // TypeORM will cascade delete related entities (progress entries, milestones)
+      await this.goalRepository.remove(goal);
+
+      this.logger.log(`Goal ${goalId} deleted by user ${userId}`);
+
+    } catch (error) {
+      this.logger.error(`Failed to delete goal ${goalId}: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   }
 }

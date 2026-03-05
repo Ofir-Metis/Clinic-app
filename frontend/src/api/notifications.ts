@@ -1,7 +1,4 @@
-import axios from 'axios';
-import { API_URL } from '../env';
-
-const api = axios.create({ baseURL: API_URL });
+import apiClient from './client';
 
 export interface Notification {
   id: number;
@@ -11,6 +8,6 @@ export interface Notification {
 }
 
 export const fetchNotifications = async () => {
-  const { data } = await api.get<Notification[]>('/api/notifications');
+  const { data } = await apiClient.get<Notification[]>('/notifications');
   return data;
 };

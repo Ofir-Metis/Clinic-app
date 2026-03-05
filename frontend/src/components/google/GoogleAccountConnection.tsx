@@ -33,7 +33,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-  Calendar as CalendarIcon,
+  CalendarMonth as CalendarIcon,
   Email as EmailIcon,
   VideoCall as VideoCallIcon,
   Refresh as RefreshIcon,
@@ -42,6 +42,7 @@ import {
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
+import { API_URL } from '../../env';
 
 export interface GoogleAccount {
   id: string;
@@ -91,9 +92,9 @@ export const GoogleAccountConnection: React.FC<GoogleAccountConnectionProps> = (
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/google/accounts?userId=${currentUserId}`, {
+      const response = await fetch(`${API_URL}/api/auth/google/integration-status`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`, // TODO: Use proper auth context
+          'Authorization': `Bearer ${localStorage.getItem('clinic_access_token')}`,
         },
       });
 
@@ -102,7 +103,15 @@ export const GoogleAccountConnection: React.FC<GoogleAccountConnectionProps> = (
       }
 
       const data = await response.json();
-      setAccounts(data.accounts || []);
+      setAccounts(data.integration?.connected ? [{
+        id: 'primary',
+        email: data.integration?.user?.email || '',
+        name: data.integration?.user?.name || '',
+        picture: '',
+        connected: true,
+        permissions: { calendar: true, email: true, meet: true },
+        lastSynced: data.integration?.lastSync || new Date().toISOString(),
+      }] : []);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load accounts');
@@ -122,17 +131,10 @@ export const GoogleAccountConnection: React.FC<GoogleAccountConnectionProps> = (
       setError(null);
 
       // Get OAuth URL from backend
-      const response = await fetch('/api/google/auth/url', {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/auth/google/authorize`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('clinic_access_token')}`,
         },
-        body: JSON.stringify({
-          userId: currentUserId,
-          scopes: ['calendar', 'email', 'meet'],
-          redirectUri: `${window.location.origin}/google/callback`
-        }),
       });
 
       if (!response.ok) {
@@ -153,10 +155,10 @@ export const GoogleAccountConnection: React.FC<GoogleAccountConnectionProps> = (
   // Disconnect Google account
   const handleDisconnectAccount = async (accountId: string) => {
     try {
-      const response = await fetch(`/api/google/accounts/${accountId}/disconnect`, {
+      const response = await fetch(`${API_URL}/api/auth/google/revoke`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('clinic_access_token')}`,
         },
       });
 
@@ -183,11 +185,11 @@ export const GoogleAccountConnection: React.FC<GoogleAccountConnectionProps> = (
     enabled: boolean
   ) => {
     try {
-      const response = await fetch(`/api/google/accounts/${accountId}/permissions`, {
+      const response = await fetch(`${API_URL}/api/auth/google/validate`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Authorization': `Bearer ${localStorage.getItem('clinic_access_token')}`,
         },
         body: JSON.stringify({
           [permission]: enabled

@@ -223,4 +223,4 @@ volumes:
 
 networks:
   clinic-network:
-    external: true
+    driver: bridge

@@ -1,18 +1,19 @@
 import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiBearerAuth, 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
   ApiQuery,
-  ApiExtraModels 
+  ApiExtraModels
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@clinic/common';
 import { DashboardService } from './dashboard.service';
-import { 
-  DashboardQueryDto, 
-  DashboardResponseDto, 
-  AppointmentSummaryDto, 
-  NoteSummaryDto, 
+import {
+  DashboardQueryDto,
+  DashboardResponseDto,
+  AppointmentSummaryDto,
+  NoteSummaryDto,
   DashboardStatsDto,
   DashboardAnalyticsDto,
   TimeRange,
@@ -30,6 +31,7 @@ import {
   DashboardAnalyticsDto
 )
 @Controller('dashboard')
+@UseGuards(JwtAuthGuard)
 export class DashboardController {
   constructor(private readonly service: DashboardService) {}
 

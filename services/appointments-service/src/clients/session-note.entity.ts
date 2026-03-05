@@ -12,9 +12,9 @@ export class SessionNote {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: 'integer' })
-  @IsNumber()
-  patientId!: number;
+  @Column({ type: 'uuid', name: 'patient_id' })
+  @IsString()
+  patientId!: string;
 
   @Column({ type: 'integer' })
   @IsNumber()

@@ -7,10 +7,10 @@ import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 @Index(['patientId'])
 @Index(['datetime'])
 export class Appointment {
-  @PrimaryGeneratedColumn()
-  id!: number;
-  @Column()
-  patientId!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+  @Column({ type: 'uuid' })
+  patientId!: string;
   @Column({ type: 'timestamptz' })
   datetime!: Date;
   serviceType!: string;

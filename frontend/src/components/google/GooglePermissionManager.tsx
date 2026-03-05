@@ -29,7 +29,7 @@ import {
   Collapse,
 } from '@mui/material';
 import {
-  Calendar as CalendarIcon,
+  CalendarMonth as CalendarIcon,
   Email as EmailIcon,
   VideoCall as VideoCallIcon,
   Security as SecurityIcon,

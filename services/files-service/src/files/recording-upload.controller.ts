@@ -51,8 +51,8 @@ interface ChunkUploadResponse {
 
 @ApiTags('Recording Uploads')
 @Controller('recordings')
-// @UseGuards(JwtAuthGuard)  // Temporarily disabled for testing
-// @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class RecordingUploadController {
   private readonly logger = new Logger(RecordingUploadController.name);
 

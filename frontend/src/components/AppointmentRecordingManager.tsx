@@ -50,7 +50,7 @@ import {
   Share as ShareIcon,
   Delete as DeleteIcon,
   SmartToy as AIIcon,
-  Transcription as TranscriptIcon,
+  Description as TranscriptIcon,
   ExpandMore as ExpandIcon,
   CloudUpload as CloudUploadIcon,
   CheckCircle as CheckIcon,
@@ -60,10 +60,12 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Schedule as ScheduleIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 
 import SessionRecorder from './SessionRecorder';
 import { useTranslation } from '../contexts/LanguageContext';
+import axios from 'axios';
 
 export interface RecordingFile {
   id: string;
@@ -134,13 +136,74 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
   canManageRecordings = true,
   maxFileSize = 500, // 500MB default
 }) => {
-  const { t } = useTranslation();
+  const { translations: rawT } = useTranslation();
+
+  // Robust fallback for recording translations
+  const t = {
+    ...rawT,
+    recording: (rawT?.recording) || {
+      title: "Session Recording",
+      multipleRecordings: "{count} recordings",
+      summaryReady: "Summary Ready",
+      directRecord: "Record Now",
+      uploadExisting: "Upload File",
+      playbackControls: "Playback",
+      autoSummary: "AI Summary",
+      recordingMode: "Recording Mode",
+      videoAndAudio: "Video & Audio",
+      audioOnly: "Audio Only",
+      screenShare: "Screen Share",
+      online: "Online",
+      inPerson: "In Person",
+      hybrid: "Hybrid",
+      uploadRecordingDescription: "Upload an existing recording file to generate an AI summary.",
+      dragDropText: "Drag & drop recording here",
+      supportedFormats: "Supports MP4, MOV, MP3, WAV (Max {maxSize})",
+      selectFile: "Select File",
+      uploadProgress: "Uploading... {progress}%",
+      processingFile: "Processing file...",
+      editSummary: "Edit Summary",
+      shareSummary: "Share Summary",
+      generatingSummary: "Generating AI Summary...",
+      keyPoints: "Key Discussion Points",
+      actionItems: "Action Items",
+      insights: "AI Insights",
+      recommendations: "Recommendations"
+    }
+  };
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoPlayerRef = useRef<HTMLVideoElement>(null);
 
   // State management
   const [activeTab, setActiveTab] = useState(0);
   const [recordings, setRecordings] = useState<RecordingFile[]>(existingRecordings);
+
+  // Fetch recordings on mount
+  useEffect(() => {
+    const fetchRecordings = async () => {
+      try {
+        const response = await axios.get<any[]>(`/api/appointments/${appointmentId}/recordings`);
+        if (response.data && Array.isArray(response.data)) {
+          const mappedRecordings: RecordingFile[] = response.data.map(rec => ({
+            id: rec.id,
+            filename: rec.originalFilename,
+            fileSize: parseInt(rec.size),
+            duration: rec.duration,
+            uploadDate: new Date(rec.createdAt),
+            format: rec.mimeType,
+            url: `/api/appointments/${appointmentId}/recordings/${rec.id}/stream`,
+            processingStatus: 'completed'
+          }));
+          setRecordings(mappedRecordings);
+        }
+      } catch (err) {
+        console.error('Failed to fetch recordings', err);
+      }
+    };
+    fetchRecordings();
+  }, [appointmentId]);
+
   const [selectedRecording, setSelectedRecording] = useState<RecordingFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -166,7 +229,7 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
     // Validate file type
     const supportedFormats = ['mp4', 'mov', 'avi', 'mp3', 'wav', 'm4a', 'webm'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
+
     if (!fileExtension || !supportedFormats.includes(fileExtension)) {
       setUploadError('Unsupported file format. Please use MP4, MOV, AVI, MP3, WAV, or M4A files.');
       return;
@@ -227,7 +290,7 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
           duration: Math.floor(Math.random() * 3600) + 600, // 10-60 minutes
           processingStatus: 'completed' as const,
         };
-        
+
         setRecordings(prev => [...prev, processedRecording]);
         onRecordingAdded?.(processedRecording);
 
@@ -242,54 +305,52 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
     }
   };
 
-  // AI Summary generation
-  const generateAISummary = async (recording: RecordingFile) => {
+  // AI Summary generation - Now fetches from backend
+  const pollForSummary = useCallback(async (recording: RecordingFile) => {
     setIsGeneratingSummary(true);
-    
-    try {
-      // Mock AI summary generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockSummary: SessionSummary = {
-        id: `summary_${recording.id}`,
-        keyPoints: [
-          'Client expressed increased confidence in handling workplace stress',
-          'Discussion around new coping strategies for anxiety management',
-          'Progress noted in maintaining healthy sleep schedule',
-          'Challenges with time management and work-life balance addressed'
-        ],
-        actionItems: [
-          'Practice daily 10-minute meditation using guided app',
-          'Implement the "2-minute rule" for task management',
-          'Schedule weekly nature walks for stress relief',
-          'Keep a mood journal for self-awareness tracking'
-        ],
-        insights: [
-          'Client shows strong self-awareness and motivation for change',
-          'Cognitive reframing techniques are resonating well',
-          'Previous session goals have been partially achieved',
-          'Strong therapeutic alliance evident in today\'s session'
-        ],
-        recommendations: [
-          'Continue building on mindfulness practices',
-          'Explore additional stress management techniques',
-          'Consider introducing goal-setting framework',
-          'Schedule follow-up in 2 weeks to review progress'
-        ],
-        mood: 'Optimistic and engaged',
-        progressNotes: 'Client is making steady progress with anxiety management. Showing increased confidence and self-efficacy. Ready for more advanced coping strategies.',
-        nextSessionFocus: 'Goal setting and action planning for workplace stress scenarios',
-        generatedAt: new Date(),
-        isSharedWithClient: false,
-      };
+    let attempts = 0;
+    const maxAttempts = 30; // 30 attempts * 2s = 60s timeout
 
-      setSummary(mockSummary);
-      onSummaryGenerated?.(mockSummary);
-    } catch (error) {
-      console.error('Summary generation failed:', error);
-    } finally {
-      setIsGeneratingSummary(false);
-    }
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const response = await axios.get<any>(`/api/appointments/${appointmentId}/recordings/${recording.id}`);
+        const data = response.data;
+
+        if (data.processingStatus === 'completed' && data.summary) {
+          clearInterval(interval);
+
+          const backendSummary: SessionSummary = {
+            id: `summary_${data.id}`,
+            ...data.summary,
+            generatedAt: new Date(data.updatedAt || new Date()), // fallback
+            isSharedWithClient: false
+          };
+
+          setSummary(backendSummary);
+          onSummaryGenerated?.(backendSummary);
+          setIsGeneratingSummary(false);
+
+          // Update recording status in list
+          setRecordings(prev => prev.map(r => r.id === recording.id ? { ...r, processingStatus: 'completed' } : r));
+        } else if (data.processingStatus === 'failed') {
+          clearInterval(interval);
+          setIsGeneratingSummary(false);
+          console.error('Summary generation failed on server');
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setIsGeneratingSummary(false);
+          console.warn('Summary polling timed out');
+        }
+      } catch (err) {
+        console.error('Polling error', err);
+      }
+    }, 2000);
+  }, [appointmentId, onSummaryGenerated]);
+
+  const generateAISummary = async (recording: RecordingFile) => {
+    // Trigger polling since backend starts automatically on upload
+    pollForSummary(recording);
   };
 
   // Recording playback controls
@@ -302,7 +363,7 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -322,13 +383,13 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
           <Typography variant="h6" component="h2">
-            {t.recording.title}
+            {t.recording?.title || 'Session Recording'}
           </Typography>
           <Stack direction="row" spacing={1}>
             {recordings.length > 0 && (
               <Chip
                 icon={<VideoIcon />}
-                label={t.recording.multipleRecordings.replace('{count}', recordings.length.toString())}
+                label={(t.recording?.multipleRecordings || '{count} recordings').replace('{count}', recordings.length.toString())}
                 color="primary"
                 variant="outlined"
                 size="small"
@@ -347,26 +408,26 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
         </Box>
 
         <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
-          <Tab 
-            icon={<VideoIcon />} 
+          <Tab
+            icon={<VideoIcon />}
             label={t.recording.directRecord}
             iconPosition="start"
           />
-          <Tab 
-            icon={<UploadIcon />} 
+          <Tab
+            icon={<UploadIcon />}
             label={t.recording.uploadExisting}
             iconPosition="start"
           />
           {recordings.length > 0 && (
-            <Tab 
-              icon={<PlayIcon />} 
+            <Tab
+              icon={<PlayIcon />}
               label={t.recording.playbackControls}
               iconPosition="start"
             />
           )}
           {summary && (
-            <Tab 
-              icon={<AIIcon />} 
+            <Tab
+              icon={<AIIcon />}
               label={t.recording.autoSummary}
               iconPosition="start"
             />
@@ -412,10 +473,10 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
             {/* Session Type Indicator */}
             <Alert severity="info" icon={sessionType === 'online' ? <VideoIcon /> : <ScheduleIcon />}>
               <Typography variant="body2">
-                {sessionType === 'online' 
-                  ? t.recording.online 
-                  : sessionType === 'in-person' 
-                    ? t.recording.inPerson 
+                {sessionType === 'online'
+                  ? t.recording.online
+                  : sessionType === 'in-person'
+                    ? t.recording.inPerson
                     : t.recording.hybrid
                 } session detected
               </Typography>
@@ -518,9 +579,9 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
                     {uploadProgress < 100 ? 'Uploading...' : t.recording.processingFile}
                   </Typography>
                 </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={uploadProgress} 
+                <LinearProgress
+                  variant="determinate"
+                  value={uploadProgress}
                   sx={{ height: 8, borderRadius: 4 }}
                 />
               </Box>
@@ -536,8 +597,27 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
         </TabPanel>
 
         {/* Playback Tab */}
-        {recordings.length > 0 && (
-          <TabPanel value={activeTab} index={2}>
+        <TabPanel value={activeTab} index={2}>
+          {isPlaying && selectedRecording ? (
+            <Box sx={{ mb: 2, bgcolor: 'black', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
+              <Box display="flex" justifyContent="flex-end" p={1} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
+                <IconButton size="small" onClick={() => setIsPlaying(false)} sx={{ bgcolor: 'rgba(0,0,0,0.5)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+              <video
+                ref={videoPlayerRef}
+                src={selectedRecording.url}
+                controls
+                autoPlay
+                style={{ width: '100%', maxHeight: '400px' }}
+              >
+                Your browser does not support the video tag.
+              </video>
+            </Box>
+          ) : null}
+
+          {recordings.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={2}>
               <Typography variant="subtitle1" gutterBottom>
                 Session Recordings ({recordings.length})
@@ -548,8 +628,8 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
                   <React.Fragment key={recording.id}>
                     <ListItem
                       sx={{
-                        bgcolor: selectedRecording?.id === recording.id 
-                          ? alpha(theme.palette.primary.main, 0.1) 
+                        bgcolor: selectedRecording?.id === recording.id
+                          ? alpha(theme.palette.primary.main, 0.1)
                           : 'transparent',
                         borderRadius: 1,
                         mb: 1,
@@ -560,7 +640,7 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
                           {recording.format.includes('video') ? <VideoIcon /> : <AudioIcon />}
                         </Avatar>
                       </ListItemIcon>
-                      
+
                       <ListItemText
                         primary={recording.filename}
                         secondary={
@@ -590,10 +670,13 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
                         <Stack direction="row" spacing={1}>
                           <IconButton
                             size="small"
-                            onClick={() => togglePlayback()}
+                            onClick={() => {
+                              setSelectedRecording(recording);
+                              setIsPlaying(true);
+                            }}
                             disabled={recording.processingStatus !== 'completed'}
                           >
-                            {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                            <PlayIcon />
                           </IconButton>
                           <IconButton size="small">
                             <DownloadIcon />
@@ -614,8 +697,12 @@ const AppointmentRecordingManager: React.FC<AppointmentRecordingManagerProps> = 
                 ))}
               </List>
             </Box>
-          </TabPanel>
-        )}
+          ) : (
+            <Box p={4} textAlign="center">
+              <Typography color="textSecondary">No recordings available. Record a session to get started.</Typography>
+            </Box>
+          )}
+        </TabPanel>
 
         {/* AI Summary Tab */}
         {summary && (

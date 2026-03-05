@@ -34,7 +34,7 @@ export class GoogleAuthController {
    */
   @Get('authorize')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async authorize(@Request() req: any) {
     try {
       const userId = req.user.sub;
@@ -142,7 +142,7 @@ export class GoogleAuthController {
    */
   @Post('refresh')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async refreshToken(
     @Body() refreshData: { refreshToken: string },
     @Request() req: any,
@@ -185,7 +185,7 @@ export class GoogleAuthController {
    */
   @Post('revoke')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async revokeAccess(
     @Body() revokeData: { accessToken: string },
     @Request() req: any,
@@ -220,7 +220,7 @@ export class GoogleAuthController {
    */
   @Post('validate')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async validateToken(
     @Body() validateData: { accessToken: string },
     @Request() req: any,
@@ -262,7 +262,7 @@ export class GoogleAuthController {
    */
   @Post('setup-integration')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async setupIntegration(
     @Body() setupData: {
       accessToken: string;
@@ -375,7 +375,7 @@ export class GoogleAuthController {
    */
   @Get('integration-status')
   @UseGuards(JwtAuthGuard)
-  @RequireRoles('coach', 'admin')
+  @RequireRoles('coach', 'therapist', 'admin')
   async getIntegrationStatus(@Request() req: any) {
     try {
       const userId = req.user.sub;

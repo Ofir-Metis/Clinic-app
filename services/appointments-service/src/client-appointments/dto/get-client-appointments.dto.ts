@@ -1,11 +1,12 @@
-import { IsInt, IsOptional, IsISO8601 } from 'class-validator';
+import { IsInt, IsOptional, IsISO8601, IsString } from 'class-validator';
 
 export class GetClientAppointmentsDto {
-  patientId!: number;
+  @IsString()
+  patientId!: string;
 
   @IsOptional()
-  @IsInt()
-  therapistId?: number;
+  @IsString()
+  therapistId?: string;
 
   @IsOptional()
   @IsISO8601()

@@ -89,11 +89,14 @@ export class SecureUserRepository extends BaseSecureRepository<User> {
         'user'
       );
 
+      // Escape LIKE special characters to prevent wildcard injection
+      const escapedSearch = searchTerm.replace(/[%_\\]/g, '\\$&');
+
       // Add search conditions for allowed fields
       queryBuilder
-        .where('user.firstName ILIKE :search', { search: `%${searchTerm}%` })
-        .orWhere('user.lastName ILIKE :search', { search: `%${searchTerm}%` })
-        .orWhere('user.email ILIKE :search', { search: `%${searchTerm}%` });
+        .where('user.firstName ILIKE :search ESCAPE \'\\\'', { search: `%${escapedSearch}%` })
+        .orWhere('user.lastName ILIKE :search ESCAPE \'\\\'', { search: `%${escapedSearch}%` })
+        .orWhere('user.email ILIKE :search ESCAPE \'\\\'', { search: `%${escapedSearch}%` });
 
       // Add role filter if specified
       if (role) {

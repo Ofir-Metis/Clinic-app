@@ -113,13 +113,13 @@ class ErrorBoundary extends Component<Props, State> {
             >
               Go Home
             </Button>
-            
-            {this.state.error && (
+
+            {import.meta.env.DEV && this.state.error && (
               <Box sx={{ mt: 3, textAlign: 'left' }}>
                 <Typography variant="subtitle2" color="error">
                   Error Details (Development Mode):
                 </Typography>
-                <Typography variant="caption" component="pre" sx={{ 
+                <Typography variant="caption" component="pre" sx={{
                   whiteSpace: 'pre-wrap',
                   backgroundColor: '#f5f5f5',
                   p: 2,

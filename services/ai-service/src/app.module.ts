@@ -9,6 +9,7 @@ import { AiGraphqlModule } from './graphql/graphql.module';
 import { OpenaiService } from './openai.service';
 import { SessionAnalysisService } from './session-analysis/session-analysis.service';
 import { SessionAnalysisController } from './session-analysis/session-analysis.controller';
+import { VoiceNoteTranscriptionModule } from './voice-note-transcription/voice-note-transcription.module';
 import { SessionSummary } from './entities/session-summary.entity';
 import { Transcription } from './entities/transcription.entity';
 
@@ -57,8 +58,8 @@ import { Transcription } from './entities/transcription.entity';
     // JWT and Authentication - CommonModule provides JwtService, but we need module-specific config
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'clinic-ai-service-fallback-2024',
-      signOptions: { 
+      secret: process.env.JWT_SECRET,
+      signOptions: {
         expiresIn: process.env.JWT_EXPIRES_IN || '24h',
         issuer: process.env.JWT_ISSUER || 'clinic-ai-service',
         audience: process.env.JWT_AUDIENCE || 'clinic-users'
@@ -66,6 +67,7 @@ import { Transcription } from './entities/transcription.entity';
     }),
 
     AiGraphqlModule,
+    VoiceNoteTranscriptionModule,
   ],
   controllers: [HealthController, SessionAnalysisController],
   providers: [OpenaiService, SessionAnalysisService],

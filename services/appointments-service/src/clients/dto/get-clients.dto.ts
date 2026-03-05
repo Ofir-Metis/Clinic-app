@@ -1,7 +1,9 @@
 import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class GetPatientsDto {
-  therapistId!: number;
+  @IsString()
+  @IsOptional()
+  coachId?: string;
 
   @IsInt()
   @IsOptional()

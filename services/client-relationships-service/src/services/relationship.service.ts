@@ -6,29 +6,16 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, In } from 'typeorm';
-import { 
-  ClientCoachRelationship, 
-  RelationshipStatus, 
-  RelationshipType, 
-  DataAccessLevel 
+import {
+  ClientCoachRelationship,
+  RelationshipStatus,
+  RelationshipType,
+  DataAccessLevel
 } from '../entities/client-coach-relationship.entity';
 import { Client } from '../entities/client.entity';
 import { Coach } from '../entities/coach.entity';
 import { RelationshipPermission, PermissionType, PermissionScope } from '../entities/relationship-permission.entity';
-
-export interface CreateRelationshipDto {
-  clientId: string;
-  coachId: string;
-  relationshipType: RelationshipType;
-  dataAccessLevel: DataAccessLevel;
-  focusAreas?: string[];
-  specialization?: string;
-  coachingPreferences?: any;
-  privacySettings?: any;
-  programDetails?: any;
-  invitedBy: string;
-  invitationMessage?: string;
-}
+import { CreateRelationshipDto } from '../dto/create-relationship.dto';
 
 export interface UpdateRelationshipDto {
   status?: RelationshipStatus;

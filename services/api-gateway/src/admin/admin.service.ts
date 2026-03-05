@@ -49,7 +49,7 @@ export interface SystemAlert {
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private httpService: HttpService) {}
+  constructor(private httpService: HttpService) { }
 
   /**
    * Get comprehensive system health status
@@ -88,15 +88,15 @@ export class AdminService {
    */
   private async checkAllServices(): Promise<ServiceHealth[]> {
     const services = [
-      { name: 'API Gateway', url: 'http://localhost:4000/health', port: 4000 },
-      { name: 'Auth Service', url: 'http://localhost:3001/health', port: 3001 },
-      { name: 'Appointments Service', url: 'http://localhost:3002/health', port: 3002 },
-      { name: 'Files Service', url: 'http://localhost:3003/health', port: 3003 },
-      { name: 'Notifications Service', url: 'http://localhost:3004/health', port: 3004 },
-      { name: 'AI Service', url: 'http://localhost:3005/health', port: 3005 },
-      { name: 'Notes Service', url: 'http://localhost:3006/health', port: 3006 },
-      { name: 'Analytics Service', url: 'http://localhost:3007/health', port: 3007 },
-      { name: 'Settings Service', url: 'http://localhost:3008/health', port: 3008 },
+      { name: 'API Gateway', url: 'http://api-gateway:3000/health', port: 3000 },
+      { name: 'Auth Service', url: 'http://auth-service:3000/health', port: 3000 },
+      { name: 'Appointments Service', url: 'http://appointments-service:3002/health', port: 3002 },
+      { name: 'Files Service', url: 'http://files-service:3000/health', port: 3000 },
+      { name: 'Notifications Service', url: 'http://notifications-service:3004/health', port: 3004 },
+      { name: 'AI Service', url: 'http://ai-service:3000/health', port: 3000 },
+      { name: 'Notes Service', url: 'http://notes-service:3000/health', port: 3000 },
+      { name: 'Analytics Service', url: 'http://analytics-service:3007/health', port: 3007 },
+      { name: 'Settings Service', url: 'http://settings-service:3008/health', port: 3008 },
     ];
 
     const healthChecks = await Promise.allSettled(
@@ -127,14 +127,14 @@ export class AdminService {
     port: number;
   }): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       const response = await firstValueFrom(
         this.httpService.get(service.url, { timeout: 5000 })
       );
-      
+
       const responseTime = Date.now() - startTime;
-      
+
       let status: 'up' | 'down' | 'degraded' = 'up';
       if (responseTime > 2000) {
         status = 'degraded'; // Slow response
@@ -276,7 +276,7 @@ export class AdminService {
     try {
       // Mock implementation - in production, this would query log aggregation system
       const mockLogs = this.generateMockLogs();
-      
+
       let filteredLogs = mockLogs;
 
       // Apply filters
@@ -287,12 +287,12 @@ export class AdminService {
         filteredLogs = filteredLogs.filter(log => log.service === filters.service);
       }
       if (filters.startDate) {
-        filteredLogs = filteredLogs.filter(log => 
+        filteredLogs = filteredLogs.filter(log =>
           new Date(log.timestamp) >= new Date(filters.startDate!)
         );
       }
       if (filters.endDate) {
-        filteredLogs = filteredLogs.filter(log => 
+        filteredLogs = filteredLogs.filter(log =>
           new Date(log.timestamp) <= new Date(filters.endDate!)
         );
       }
@@ -364,7 +364,7 @@ export class AdminService {
     try {
       // Mock implementation - in production, this would query user database
       const mockUsers = this.generateMockUsers();
-      
+
       let filteredUsers = mockUsers;
 
       // Apply filters
@@ -376,7 +376,7 @@ export class AdminService {
       }
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
-        filteredUsers = filteredUsers.filter(user => 
+        filteredUsers = filteredUsers.filter(user =>
           user.email.toLowerCase().includes(searchTerm) ||
           user.id.toLowerCase().includes(searchTerm)
         );
@@ -386,6 +386,9 @@ export class AdminService {
       const startIndex = (filters.page - 1) * filters.limit;
       const endIndex = startIndex + filters.limit;
       const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+      this.logger.log(`Filtered users count: ${filteredUsers.length}`);
+      this.logger.log(`Paginated users count: ${paginatedUsers.length} (start: ${startIndex}, end: ${endIndex})`);
 
       // Calculate stats
       const stats = {
@@ -454,7 +457,7 @@ export class AdminService {
     try {
       // Mock implementation - in production, this would update database
       this.logger.log(`Updating user ${userId} status to ${status} by admin ${adminId}`);
-      
+
       // Log audit trail
       await this.logAuditActivity({
         userId: adminId,
@@ -484,7 +487,7 @@ export class AdminService {
     try {
       // Mock implementation
       const mockSubscriptions = this.generateMockSubscriptions();
-      
+
       let filteredSubs = mockSubscriptions;
       if (filters.status) {
         filteredSubs = filteredSubs.filter(sub => sub.status === filters.status);
@@ -559,7 +562,7 @@ export class AdminService {
     try {
       // Mock implementation
       this.logger.log(`Updating subscription ${subscriptionId} by admin ${adminId}`);
-      
+
       await this.logAuditActivity({
         userId: adminId,
         action: 'update_subscription',
@@ -618,7 +621,7 @@ export class AdminService {
   async updateSystemConfig(config: Record<string, any>, adminId: string) {
     try {
       this.logger.log(`Updating system config by admin ${adminId}`);
-      
+
       await this.logAuditActivity({
         userId: adminId,
         action: 'update_system_config',
@@ -648,7 +651,7 @@ export class AdminService {
   ) {
     try {
       this.logger.log(`Executing maintenance task ${task} by admin ${adminId}`);
-      
+
       // Mock implementation - in production, these would be real maintenance operations
       const results = {
         'cleanup-logs': { deletedEntries: 1500, freedSpaceMB: 250 },
@@ -691,7 +694,7 @@ export class AdminService {
     try {
       // Mock implementation
       const mockAuditLogs = this.generateMockAuditLogs();
-      
+
       let filteredLogs = mockAuditLogs;
       if (filters.userId) {
         filteredLogs = filteredLogs.filter(log => log.userId === filters.userId);
@@ -769,7 +772,7 @@ export class AdminService {
   ) {
     try {
       this.logger.log(`Updating feature flag ${flagName} to ${enabled} by admin ${adminId}`);
-      
+
       await this.logAuditActivity({
         userId: adminId,
         action: 'update_feature_flag',

@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@clinic/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { 
   SecurityMonitoringService, 
@@ -34,6 +35,7 @@ interface ResolveAlertDto {
 @ApiTags('Security Monitoring')
 @ApiBearerAuth('JWT-auth')
 @Controller('security-monitoring')
+@UseGuards(JwtAuthGuard)
 export class SecurityMonitoringController {
   constructor(
     private readonly securityMonitoringService: SecurityMonitoringService,

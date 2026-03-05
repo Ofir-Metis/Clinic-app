@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from '../entities/user.entity';
@@ -16,11 +17,16 @@ import { MFAController } from '../mfa/mfa.controller';
   imports: [
     ConfigModule,
     TypeOrmModule.forFeature([User, ResetToken]),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 20 }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '1h' },
+        signOptions: {
+          expiresIn: '1h',
+          issuer: 'clinic-app',
+          audience: 'clinic-users'
+        },
       }),
       inject: [ConfigService],
     }),
@@ -42,4 +48,4 @@ import { MFAController } from '../mfa/mfa.controller';
   providers: [AuthService, ResetService, JwtStrategy],
   controllers: [AuthController, ResetController, MFAController],
 })
-export class AuthModule {}
+export class AuthModule { }

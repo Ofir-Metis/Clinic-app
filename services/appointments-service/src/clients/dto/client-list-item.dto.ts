@@ -1,5 +1,5 @@
 export class PatientListItemDto {
-  id!: number;
+  id!: string;
   firstName!: string;
   lastName!: string;
   email!: string;

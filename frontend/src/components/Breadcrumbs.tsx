@@ -38,7 +38,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
 
     // Always start with home
     breadcrumbs.push({
-      label: t.nav.dashboard,
+      label: t.nav?.dashboard || 'Dashboard',
       href: '/dashboard',
       icon: <HomeIcon sx={{ fontSize: '1rem', mr: 0.5 }} />,
     });
@@ -60,37 +60,37 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
       // Map route segments to translated labels
       switch (segment) {
         case 'patients':
-          label = t.nav.patients;
+          label = t.nav?.patients || 'Clients';
           break;
         case 'appointments':
-          label = t.nav.appointments;
+          label = t.nav?.appointments || 'Appointments';
           break;
         case 'calendar':
-          label = t.nav.calendar;
+          label = t.nav?.calendar || 'Calendar';
           break;
         case 'tools':
-          label = t.nav.tools;
+          label = t.nav?.tools || 'Tools';
           break;
         case 'notifications':
-          label = t.nav.notifications;
+          label = t.nav?.notifications || 'Notifications';
           break;
         case 'profile':
-          label = t.nav.profile;
+          label = t.nav?.profile || 'Profile';
           break;
         case 'settings':
-          label = t.nav.settings;
+          label = t.nav?.settings || 'Settings';
           break;
         case 'admin':
-          label = t.nav.admin;
+          label = t.nav?.admin || 'Admin';
           break;
         case 'client':
-          label = t.nav.clientPortal;
+          label = t.nav?.clientPortal || 'Client Portal';
           break;
         case 'new':
-          label = t.common.new;
+          label = t.common?.new || 'New';
           break;
         case 'edit':
-          label = t.common.edit;
+          label = t.common?.edit || 'Edit';
           break;
         case 'goals':
           label = t.clientPortal?.goals?.title || 'Goals';
@@ -111,7 +111,7 @@ const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
           // For dynamic segments (IDs), try to get a more meaningful label
           if (/^\d+$/.test(segment)) {
             // If it's a numeric ID, show as "Details" or similar
-            label = t.common.details || 'Details';
+            label = t.common?.details || 'Details';
           } else {
             // Capitalize first letter for other segments
             label = segment.charAt(0).toUpperCase() + segment.slice(1);

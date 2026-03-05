@@ -1,16 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
-@Entity()
+@Entity('notes')
 export class Note {
-  @PrimaryGeneratedColumn()
-  id!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
   @Column()
-  coachId!: number;
+  @Index()
+  coachId!: string;
+
+  @Column()
+  @Index()
+  entityId!: string;
+
+  @Column({ default: 'patient' })
+  entityType!: 'appointment' | 'patient';
 
   @Column('text')
   content!: string;
 
+  @Column({ default: true })
+  isPrivate!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

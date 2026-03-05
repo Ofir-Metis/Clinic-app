@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import fs from 'fs';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
@@ -15,11 +17,11 @@ export default defineConfig({
     include: ['@mui/x-date-pickers', '@mui/x-date-pickers-pro'],
   },
   build: {
-    sourcemap: true, // Enable source maps for debugging
+    sourcemap: false, // Disable source maps in production
     minify: 'terser', // Use terser for minification
     terserOptions: {
       compress: {
-        drop_console: false, // Keep console logs for debugging
+        drop_console: true, // Remove console logs in production
         drop_debugger: true
       }
     }
@@ -33,5 +35,12 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''), // Strip /api prefix
       },
     },
+    https: (() => {
+      const sslKeyPath = path.resolve(__dirname, 'ssl/key.pem');
+      const sslCertPath = path.resolve(__dirname, 'ssl/cert.pem');
+      return fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)
+        ? { key: fs.readFileSync(sslKeyPath), cert: fs.readFileSync(sslCertPath) }
+        : undefined;
+    })(),
   },
 });

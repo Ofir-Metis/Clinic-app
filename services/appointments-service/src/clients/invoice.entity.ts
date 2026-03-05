@@ -23,9 +23,9 @@ export class Invoice {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ type: 'integer' })
-  @IsNumber()
-  patientId!: number;
+  @Column({ type: 'uuid', name: 'patient_id' })
+  @IsString()
+  patientId!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -36,10 +36,10 @@ export class Invoice {
   @IsString()
   currency!: string;
 
-  @Column({ 
-    type: 'enum', 
-    enum: InvoiceStatus, 
-    default: InvoiceStatus.DRAFT 
+  @Column({
+    type: 'enum',
+    enum: InvoiceStatus,
+    default: InvoiceStatus.DRAFT
   })
   @IsEnum(InvoiceStatus)
   status!: InvoiceStatus;

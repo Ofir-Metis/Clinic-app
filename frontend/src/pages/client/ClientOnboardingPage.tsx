@@ -109,7 +109,7 @@ const getCoachPreferences = (t: any) => [
 
 const ClientOnboardingPage: React.FC = () => {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { translations: t } = useTranslation();
   const navigate = useNavigate();
   
   const LIFE_AREAS = getLifeAreas(t);

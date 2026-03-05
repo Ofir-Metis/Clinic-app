@@ -1,1 +1,10 @@
-{"email":"coach@example.com","password":"CoachPassword123!"}
+{
+  "coach": {
+    "email": "coach@example.com",
+    "password": "CoachPassword123!"
+  },
+  "admin": {
+    "email": "admin@example.com",
+    "password": "AdminPassword123!"
+  }
+}

@@ -35,6 +35,13 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
   MoreHoriz as MoreIcon,
+  AdminPanelSettings as AdminIcon,
+  EventNote as SessionsIcon,
+  BookOnline as BookingIcon,
+  TrendingUp as ProgressIcon,
+  EmojiEvents as AchievementsIcon,
+  Explore as DiscoverIcon,
+  FlagCircle as GoalsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../contexts/LanguageContext';
@@ -92,8 +99,70 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
   const [moreMenuAnchorEl, setMoreMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   const commandPalette = useCommandPalette();
 
-  // Navigation items - moved inside component to access translations
-  const navigationItems: NavigationItem[] = [
+  const isClientUser = user?.role === 'client';
+
+  // Client-specific navigation items
+  const clientNavigationItems: NavigationItem[] = [
+    {
+      label: t.nav?.dashboard || 'Dashboard',
+      icon: <DashboardIcon />,
+      path: '/client/dashboard',
+      value: 'dashboard',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.mySessions || 'My Sessions',
+      icon: <SessionsIcon />,
+      path: '/client/appointments',
+      value: 'appointments',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.bookSession || 'Book Session',
+      icon: <BookingIcon />,
+      path: '/client/booking',
+      value: 'booking',
+      showInBottomNav: true,
+    },
+    {
+      label: t.nav?.myGoals || 'My Goals',
+      icon: <GoalsIcon />,
+      path: '/client/goals',
+      value: 'goals',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.myProgress || 'My Progress',
+      icon: <ProgressIcon />,
+      path: '/client/progress',
+      value: 'progress',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.achievements || 'Achievements',
+      icon: <AchievementsIcon />,
+      path: '/client/achievements',
+      value: 'achievements',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.discoverCoaches || 'Discover Coaches',
+      icon: <DiscoverIcon />,
+      path: '/client/discover',
+      value: 'discover',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.settings || 'Settings',
+      icon: <SettingsIcon />,
+      path: '/client/settings',
+      value: 'settings',
+      showInBottomNav: false,
+    },
+  ];
+
+  // Coach/Admin navigation items
+  const coachNavigationItems: NavigationItem[] = [
     {
       label: t.nav?.dashboard || 'Dashboard',
       icon: <DashboardIcon />,
@@ -120,14 +189,14 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
       icon: <ToolsIcon />,
       path: '/tools',
       value: 'tools',
-      showInBottomNav: false, // Moved to More menu
+      showInBottomNav: false,
     },
     {
       label: t.nav?.notifications || 'Notifications',
       icon: <NotificationsIcon />,
       path: '/notifications',
       value: 'notifications',
-      showInBottomNav: false, // Moved to More menu
+      showInBottomNav: false,
     },
     {
       label: t.nav?.settings || 'Settings',
@@ -136,10 +205,43 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
       value: 'settings',
       showInBottomNav: false,
     },
+    // Conditionally add Admin item for admin users
+    ...(user?.role === 'admin' || user?.role === 'super_admin' ? [{
+      label: t.nav?.admin || 'Admin Dashboard',
+      icon: <AdminIcon />,
+      path: '/admin',
+      value: 'admin',
+      showInBottomNav: false,
+    }] : []),
   ];
 
-  // Additional items for the "More" menu
-  const moreMenuItems: NavigationItem[] = [
+  // Select navigation based on user role
+  const navigationItems = isClientUser ? clientNavigationItems : coachNavigationItems;
+
+  // Additional items for the "More" menu (role-aware)
+  const moreMenuItems: NavigationItem[] = isClientUser ? [
+    {
+      label: t.nav?.myGoals || 'My Goals',
+      icon: <GoalsIcon />,
+      path: '/client/goals',
+      value: 'goals',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.myProgress || 'My Progress',
+      icon: <ProgressIcon />,
+      path: '/client/progress',
+      value: 'progress',
+      showInBottomNav: false,
+    },
+    {
+      label: t.nav?.settings || 'Settings',
+      icon: <SettingsIcon />,
+      path: '/client/settings',
+      value: 'settings',
+      showInBottomNav: false,
+    },
+  ] : [
     {
       label: t.nav?.tools || 'AI Tools',
       icon: <ToolsIcon />,
@@ -204,7 +306,7 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
 
   const handleLogoutClick = () => {
     logout();
-    navigate('/login');
+    navigate(isClientUser ? '/client/login' : '/login');
     handleProfileMenuClose();
   };
 
@@ -448,7 +550,11 @@ const WellnessLayout: React.FC<WellnessLayoutProps> = ({
           </Box>
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogoutClick} sx={{ py: 1.5, color: 'text.secondary' }}>
+        <MenuItem
+          onClick={handleLogoutClick}
+          role="menuitem"
+          sx={{ py: 1.5, color: 'text.secondary' }}
+        >
           <Typography variant="body2">
             {t.nav?.logout || 'See You Space Cowboy 👋'}
           </Typography>

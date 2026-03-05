@@ -24,6 +24,12 @@ import {
   Alert,
   Tooltip,
   Badge,
+  CircularProgress,
+  Switch,
+  FormControlLabel,
+  Divider,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -37,16 +43,20 @@ import {
   CalendarViewMonth as MonthViewIcon,
   CalendarViewWeek as WeekViewIcon,
   CalendarViewDay as DayViewIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { he } from 'date-fns/locale';
+import { getDatePickerLocale } from '../locales/datePickerLocale';
 import { useTranslation } from '../contexts/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { theme } from '../theme';
 import WellnessLayout from '../layouts/WellnessLayout';
+import { useAuth } from '../AuthContext';
+import { getMyPatients, Patient as ApiPatient } from '../api/patients';
+import { getAppointments, Appointment as ApiAppointment, createAppointment, updateAppointment } from '../api/appointments';
 
 interface Appointment {
   id: string;
@@ -68,44 +78,23 @@ interface Patient {
   avatar?: string;
 }
 
-const mockPatients: Patient[] = [
-  { id: '1', name: 'Sarah Johnson' },
-  { id: '2', name: 'Michael Chen' },
-  { id: '3', name: 'Emma Davis' },
-  { id: '4', name: 'James Wilson' },
-];
-
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    title: 'Individual Therapy Session',
-    patientName: 'Sarah Johnson',
-    patientId: '1',
-    date: new Date(),
-    startTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-    endTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
-    type: 'individual',
-    status: 'confirmed',
-    meetingUrl: 'https://meet.example.com/session1',
-  },
-  {
-    id: '2',
-    title: 'Family Therapy Session',
-    patientName: 'Michael Chen',
-    patientId: '2',
-    date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-    startTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 10 * 60 * 60 * 1000), // Tomorrow 10 AM
-    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000 + 11 * 60 * 60 * 1000), // Tomorrow 11 AM
-    type: 'family',
-    status: 'pending',
-  },
-];
+type MeetingType = 'in-person' | 'online';
 
 const CalendarPage: React.FC = () => {
-  const { translations: t } = useTranslation();
+  const { translations: t, language } = useTranslation();
+  const { adapterLocale, localeText } = getDatePickerLocale(language);
+  const muiTheme = useTheme();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
+
+  // Compute coachId - use explicit coachId if available, otherwise use user.id for coach users
+  const coachId = user?.coachId || (user?.role === 'coach' ? user.id : null);
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
@@ -116,10 +105,83 @@ const CalendarPage: React.FC = () => {
     startTime: new Date(),
     endTime: new Date(),
     notes: '',
+    meetingType: 'in-person' as MeetingType,
+    googleMeetEnabled: true,
+    location: '',
   });
 
+  // Fetch patients and appointments from API
+  useEffect(() => {
+    console.log('[CalendarPage] useEffect triggered, coachId:', coachId, 'user:', user);
+    const fetchData = async () => {
+      if (!coachId) {
+        console.log('[CalendarPage] No coachId, setting loading to false');
+        setLoading(false);
+        return;
+      }
+
+      console.log('[CalendarPage] Fetching data for coachId:', coachId);
+      setLoading(true);
+
+      try {
+        // Fetch patients
+        const patientsResponse = await getMyPatients(coachId, 0, 100);
+        const transformedPatients: Patient[] = patientsResponse.items.map((p: ApiPatient) => ({
+          id: p.id.toString(),
+          name: `${p.firstName} ${p.lastName}`,
+          avatar: p.avatarUrl,
+        }));
+        setPatients(transformedPatients);
+
+        // Fetch appointments
+        const appointmentsData = await getAppointments({ coachId });
+        const transformedAppointments: Appointment[] = appointmentsData.map((apt: ApiAppointment) => {
+          const patient = transformedPatients.find(p => p.id === apt.clientId.toString());
+          const startTime = new Date(apt.startTime);
+          const endTime = new Date(apt.endTime);
+          return {
+            id: apt.id.toString(),
+            title: `${apt.type === 'virtual' ? 'Virtual' : 'In-Person'} Session`,
+            patientName: patient?.name || 'Unknown Client',
+            patientId: apt.clientId.toString(),
+            date: startTime,
+            startTime,
+            endTime,
+            type: 'individual' as const,
+            status: apt.status === 'scheduled' ? 'confirmed' as const :
+              apt.status === 'cancelled' ? 'cancelled' as const : 'pending' as const,
+            notes: undefined,
+            meetingUrl: apt.meetingUrl,
+          };
+        });
+        setAppointments(transformedAppointments);
+      } catch (error) {
+        console.error('Error fetching calendar data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [coachId]);
+
+  // Auto-open scheduling dialog when navigated with ?patient= query param
+  useEffect(() => {
+    const patientParam = searchParams.get('patient');
+    if (patientParam && patients.length > 0 && !openDialog) {
+      setEditingAppointment(null);
+      setFormData(prev => ({
+        ...prev,
+        patientId: patientParam,
+      }));
+      setOpenDialog(true);
+      // Clear the query param so it doesn't re-trigger
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, patients, openDialog, setSearchParams]);
+
   // Filter appointments for selected date
-  const selectedDateAppointments = appointments.filter(apt => 
+  const selectedDateAppointments = appointments.filter(apt =>
     apt.date.toDateString() === selectedDate.toDateString()
   );
 
@@ -139,6 +201,9 @@ const CalendarPage: React.FC = () => {
       startTime: new Date(),
       endTime: new Date(),
       notes: '',
+      meetingType: 'in-person',
+      googleMeetEnabled: true,
+      location: '',
     });
     setOpenDialog(true);
   };
@@ -152,36 +217,81 @@ const CalendarPage: React.FC = () => {
       startTime: appointment.startTime,
       endTime: appointment.endTime,
       notes: appointment.notes || '',
+      meetingType: appointment.meetingUrl ? 'online' : 'in-person',
+      googleMeetEnabled: Boolean(appointment.meetingUrl),
+      location: '',
     });
     setOpenDialog(true);
   };
 
-  const handleSaveAppointment = () => {
-    const patient = mockPatients.find(p => p.id === formData.patientId);
-    if (!patient) return;
+  const handleSaveAppointment = async () => {
+    const patient = patients.find(p => p.id === formData.patientId);
+    if (!patient || !coachId) return;
 
-    const appointmentData: Appointment = {
-      id: editingAppointment?.id || Date.now().toString(),
-      title: `${getTypeLabel(formData.type)} Session`,
-      patientName: patient.name,
-      patientId: formData.patientId,
-      date: formData.date,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      type: formData.type,
-      status: 'confirmed',
-      notes: formData.notes,
-    };
+    try {
+      if (editingAppointment) {
+        // Update existing appointment via API
+        await updateAppointment(parseInt(editingAppointment.id), {
+          clientId: parseInt(formData.patientId),
+          startTime: formData.startTime.toISOString(),
+          endTime: formData.endTime.toISOString(),
+        });
 
-    if (editingAppointment) {
-      setAppointments(prev => prev.map(apt => 
-        apt.id === editingAppointment.id ? appointmentData : apt
-      ));
-    } else {
-      setAppointments(prev => [...prev, appointmentData]);
+        const appointmentData: Appointment = {
+          id: editingAppointment.id,
+          title: `${getTypeLabel(formData.type)} Session`,
+          patientName: patient.name,
+          patientId: formData.patientId,
+          date: formData.date,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          type: formData.type,
+          status: 'confirmed',
+          notes: formData.notes,
+        };
+
+        setAppointments(prev => prev.map(apt =>
+          apt.id === editingAppointment.id ? appointmentData : apt
+        ));
+      } else {
+        // Create new appointment via API
+        const isOnline = formData.meetingType === 'online';
+        // Ensure endTime is after startTime (default 1 hour if same)
+        let endTime = formData.endTime;
+        if (endTime.getTime() <= formData.startTime.getTime()) {
+          endTime = new Date(formData.startTime.getTime() + 60 * 60 * 1000);
+        }
+        const newApt = await createAppointment({
+          therapistId: coachId, // UUID from coach record
+          clientId: String(formData.patientId),
+          startTime: formData.startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          type: isOnline ? 'virtual' : 'in-person',
+          status: 'scheduled',
+          googleMeetEnabled: isOnline ? formData.googleMeetEnabled : false,
+          location: isOnline ? undefined : formData.location,
+        });
+
+        const appointmentData: Appointment = {
+          id: newApt.id.toString(),
+          title: `${getTypeLabel(formData.type)} Session`,
+          patientName: patient.name,
+          patientId: formData.patientId,
+          date: formData.date,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          type: formData.type,
+          status: 'confirmed',
+          notes: formData.notes,
+        };
+
+        setAppointments(prev => [...prev, appointmentData]);
+      }
+
+      setOpenDialog(false);
+    } catch (error) {
+      console.error('Error saving appointment:', error);
     }
-
-    setOpenDialog(false);
   };
 
   const handleDeleteAppointment = (appointmentId: string) => {
@@ -219,67 +329,72 @@ const CalendarPage: React.FC = () => {
 
   return (
     <WellnessLayout
-        title={t.nav.calendar}
-        showFab={true}
-        fabIcon={<AddIcon />}
-        fabAction={handleAddAppointment}
-        fabAriaLabel={t.calendarPage.scheduleNewAppointment}
-      >
-        {/* Header Section */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              📅 {t.calendarPage.yourSchedule}
-            </Typography>
-
-            {/* View Controls */}
-            <Stack direction="row" spacing={1}>
-              <Tooltip title={t.calendarPage.monthView}>
-                <IconButton
-                  onClick={() => setView('month')}
-                  color={view === 'month' ? 'primary' : 'default'}
-                >
-                  <MonthViewIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t.calendarPage.weekView}>
-                <IconButton
-                  onClick={() => setView('week')}
-                  color={view === 'week' ? 'primary' : 'default'}
-                >
-                  <WeekViewIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t.calendarPage.dayView}>
-                <IconButton
-                  onClick={() => setView('day')}
-                  color={view === 'day' ? 'primary' : 'default'}
-                >
-                  <DayViewIcon />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          </Box>
-
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            {t.calendarPage.subtitle}
+      title={t.nav.calendar}
+      showFab={true}
+      fabIcon={<AddIcon />}
+      fabAction={handleAddAppointment}
+      fabAriaLabel={t.calendarPage.scheduleNewAppointment}
+    >
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            📅 {t.calendarPage.yourSchedule}
           </Typography>
+
+          {/* View Controls */}
+          <Stack direction="row" spacing={1}>
+            <Tooltip title={t.calendarPage.monthView}>
+              <IconButton
+                onClick={() => setView('month')}
+                color={view === 'month' ? 'primary' : 'default'}
+              >
+                <MonthViewIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t.calendarPage.weekView}>
+              <IconButton
+                onClick={() => setView('week')}
+                color={view === 'week' ? 'primary' : 'default'}
+              >
+                <WeekViewIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t.calendarPage.dayView}>
+              <IconButton
+                onClick={() => setView('day')}
+                color={view === 'day' ? 'primary' : 'default'}
+              >
+                <DayViewIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Box>
 
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          {t.calendarPage.subtitle}
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
           {/* Calendar Section */}
           <Grid item xs={12} md={6} lg={5}>
@@ -290,7 +405,11 @@ const CalendarPage: React.FC = () => {
                   {t.calendarPage.calendar}
                 </Typography>
 
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
+                <LocalizationProvider
+                  dateAdapter={AdapterDateFns}
+                  adapterLocale={adapterLocale}
+                  localeText={localeText}
+                >
                   <DateCalendar
                     value={selectedDate}
                     onChange={(date) => setSelectedDate(date || new Date())}
@@ -398,14 +517,14 @@ const CalendarPage: React.FC = () => {
                               </Box>
                             </Box>
                             <Stack direction="row" spacing={1}>
-                              <Chip 
+                              <Chip
                                 label={getStatusColor(appointment.status)}
                                 color={getStatusColor(appointment.status) as any}
                                 size="small"
                               />
                             </Stack>
                           </Box>
-                          
+
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             {getTypeIcon(appointment.type)}
                             <Typography variant="body2">
@@ -496,83 +615,225 @@ const CalendarPage: React.FC = () => {
             </Stack>
           </Grid>
         </Grid>
+      )}
 
-        {/* Add/Edit Appointment Dialog */}
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>
-            {editingAppointment ? t.calendarPage.editAppointment : t.calendarPage.scheduleNewAppointment}
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 2 }}>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>{t.calendarPage.client}</InputLabel>
-                <Select
-                  value={formData.patientId}
-                  onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-                  label={t.calendarPage.client}
-                >
-                  {mockPatients.map((patient) => (
-                    <MenuItem key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+      {/* Add/Edit Appointment Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingAppointment ? t.calendarPage.editAppointment : t.calendarPage.scheduleNewAppointment}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>{t.calendarPage.client}</InputLabel>
+              <Select
+                value={formData.patientId}
+                onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                label={t.calendarPage.client}
+              >
+                {patients.map((patient) => (
+                  <MenuItem key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>{t.calendarPage.sessionType}</InputLabel>
-                <Select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as Appointment['type'] })}
-                  label={t.calendarPage.sessionType}
-                >
-                  <MenuItem value="individual">{t.calendarPage.individualTherapy}</MenuItem>
-                  <MenuItem value="group">{t.calendarPage.groupTherapy}</MenuItem>
-                  <MenuItem value="family">{t.calendarPage.familyTherapy}</MenuItem>
-                  <MenuItem value="consultation">{t.calendarPage.consultation}</MenuItem>
-                </Select>
-              </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>{t.calendarPage.sessionType}</InputLabel>
+              <Select
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as Appointment['type'] })}
+                label={t.calendarPage.sessionType}
+              >
+                <MenuItem value="individual">{t.calendarPage.individualTherapy}</MenuItem>
+                <MenuItem value="group">{t.calendarPage.groupTherapy}</MenuItem>
+                <MenuItem value="family">{t.calendarPage.familyTherapy}</MenuItem>
+                <MenuItem value="consultation">{t.calendarPage.consultation}</MenuItem>
+              </Select>
+            </FormControl>
 
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={he}>
-                <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                  <TimePicker
-                    label={t.calendarPage.startTime}
-                    value={formData.startTime}
-                    onChange={(time) => setFormData({ ...formData, startTime: time || new Date() })}
-                    sx={{ flex: 1 }}
+            <LocalizationProvider
+              dateAdapter={AdapterDateFns}
+              adapterLocale={adapterLocale}
+              localeText={localeText}
+            >
+              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                <TimePicker
+                  label={t.calendarPage.startTime}
+                  value={formData.startTime}
+                  onChange={(time) => setFormData({ ...formData, startTime: time || new Date() })}
+                  sx={{ flex: 1 }}
+                />
+                <TimePicker
+                  label={t.calendarPage.endTime}
+                  value={formData.endTime}
+                  onChange={(time) => setFormData({ ...formData, endTime: time || new Date() })}
+                  sx={{ flex: 1 }}
+                />
+              </Stack>
+            </LocalizationProvider>
+
+            {/* Meeting Configuration Section */}
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+              {formData.meetingType === 'online' ? <VideoCallIcon color="primary" /> : <LocationIcon color="secondary" />}
+              {t.calendarPage.meetingConfiguration}
+            </Typography>
+
+            {/* Meeting Type Toggle */}
+            <Box
+              sx={{
+                p: 2,
+                mb: 2,
+                borderRadius: 2,
+                backgroundColor: alpha(muiTheme.palette.primary.main, 0.04),
+                border: `1px solid ${alpha(muiTheme.palette.primary.main, 0.1)}`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 2,
+                      backgroundColor: formData.meetingType === 'online'
+                        ? alpha(muiTheme.palette.primary.main, 0.15)
+                        : alpha(muiTheme.palette.secondary.main, 0.15),
+                      color: formData.meetingType === 'online' ? muiTheme.palette.primary.main : muiTheme.palette.secondary.main,
+                    }}
+                  >
+                    {formData.meetingType === 'online' ? <VideoCallIcon /> : <LocationIcon />}
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {formData.meetingType === 'online' ? t.calendarPage.onlineMeeting : t.calendarPage.inPersonMeeting}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {formData.meetingType === 'online'
+                        ? t.calendarPage.meetingTypes.online
+                        : t.calendarPage.meetingTypes.inPerson}
+                    </Typography>
+                  </Box>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.meetingType === 'online'}
+                      onChange={(e) => setFormData({ ...formData, meetingType: e.target.checked ? 'online' : 'in-person' })}
+                      color="primary"
+                    />
+                  }
+                  label=""
+                  sx={{ m: 0 }}
+                />
+              </Box>
+            </Box>
+
+            {/* Google Meet Toggle (for online meetings) */}
+            {formData.meetingType === 'online' && (
+              <Box
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 2,
+                  backgroundColor: alpha(muiTheme.palette.info.main, 0.04),
+                  border: `1px solid ${alpha(muiTheme.palette.info.main, 0.1)}`,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: formData.googleMeetEnabled ? 2 : 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        p: 1,
+                        borderRadius: 1,
+                        backgroundColor: formData.googleMeetEnabled
+                          ? alpha('#4285F4', 0.15)
+                          : alpha(muiTheme.palette.grey[500], 0.15),
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <img
+                        src="https://www.gstatic.com/meet/google_meet_horizontal_wordmark_2020q4_1x_icon_124_40_2373e79660dabbf194273d27aa7ee1f5.png"
+                        alt="Google Meet"
+                        style={{ height: 20, opacity: formData.googleMeetEnabled ? 1 : 0.5 }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {t.calendarPage.googleMeet.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t.calendarPage.googleMeet.enabled}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.googleMeetEnabled}
+                        onChange={(e) => setFormData({ ...formData, googleMeetEnabled: e.target.checked })}
+                        color="primary"
+                      />
+                    }
+                    label=""
+                    sx={{ m: 0 }}
                   />
-                  <TimePicker
-                    label={t.calendarPage.endTime}
-                    value={formData.endTime}
-                    onChange={(time) => setFormData({ ...formData, endTime: time || new Date() })}
-                    sx={{ flex: 1 }}
-                  />
-                </Stack>
-              </LocalizationProvider>
+                </Box>
+                {formData.googleMeetEnabled && (
+                  <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    <Typography variant="body2">
+                      {t.calendarPage.googleMeet.willGenerate}
+                    </Typography>
+                  </Alert>
+                )}
+              </Box>
+            )}
 
+            {/* Location Field (for in-person meetings) */}
+            {formData.meetingType !== 'online' && (
               <TextField
                 fullWidth
-                label={t.calendarPage.sessionNotes}
-                multiline
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder={t.calendarPage.sessionNotesPlaceholder}
+                required
+                label={t.calendarPage.location}
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder={t.calendarPage.locationPlaceholder}
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: <LocationIcon sx={{ mr: 1, color: 'action.active' }} />
+                }}
               />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>{t.calendarPage.cancel}</Button>
-            <Button
-              onClick={handleSaveAppointment}
-              variant="contained"
-              disabled={!formData.patientId}
-            >
-              {editingAppointment ? t.calendarPage.update : t.calendarPage.schedule}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </WellnessLayout>
+            )}
+
+            <TextField
+              fullWidth
+              label={t.calendarPage.sessionNotes}
+              multiline
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              placeholder={t.calendarPage.sessionNotesPlaceholder}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>{t.calendarPage.cancel}</Button>
+          <Button
+            onClick={handleSaveAppointment}
+            variant="contained"
+            disabled={!formData.patientId || (formData.meetingType !== 'online' && !formData.location.trim())}
+          >
+            {editingAppointment ? t.calendarPage.update : t.calendarPage.schedule}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </WellnessLayout>
   );
 };
 

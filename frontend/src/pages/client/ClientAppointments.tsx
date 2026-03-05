@@ -27,7 +27,8 @@ import {
   Tabs,
   Tab,
   AvatarGroup,
-  Fab
+  Fab,
+  CircularProgress
 } from '@mui/material';
 import {
   CalendarToday as CalendarIcon,
@@ -43,6 +44,8 @@ import {
   Upcoming as UpcomingIcon
 } from '@mui/icons-material';
 import { useTranslation } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { getPatientAppointments } from '../../api/patientAppointments';
 
 interface Coach {
   id: string;
@@ -71,12 +74,13 @@ interface Appointment {
 const ClientAppointments: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
-  
+  const { user } = useAuth();
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentTab, setCurrentTab] = useState(0);
-  
+
   // Filtering state
   const [selectedCoach, setSelectedCoach] = useState<string>('all');
   const [sessionTypeFilter, setSessionTypeFilter] = useState<string>('all');
@@ -88,109 +92,57 @@ const ClientAppointments: React.FC = () => {
 
   useEffect(() => {
     loadAppointments();
-  }, []);
+  }, [user?.id]);
 
   const loadAppointments = async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      
-      // Mock data - replace with actual API call
-      const mockCoaches = [
-        {
-          id: '1',
-          name: 'Dr. Emily Chen',
-          specialization: 'Life & Wellness Coaching',
-          isActive: true,
-          relationshipSince: '2024-01-15',
-          nextAvailable: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-        },
-        {
-          id: '2',
-          name: 'Marcus Rodriguez',
-          specialization: 'Career & Leadership',
-          isActive: true,
-          relationshipSince: '2024-03-10',
-          nextAvailable: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-        },
-        {
-          id: '3',
-          name: 'Dr. Aisha Patel',
-          specialization: 'Mindfulness & Stress Management',
-          isActive: true,
-          relationshipSince: '2024-02-20',
-          nextAvailable: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
-        }
-      ];
+      const clientId = parseInt(user.id);
 
-      const mockAppointments: Appointment[] = [
-        // Upcoming appointments
-        {
-          id: '1',
-          title: 'Weekly Wellness Check-in',
-          date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          type: 'online',
-          coach: mockCoaches[0],
-          meetingUrl: 'https://meet.google.com/abc-def-ghi',
+      // Fetch real appointments from API
+      let realAppointments: Appointment[] = [];
+      try {
+        const appointmentsData = await getPatientAppointments({ patientId: clientId });
+        realAppointments = (appointmentsData || []).map((apt: any) => ({
+          id: apt.id?.toString() || '',
+          title: apt.title || 'Coaching Session',
+          date: new Date(apt.startTime),
+          type: apt.type === 'virtual' ? 'online' as const : 'in-person' as const,
+          coach: {
+            id: apt.therapistId?.toString() || '1',
+            name: apt.coachName || 'Your Coach',
+            specialization: 'Life Coaching',
+            isActive: true,
+            relationshipSince: ''
+          },
+          meetingUrl: apt.meetingUrl,
+          location: apt.location,
           duration: 60,
-          status: 'scheduled'
-        },
-        {
-          id: '2',
-          title: 'Career Strategy Deep Dive',
-          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-          type: 'in-person',
-          coach: mockCoaches[1],
-          location: 'Downtown Office - Suite 402',
-          duration: 90,
-          status: 'scheduled'
-        },
-        {
-          id: '3',
-          title: 'Mindfulness Session',
-          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-          type: 'online',
-          coach: mockCoaches[2],
-          meetingUrl: 'https://meet.google.com/xyz-abc-def',
-          duration: 45,
-          status: 'scheduled'
-        },
-        // Past appointments
-        {
-          id: '4',
-          title: 'Goal Setting Session',
-          date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          type: 'in-person',
-          coach: mockCoaches[0],
-          location: 'Wellness Center',
-          duration: 75,
-          status: 'completed',
-          sessionSummary: 'Great progress on life balance goals'
-        },
-        {
-          id: '5',
-          title: 'Leadership Assessment',
-          date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-          type: 'online',
-          coach: mockCoaches[1],
-          duration: 60,
-          status: 'completed',
-          sessionSummary: 'Identified key leadership strengths'
-        },
-        {
-          id: '6',
-          title: 'Stress Management Workshop',
-          date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
-          type: 'in-person',
-          coach: mockCoaches[2],
-          location: 'Mindfulness Studio',
-          duration: 120,
-          status: 'completed',
-          sessionSummary: 'Learned new breathing techniques'
-        }
-      ];
+          status: apt.status === 'scheduled' ? 'scheduled' as const :
+                 apt.status === 'completed' ? 'completed' as const :
+                 apt.status === 'cancelled' ? 'cancelled' as const : 'scheduled' as const,
+          sessionSummary: apt.notes
+        }));
+      } catch (aptError) {
+        console.warn('Could not fetch appointments:', aptError);
+      }
 
-      setCoaches(mockCoaches);
-      setAppointments(mockAppointments);
+      // Extract unique coaches from appointments
+      const coachesMap = new Map<string, Coach>();
+      realAppointments.forEach(apt => {
+        if (!coachesMap.has(apt.coach.id)) {
+          coachesMap.set(apt.coach.id, apt.coach);
+        }
+      });
+      const uniqueCoaches = Array.from(coachesMap.values());
+
+      setCoaches(uniqueCoaches);
+      setAppointments(realAppointments);
       setIsLoading(false);
     } catch (error) {
       console.error('Failed to load appointments:', error);
@@ -249,6 +201,14 @@ const ClientAppointments: React.FC = () => {
       return <HistoryIcon sx={{ fontSize: 16 }} />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box

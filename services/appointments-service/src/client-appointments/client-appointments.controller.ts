@@ -1,15 +1,15 @@
-import { Controller, Get, Query, Req, ForbiddenException, Param, ParseIntPipe } from '@nestjs/common';
-// import { JwtAuthGuard } from '../jwt-auth.guard'; // Temporarily disabled
+import { Controller, Get, Query, Req, ForbiddenException, Param, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../jwt-auth.guard';
 import { ClientAppointmentsService } from './client-appointments.service';
 import { GetClientAppointmentsDto } from './dto/get-client-appointments.dto';
 import { createLogger, transports, format } from 'winston';
 
 @Controller('client/appointments')
-// @UseGuards(JwtAuthGuard) // Temporarily disabled
+@UseGuards(JwtAuthGuard)
 export class ClientAppointmentsController {
   private logger = createLogger({ level: 'info', format: format.json(), transports: [new transports.Console()] });
 
-  constructor(private readonly service: ClientAppointmentsService) {}
+  constructor(private readonly service: ClientAppointmentsService) { }
 
   @Get()
   async list(@Query() query: GetClientAppointmentsDto, @Req() req: any) {
@@ -21,7 +21,7 @@ export class ClientAppointmentsController {
   }
 
   @Get(':id')
-  async get(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  async get(@Param('id') id: string, @Req() req: any) {
     const appt = await this.service.findOne(id);
     if (!appt || appt.patientId !== req.user.id) {
       this.logger.warn('forbidden get', { user: req.user.id, id });

@@ -248,11 +248,24 @@ export class ProgressController {
     @Query('offset') offset?: string
   ): Promise<ApiResponse<ProgressEntry[]>> {
     try {
-      // This would be implemented as a method in ProgressService
-      // For now, return a placeholder response
+      const parsedLimit = limit ? parseInt(limit, 10) : 20;
+      const parsedOffset = offset ? parseInt(offset, 10) : 0;
+
+      // Validate parsed values
+      if (isNaN(parsedLimit) || isNaN(parsedOffset)) {
+        throw new BadRequestException('Invalid limit or offset parameter');
+      }
+
+      const entries = await this.progressService.getProgressEntries(
+        goalId,
+        req.user.id,
+        parsedLimit,
+        parsedOffset
+      );
+
       return {
         success: true,
-        data: [],
+        data: entries,
         message: 'Progress entries retrieved successfully'
       };
     } catch (error) {
@@ -274,11 +287,11 @@ export class ProgressController {
     @Param('goalId') goalId: string
   ): Promise<ApiResponse<Milestone[]>> {
     try {
-      // This would be implemented as a method in ProgressService
-      // For now, return a placeholder response
+      const milestones = await this.progressService.getMilestones(goalId, req.user.id);
+
       return {
         success: true,
-        data: [],
+        data: milestones,
         message: 'Milestones retrieved successfully'
       };
     } catch (error) {
@@ -301,11 +314,15 @@ export class ProgressController {
     @Body() celebrationData?: any
   ): Promise<ApiResponse<Milestone>> {
     try {
-      // This would be implemented as a method in ProgressService
-      // For now, return a placeholder response
+      const milestone = await this.progressService.achieveMilestone(
+        milestoneId,
+        req.user.id,
+        celebrationData
+      );
+
       return {
         success: true,
-        data: {} as Milestone,
+        data: milestone,
         message: 'Milestone achieved! Congratulations! 🎉'
       };
     } catch (error) {

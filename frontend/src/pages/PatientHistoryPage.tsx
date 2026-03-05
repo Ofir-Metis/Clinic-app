@@ -26,6 +26,7 @@ import {
 import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 import { DateRangePicker, LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
+import { getDatePickerLocale } from '../locales/datePickerLocale';
 import { useTranslation } from '../contexts/LanguageContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -42,7 +43,8 @@ interface AppointmentRow {
 }
 
 const PatientHistoryPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t, i18n, language } = useTranslation();
+  const { adapterLocale, localeText } = getDatePickerLocale(language);
   const navigate = useNavigate();
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,22 +99,22 @@ const PatientHistoryPage: React.FC = () => {
   }, [page, pageSize]);
 
   const columns: GridColDef[] = [
-    { field: 'date', headerName: t('date', 'Date'), flex: 1 },
-    { field: 'therapistName', headerName: t('therapist', 'Therapist'), flex: 1 },
-    { field: 'type', headerName: t('type', 'Type'), flex: 1 },
-    { field: 'notesSnippet', headerName: t('notes', 'Notes'), flex: 2 },
+    { field: 'date', headerName: t('historyPage.date'), flex: 1 },
+    { field: 'therapistName', headerName: t('historyPage.therapist'), flex: 1 },
+    { field: 'type', headerName: t('historyPage.type'), flex: 1 },
+    { field: 'notesSnippet', headerName: t('historyPage.notes'), flex: 2 },
   ];
 
   return (
     <WellnessLayout
-      title="Patient History"
+      title="Client History"
       showFab={false}
     >
       {/* Header Section */}
       <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h4" 
-          sx={{ 
+        <Typography
+          variant="h4"
+          sx={{
             fontWeight: 700,
             mb: 1,
             background: 'linear-gradient(135deg, #2E7D6B 0%, #4A9B8A 100%)',
@@ -121,10 +123,10 @@ const PatientHistoryPage: React.FC = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          📋 Treatment History
+          📋 Session History
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Complete record of patient appointments and therapy sessions
+          Complete record of client coaching sessions
         </Typography>
       </Box>
 
@@ -141,12 +143,12 @@ const PatientHistoryPage: React.FC = () => {
                 fullWidth
                 select
                 SelectProps={{ native: true }}
-                label={t('therapist', 'Therapist')}
+                label={t('historyPage.therapist')}
                 value={therapistId ?? ''}
                 onChange={(e) => setTherapistId(Number(e.target.value) || null)}
                 aria-label="therapist-filter"
               >
-                <option value="">{t('allTherapists', 'All Therapists')}</option>
+                <option value="">{t('historyPage.allTherapists')}</option>
                 {therapists.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -155,11 +157,15 @@ const PatientHistoryPage: React.FC = () => {
               </TextField>
             </Grid>
             <Grid item xs={12} md={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DateRangePicker 
-                  value={range} 
+              <LocalizationProvider
+                dateAdapter={AdapterDateFns}
+                adapterLocale={adapterLocale}
+                localeText={localeText}
+              >
+                <DateRangePicker
+                  value={range}
                   onChange={(r) => setRange(r)}
-                  localeText={{ start: 'Start Date', end: 'End Date' }}
+                  localeText={{ start: 'תאריך התחלה', end: 'תאריך סיום' }}
                 />
               </LocalizationProvider>
             </Grid>
@@ -168,11 +174,11 @@ const PatientHistoryPage: React.FC = () => {
                 fullWidth
                 variant="contained" 
                 size="large"
-                onClick={() => { setPage(0); fetchData(); }} 
+                onClick={() => { setPage(0); fetchData(); }}
                 aria-label="apply-filters"
                 sx={{ height: 56 }}
               >
-                {t('apply', 'Apply')}
+                {t('historyPage.apply')}
               </Button>
             </Grid>
           </Grid>
@@ -199,15 +205,15 @@ const PatientHistoryPage: React.FC = () => {
               ))}
             </Stack>
           ) : rows.length === 0 ? (
-            <Box sx={{ 
-              textAlign: 'center', 
+            <Box sx={{
+              textAlign: 'center',
               py: 8,
               background: 'rgba(46, 125, 107, 0.04)',
               borderRadius: 2,
             }}>
               <EventIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-                {t('noTreatments', 'No treatments found')}
+                {t('historyPage.noTreatments')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Adjust your filters or check back later for appointment history
@@ -217,9 +223,9 @@ const PatientHistoryPage: React.FC = () => {
             <DataGrid
               rows={rows}
               columns={[
-                { 
-                  field: 'date', 
-                  headerName: t('date', 'Date'), 
+                {
+                  field: 'date',
+                  headerName: t('historyPage.date'),
                   flex: 1,
                   renderCell: (params) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -228,9 +234,9 @@ const PatientHistoryPage: React.FC = () => {
                     </Box>
                   )
                 },
-                { 
-                  field: 'therapistName', 
-                  headerName: t('therapist', 'Therapist'), 
+                {
+                  field: 'therapistName',
+                  headerName: t('historyPage.therapist'),
                   flex: 1,
                   renderCell: (params) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -239,22 +245,22 @@ const PatientHistoryPage: React.FC = () => {
                     </Box>
                   )
                 },
-                { 
-                  field: 'type', 
-                  headerName: t('type', 'Type'), 
+                {
+                  field: 'type',
+                  headerName: t('historyPage.type'),
                   flex: 1,
                   renderCell: (params) => (
-                    <Chip 
-                      label={params.value} 
-                      size="small" 
-                      color="primary" 
+                    <Chip
+                      label={params.value}
+                      size="small"
+                      color="primary"
                       variant="outlined"
                     />
                   )
                 },
-                { 
-                  field: 'notesSnippet', 
-                  headerName: t('notes', 'Notes'), 
+                {
+                  field: 'notesSnippet',
+                  headerName: t('historyPage.notes'),
                   flex: 2,
                   renderCell: (params) => (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

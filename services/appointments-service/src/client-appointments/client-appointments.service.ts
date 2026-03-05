@@ -13,7 +13,7 @@ export class ClientAppointmentsService {
     transports: [new transports.Console()],
   });
 
-  constructor(@InjectRepository(Appointment) private readonly repo: Repository<Appointment>) {}
+  constructor(@InjectRepository(Appointment) private readonly repo: Repository<Appointment>) { }
 
   async list(query: GetClientAppointmentsDto) {
     const qb = this.repo.createQueryBuilder('a').where('a.patientId = :pid', { pid: query.patientId });
@@ -34,7 +34,7 @@ export class ClientAppointmentsService {
     return { items, total };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const appt = await this.repo.findOne({ where: { id } });
     this.logger.info('findOne', { id });
     return appt;

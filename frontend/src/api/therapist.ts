@@ -1,9 +1,6 @@
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../logger';
-import { API_URL } from '../env';
-
-const api = axios.create({ baseURL: API_URL });
+import apiClient from './client';
 
 export interface TherapistProfile {
   userId: number;
@@ -17,7 +14,7 @@ export interface TherapistProfile {
 export const getTherapistProfile = async (id: number) => {
   const traceId = uuidv4();
   console.info({ traceId, action: 'getTherapistProfile', payload: { id } });
-  const { data } = await api.get<TherapistProfile>(`/therapists/${id}/profile`, {
+  const { data } = await apiClient.get<TherapistProfile>(`/therapists/${id}/profile`, {
     headers: { 'X-Trace-Id': traceId },
   });
   return data;
@@ -27,7 +24,7 @@ export const updateTherapistProfile = async (id: number, payload: TherapistProfi
   logger.debug('update profile', payload);
   const traceId = uuidv4();
   console.info({ traceId, action: 'updateTherapistProfile', payload });
-  const { data } = await api.put(`/therapists/${id}/profile`, payload, {
+  const { data } = await apiClient.put(`/therapists/${id}/profile`, payload, {
     headers: { 'X-Trace-Id': traceId },
   });
   return data;

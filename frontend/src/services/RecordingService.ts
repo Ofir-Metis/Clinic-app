@@ -89,7 +89,7 @@ export class RecordingService {
       mediaRecorder: typeof MediaRecorder !== 'undefined',
       getUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
       getDisplayMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia),
-      webRTC: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection)
+      webRTC: !!(window.RTCPeerConnection || (window as unknown as { webkitRTCPeerConnection?: typeof RTCPeerConnection }).webkitRTCPeerConnection)
     };
 
     const supported = features.mediaRecorder && features.getUserMedia;
@@ -130,7 +130,7 @@ export class RecordingService {
       this.chunkIndex = 0;
 
       // Request media permissions based on recording mode
-      this.mediaStream = await this.getMediaStream(metadata);
+      this.mediaStream = await this.acquireMediaStream(metadata);
 
       // For Google Meet, detect if we're recording a meeting
       if (metadata.meetingUrl && metadata.meetingUrl.includes('meet.google.com')) {
@@ -164,9 +164,10 @@ export class RecordingService {
 
     } catch (error) {
       await this.cleanup();
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.emitEvent({
         type: 'error',
-        data: { error: error.message, code: 'START_RECORDING_FAILED' },
+        data: { error: errorMessage, code: 'START_RECORDING_FAILED' },
         timestamp: new Date()
       });
       throw error;
@@ -189,7 +190,7 @@ export class RecordingService {
       this.mediaRecorder.onstop = async (event) => {
         try {
           // Call original handler first
-          if (originalStop) originalStop.call(this.mediaRecorder, event);
+          if (originalStop && this.mediaRecorder) originalStop.call(this.mediaRecorder, event);
 
           const duration = this.startTime ? Date.now() - this.startTime.getTime() : 0;
           const finalBlob = new Blob(this.recordingChunks, { 
@@ -261,6 +262,13 @@ export class RecordingService {
         timestamp: new Date()
       });
     }
+  }
+
+  /**
+   * Get the current media stream (for visualization)
+   */
+  getMediaStream(): MediaStream | null {
+    return this.mediaStream;
   }
 
   /**
@@ -449,7 +457,8 @@ export class RecordingService {
 
       return recordingId;
     } catch (error) {
-      throw new Error(`Upload failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Upload failed: ${errorMessage}`);
     }
   }
 
@@ -533,9 +542,9 @@ export class RecordingService {
   }
 
   /**
-   * Private: Get media stream based on recording mode
+   * Private: Acquire media stream based on recording mode
    */
-  private async getMediaStream(metadata: RecordingMetadata): Promise<MediaStream> {
+  private async acquireMediaStream(metadata: RecordingMetadata): Promise<MediaStream> {
     const mode = this.config.recordingMode || 'camera';
     
     switch (mode) {
@@ -634,7 +643,8 @@ export class RecordingService {
       return combinedStream;
 
     } catch (error) {
-      console.warn('Screen recording not available, falling back to camera:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Screen recording not available, falling back to camera:', errorMessage);
       return await this.getCameraMediaStream();
     }
   }
@@ -663,7 +673,8 @@ export class RecordingService {
       return combinedStream;
 
     } catch (error) {
-      console.warn('Combined recording not available, using camera only:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Combined recording not available, using camera only:', errorMessage);
       return await this.getCameraMediaStream();
     }
   }

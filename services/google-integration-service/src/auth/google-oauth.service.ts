@@ -206,7 +206,7 @@ export class GoogleOAuthService {
     googleAccount.tokenExpiresAt = expiryDate;
     googleAccount.tokenScope = tokens.scope || this.SCOPES.join(' ');
     googleAccount.syncStatus = 'active';
-    googleAccount.syncError = undefined;
+    googleAccount.syncError = null as any;
 
     return await this.googleAccountRepository.save(googleAccount);
   }
@@ -240,7 +240,7 @@ export class GoogleOAuthService {
       googleAccount.accessToken = await this.tokenManager.encryptToken(credentials.access_token);
       googleAccount.tokenExpiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
       googleAccount.syncStatus = 'active';
-      googleAccount.syncError = undefined;
+      googleAccount.syncError = null as any;
 
       if (credentials.refresh_token) {
         googleAccount.refreshToken = await this.tokenManager.encryptToken(credentials.refresh_token);

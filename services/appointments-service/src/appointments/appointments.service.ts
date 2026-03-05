@@ -406,9 +406,9 @@ export class AppointmentsService {
    * Legacy methods for backward compatibility
    */
   async findAll(filter: GetAppointmentsDto) {
-    this.logger.log('findAll (legacy)', { therapistId: filter.therapistId });
+    this.logger.log('findAll (legacy)', { coachId: filter.coachId });
     return this.findWithFilters({
-      therapistId: filter.therapistId?.toString(),
+      therapistId: filter.coachId, // Map coachId to therapistId for internal filtering
       limit: 50,
       offset: 0
     });

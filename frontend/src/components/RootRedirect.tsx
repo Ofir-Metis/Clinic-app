@@ -101,7 +101,12 @@ const RootRedirect: React.FC = () => {
     return <Navigate to="/client/dashboard" replace />;
   }
 
-  // Default to main dashboard for coaches, admins, etc.
+  if (userRole === 'admin') {
+    console.log('[RootRedirect] Admin role detected, redirecting to admin dashboard');
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Default to main dashboard for coaches
   console.log('[RootRedirect] Authenticated user, redirecting to main dashboard');
   return <Navigate to="/dashboard" replace />;
 };

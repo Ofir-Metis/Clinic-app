@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../AuthContext';
 import { useViewSwitching } from '../hooks/useViewSwitching';
+import { useTranslation } from '../contexts/LanguageContext';
 
 interface ClientOption {
   id: string;
@@ -35,6 +36,7 @@ interface ClientOption {
 }
 
 const ViewSwitchingButton: React.FC = () => {
+  const { translations } = useTranslation();
   const { user } = useAuth();
   const {
     isImpersonating,
@@ -95,14 +97,14 @@ const ViewSwitchingButton: React.FC = () => {
       <PersonIcon sx={{ mr: 1 }} />
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <Typography variant="button" sx={{ lineHeight: 1 }}>
-          Client View
+          {translations.viewSwitching?.clientView || 'Client View'}
         </Typography>
         <Typography variant="caption" sx={{ lineHeight: 1, opacity: 0.7 }}>
-          {currentView?.viewingAsClientName || 'Viewing as client'}
+          {currentView?.viewingAsClientName || translations.viewSwitching?.viewingAsClient || 'Viewing as client'}
         </Typography>
       </Box>
       <Chip
-        label="Impersonating"
+        label={translations.viewSwitching?.impersonating || 'Impersonating'}
         size="small"
         color="warning"
         sx={{ ml: 1, fontSize: '0.6rem', height: 20 }}
@@ -111,7 +113,7 @@ const ViewSwitchingButton: React.FC = () => {
   ) : (
     <>
       <TherapistIcon sx={{ mr: 1 }} />
-      <Typography variant="button">Switch View</Typography>
+      <Typography variant="button">{translations.viewSwitching?.switchView || 'Switch View'}</Typography>
     </>
   );
 
@@ -188,8 +190,8 @@ const ViewSwitchingButton: React.FC = () => {
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary="Currently in Client View"
-                secondary={`Viewing as: ${currentView?.viewingAsClientName || 'Client'}`}
+                primary={translations.viewSwitching?.currentlyInClientView || 'Currently in Client View'}
+                secondary={`${translations.viewSwitching?.viewingAs || 'Viewing as:'} ${currentView?.viewingAsClientName || 'Client'}`}
               />
             </MenuItem>
             <Divider sx={{ my: 1 }} />
@@ -207,8 +209,8 @@ const ViewSwitchingButton: React.FC = () => {
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary="Return to Therapist View"
-                secondary="Exit client view mode"
+                primary={translations.viewSwitching?.returnToCoachView || 'Return to Coach View'}
+                secondary={translations.viewSwitching?.exitClientViewMode || 'Exit client view mode'}
               />
             </MenuItem>
           </>
@@ -216,10 +218,10 @@ const ViewSwitchingButton: React.FC = () => {
           <>
             <Box sx={{ p: 2, pb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Switch to Client View
+                {translations.viewSwitching?.switchToClientView || 'Switch to Client View'}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                View the app from your client's perspective
+                {translations.viewSwitching?.switchDescription || "View the app from your client's perspective"}
               </Typography>
             </Box>
             <Divider sx={{ my: 1 }} />
@@ -229,13 +231,13 @@ const ViewSwitchingButton: React.FC = () => {
                 <ListItemAvatar>
                   <CircularProgress size={32} />
                 </ListItemAvatar>
-                <ListItemText primary="Loading clients..." />
+                <ListItemText primary={translations.viewSwitching?.loadingClients || 'Loading clients...'} />
               </MenuItem>
             ) : accessibleClients.length === 0 ? (
               <MenuItem disabled>
-                <ListItemText 
-                  primary="No clients available"
-                  secondary="No clients assigned for view switching"
+                <ListItemText
+                  primary={translations.viewSwitching?.noClientsAvailable || 'No clients available'}
+                  secondary={translations.viewSwitching?.noClientsAssigned || 'No clients assigned for view switching'}
                 />
               </MenuItem>
             ) : (
@@ -266,7 +268,7 @@ const ViewSwitchingButton: React.FC = () => {
                         </Typography>
                         {client.lastActive && (
                           <Typography variant="caption" display="block" color="text.secondary">
-                            Last active: {new Date(client.lastActive).toLocaleDateString()}
+                            {translations.viewSwitching?.lastActive || 'Last active:'} {new Date(client.lastActive).toLocaleDateString()}
                           </Typography>
                         )}
                       </Box>
